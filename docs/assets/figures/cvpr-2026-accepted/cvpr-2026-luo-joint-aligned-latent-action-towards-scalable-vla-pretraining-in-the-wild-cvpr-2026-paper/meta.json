@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 2,
+      "index": 1,
+      "width": 720,
+      "height": 544
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 2,
+      "index": 2,
+      "width": 478,
+      "height": 418
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 2,
+      "index": 3,
+      "width": 1344,
+      "height": 768
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 4,
+      "index": 4,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 4,
+      "index": 5,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 4,
+      "index": 6,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 4,
+      "index": 7,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 4,
+      "index": 8,
+      "width": 604,
+      "height": 349
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 4,
+      "index": 9,
+      "width": 672,
+      "height": 384
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 8,
+      "index": 10,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-011.webp",
+      "caption": "",
+      "page": 8,
+      "index": 11,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-012.webp",
+      "caption": "",
+      "page": 8,
+      "index": 12,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-013.webp",
+      "caption": "",
+      "page": 8,
+      "index": 13,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-luo-joint-aligned-latent-action-towards-scalable-vla-pretraining-in-the-wild-cvpr-2026-paper/fig-014.webp",
+      "caption": "",
+      "page": 8,
+      "index": 14,
+      "width": 512,
+      "height": 512
+    }
+  ]
+}

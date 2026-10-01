@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 4,
+      "index": 1,
+      "width": 782,
+      "height": 504
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 4,
+      "index": 2,
+      "width": 458,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 6,
+      "index": 3,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 6,
+      "index": 4,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 6,
+      "index": 5,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 6,
+      "index": 6,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 6,
+      "index": 7,
+      "width": 720,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 6,
+      "index": 8,
+      "width": 720,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 6,
+      "index": 9,
+      "width": 720,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-egoroc-towards-egocentric-robotic-control-via-task-agnostic-visual-alignment-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 6,
+      "index": 10,
+      "width": 720,
+      "height": 540
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-spatial-aware-vla-pretraining-through-visual-physical-alignment-from-human-videos-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 8,
+      "index": 1,
+      "width": 1768,
+      "height": 727
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-spatial-aware-vla-pretraining-through-visual-physical-alignment-from-human-videos-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 8,
+      "index": 2,
+      "width": 428,
+      "height": 317
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-spatial-aware-vla-pretraining-through-visual-physical-alignment-from-human-videos-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 8,
+      "index": 3,
+      "width": 609,
+      "height": 443
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-spatial-aware-vla-pretraining-through-visual-physical-alignment-from-human-videos-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 8,
+      "index": 4,
+      "width": 428,
+      "height": 312
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-feng-spatial-aware-vla-pretraining-through-visual-physical-alignment-from-human-videos-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 8,
+      "index": 5,
+      "width": 428,
+      "height": 312
+    }
+  ]
+}

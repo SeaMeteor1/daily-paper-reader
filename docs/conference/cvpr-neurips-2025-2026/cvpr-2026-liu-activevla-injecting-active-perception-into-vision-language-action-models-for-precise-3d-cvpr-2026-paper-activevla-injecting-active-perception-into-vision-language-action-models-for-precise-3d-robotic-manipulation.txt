@@ -1,0 +1,1722 @@
+ActiveVLA: Injecting Active Perception into Vision-Language-Action Models for
+Precise 3D Robotic Manipulation
+Zhenyang Liu1,2, Yongchong Gu3, Yikai Wang4, Xiangyang Xue1†, Yanwei Fu3,2†
+1College of Computer Science and Artificial Intelligence, Fudan University
+2Shanghai Innovation Institute 3School of Data Science, Fudan University 4Nanyang Technological University
+liuzy24@m.fudan.edu.cn, yongchonggu22@m.fudan.edu.cn, yikai.wang@ntu.edu.sg,
+xyxue@fudan.edu.cn, yanweifu@fudan.edu.cn
+Project Page: ZhenyangLiu.github.io/ActiveVLA
+Pre-trained
+VLM
+Action
+Expert
+“Pick up the 
+stick on the 
+grey square”
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+Language
+Action
+Our ActiveVLA
+Pre-trained
+VLM
+Action
+Expert
+“Pick up the 
+stick on the 
+grey square”
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+Language
+3D Action
+Observation
+Observation
+Instruction
+Instruction
+Robot States
+3D Info
+. . . 
+. . . 
+  
+Previous Methods
+Can you bring the apples on the 
+table and pass them to me？
+Previous Methods
+Can you bring the apples on 
+the table and pass them to me？
+[∆ǜ, ∆ش, ∆Gripp] = ...
+Execution failure. 
+Our ActiveVLA
+Can you bring the apples on the table 
+and pass them to me？
+The apple was 
+occluded 
+by the sheep
+Actively select 
+a better view
+Actively observe 
+more carefully
+[∆ǜ, ∆ش, ∆Gripp] = ...
+Execution success. 
+Current View 
+with Occlusion
+Crucial Area
+Figure 1. Comparison between previous VLA methods and ActiveVLA. Traditional VLA systems often fail in tasks like “bring the
+apples on the table” because their fixed cameras miss critical details or become occluded. In contrast, ActiveVLA leverages 3D scene
+understanding to freely place virtual cameras and synthesize optimal viewpoints, enabling robots to adjust their view for clearer, more
+informative observations and thus achieve more reliable manipulation performance even under occlusion.
+Abstract
+Recent advances in robot manipulation have leveraged pre-
+trained vision-language models (VLMs) and explored in-
+tegrating 3D spatial signals into these models for effec-
+tive action prediction, giving rise to the promising vision-
+language-action (VLA) paradigm.
+However, most exist-
+ing approaches overlook the importance of active percep-
+tion: they typically rely on static, wrist-mounted cameras
+that provide an end-effector-centric viewpoint. As a result,
+these models are unable to adaptively select optimal view-
+points or resolutions during task execution, which signifi-
+cantly limits their performance in long-horizon tasks and
+fine-grained manipulation scenarios. To address these lim-
+This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+Except for this watermark, it is identical to the accepted version;
+the final published version of the proceedings is available on IEEE Xplore.
+8141
+
+
+itations, we propose ActiveVLA, a novel vision-language-
+action framework that empowers robots with active percep-
+tion capabilities for high-precision, fine-grained manipula-
+tion. ActiveVLA adopts a coarse-to-fine paradigm, divid-
+ing the process into two stages: (1) Critical region local-
+ization. ActiveVLA projects 3D inputs onto multi-view 2D
+projections, identifies critical 3D regions, and supports dy-
+namic spatial awareness. (2) Active perception optimiza-
+tion. Drawing on the localized critical regions, ActiveVLA
+uses an active view selection strategy to choose optimal
+viewpoints. These viewpoints aim to maximize amodal rele-
+vance and diversity while minimizing occlusions. Addition-
+ally, ActiveVLA applies a 3D zoom-in to improve resolu-
+tion in key areas. Together, these steps enable finer-grained
+active perception for precise manipulation. Extensive ex-
+periments demonstrate that ActiveVLA achieves precise 3D
+manipulation and outperforms state-of-the-art baselines on
+three simulation benchmarks. Moreover, ActiveVLA trans-
+fers seamlessly to real-world scenarios, enabling robots to
+learn high-precision tasks in complex environments.
+1. Introduction
+“Perception is not a passive process. It’s an active process
+of hypothesis testing.”
+– Richard Gregory
+Pretrained vision-language models (VLMs) [2, 3, 27, 55]
+have become a highly effective approach for building large-
+scale vision-language-action (VLA) architectures.
+Such
+models have demonstrated impressive generalization and
+robustness in robotic manipulation [4, 6, 21, 31, 34, 38].
+However, most current VLA approaches primarily pro-
+cess 2D visual inputs, requiring massive datasets to bridge
+the gap between perception and action. In contrast, 3D-
+aware robotic policies leverage structural cues from 3D
+data, achieving better sample efficiency and spatial reason-
+ing for complex manipulation tasks [16–18, 28, 52].
+Gregory’s insight captures a core challenge in embodied
+intelligence: perception must not remain a passive receiver
+of sensory input but instead become an active hypothesis-
+testing process—seeking, selecting, and verifying informa-
+tion relevant to the task at hand. However, existing VLA
+models [31, 38, 50, 66] largely rely on static or wrist-
+mounted cameras, constraining observations to a fixed, end-
+effector-centric viewpoint. Such a setup inherently limits
+perceptual flexibility: the agent cannot adaptively and dy-
+namically adjust its viewpoint or camera resolution accord-
+ing to the task context. As a result, the absence of adaptive
+viewpoint selection during long-horizon or fine-grained ma-
+nipulation prevents current systems from acquiring essential
+contextual information, thereby undermining the robustness
+and generalizability of learned policies [16–18, 28, 38, 52].
+Addressing this limitation is crucial for developing embod-
+ied agents capable of adaptive and reliable interaction in
+complex, real-world environments.
+To address this limitation, we propose ActiveVLA, a
+novel vision-language-action framework that explicitly in-
+tegrates active perception into robotic manipulation. Ac-
+tiveVLA enables robots to adaptively and dynamically ad-
+just their viewpoint and camera resolution according to the
+task context, allowing more informative observations to be
+acquired on demand. The framework equips robots with
+two complementary capabilities: (1) Active viewpoint se-
+lection, which autonomously determines optimal camera
+perspectives during task execution to maximize visibility
+and task relevance while minimizing occlusions; and (2)
+Active 3D zoom-in, which identifies and selectively en-
+hances high-resolution views of task-critical regions within
+the 3D scene. By dynamically refining its perceptual in-
+put through these mechanisms, ActiveVLA enables more
+precise, context-aware, and reliable action prediction, ulti-
+mately achieving superior adaptability and performance in
+complex, long-horizon manipulation scenarios.
+As illustrated in Figure 1, ActiveVLA adopts a coarse-
+to-fine active perception design that integrates 3D spa-
+tial reasoning with vision-language understanding. In the
+coarse stage, ActiveVLA projects the 3D point-cloud ob-
+servations into multiple 2D orthographic views [17, 18],
+aligning them with the pretrained VLM backbone. By lever-
+aging structural priors from the 3D inputs, the model ef-
+fectively localizes salient and task-relevant regions in 3D
+space. In the fine stage, ActiveVLA performs active view
+selection to determine optimal camera poses centered on
+these key regions, maximizing amodal relevance and spatial
+diversity while reducing occlusions. It then applies an ac-
+tive 3D zoom-in strategy to enhance the spatial resolution of
+these areas, enabling precise manipulation of fine-grained
+details. This closed-loop, coarse-to-fine perception-action
+pipeline allows ActiveVLA to dynamically adapt its sen-
+sory inputs and maintain high effectiveness across complex,
+multi-step, and long-horizon manipulation tasks.
+Comprehensive experiments validate the advantages of
+ActiveVLA. On RLBench [23], it achieves an average suc-
+cess rate of 91.8%, with some tasks reaching a perfect suc-
+cess rate of 100%. On COLOSSEUM [48], it achieves the
+highest success rate of 78.3% in challenging generalization
+scenarios. ActiveVLA consistently outperforms all base-
+lines on GemBench [14], demonstrating superior adaptabil-
+ity across diverse tasks. Real-world evaluations further con-
+firm its robustness and strong generalization to previously
+unseen configurations. These results demonstrate that inte-
+grating active perception into vision-language-action learn-
+ing is a key step toward adaptive embodied intelligence.
+The contributions of this paper are summarized:
+• Active Perception for Vision-Language-Action Models:
+We propose ActiveVLA, a novel vision-language-action
+8142
+
+
+framework that equips robots with active perception capa-
+bilities, enabling adaptive viewpoint selection and zoom-
+in mechanisms for precise, fine-grained manipulation.
+• A Novel ActiveVLA Framework: ActiveVLA designs a
+novel coarse-to-fine pipeline that projects 3D point clouds
+into multi-view 2D representations, predicts key regions
+via heatmaps, and selectively refines observations for pre-
+cise, fine-grained manipulation.
+• State-of-the-Art Performance and Real-World General-
+ization: Extensive experiments on RLBench, COLOS-
+SEUM, and GemBench demonstrate that ActiveVLA out-
+performs state-of-the-art baselines.
+Real-world robot
+evaluations show strong generalization and high success
+rates, highlighting the practical impact of active percep-
+tion in long-horizon and precision-critical tasks.
+2. Related Work
+Vision-Language-Action Models.
+Recent research has
+increasingly focused on developing generalist robot poli-
+cies trained on large-scale robotic learning datasets [10,
+13, 29, 35, 45]. Vision-Language-Action (VLA) models
+have emerged as a promising approach for training such
+policies [5, 9, 11, 12, 30, 39, 44, 47, 54, 57, 58, 62, 65,
+67]. VLAs extend vision-language models (VLMs), which
+are pre-trained on massive internet-scale image and text
+datasets [1, 8, 27, 36, 37, 42, 55, 64, 68, 69], to the do-
+main of robotic control [56]. This approach provides sev-
+eral key advantages: leveraging large-scale vision-language
+model backbones with billions of parameters enables effec-
+tive learning from vast robotic datasets, while reusing pre-
+trained weights from internet-scale data enhances VLAs’
+ability to interpret diverse language commands and gen-
+eralize to novel objects and environments. ActiveVLA is
+a vision-language-action (VLA) framework that employs
+large-scale vision-language model backbones. Unlike pre-
+vious methods, ActiveVLA further leverages the spatial
+structure of 3D inputs and utilizes active perception through
+novel view synthesis, resulting in greater adaptability and
+improved performance in manipulation tasks.
+3D Modalities in Robotic Learning. Although VLA mod-
+els with 2D inputs have been extensively explored, incor-
+porating 3D modalities into robot learning is still an emerg-
+ing area of research [26, 32, 40, 41, 60, 66]. Recent stud-
+ies have started leveraging richer spatial information to en-
+hance robot perception and manipulation capabilities. Some
+approaches, such as 3DVLA [20], present holistic models
+for unified 3D tasks like generalization, visual question an-
+swering, 3D perception, and control. Other methods aim
+to improve the performance of foundational 2D models by
+integrating three-dimensional features.
+Lift3D [26] aug-
+ments 2D vision backbones like DINOv2 [46] with both im-
+plicit and explicit 3D representations. PointVLA [32] uti-
+lizes separate encoders for 2D images and 3D point clouds,
+merging their features in a downstream action predictor to
+inform decision-making. SpatialVLA [50] introduces a spe-
+cialized position encoding (Ego3D) to inject spatial infor-
+mation into 2D observations. However, most existing meth-
+ods lack perceptual flexibility because the models cannot
+dynamically adjust their viewpoint or camera resolution. As
+a result, they fail to leverage the advantages of active, ego-
+centric perception in robotic manipulation. In contrast, Ac-
+tiveVLA uses an active camera selection strategy to choose
+optimal viewpoints and an active 3D zoom-in mechanism
+to enhance point cloud resolution in key regions, leading to
+better performance in complex, long-horizon tasks.
+3. Our Proposed ActiveVLA
+VLA Setup. Vision-Language-Action models aim to learn
+a generalizable and robust multi-task robot manipulation
+policy π. π that maps an observation o and a language in-
+struction l to an action a:
+  \pi : ( \mathbf {o}, l) \mapsto \mathbf {a}, 
+(1)
+The action a consists of a 6-DoF end-effector pose T ∈
+SE(3), a gripper state g ∈{0, 1}, and a collision flag
+c ∈{0, 1} of the next key frame. This setting assumes
+access to expert demonstrations D = {τ i}N
+i=1 containing
+N trajectories, where each trajectory contains a language
+instruction and a sequence of observation-action pairs, i.e.,
+τ i = {li, (oi
+1, ai
+1), ..., (oi
+H, ai
+H)}. The observation o con-
+tains RGB-D images captured from one or multiple fixed,
+end-effector-centric viewpoints. However, this setup lim-
+its perceptual flexibility by preventing dynamic viewpoint
+or resolution adjustment, hindering context acquisition and
+policy generalization.
+ActiveVLA. As shown in Figure 2, ActiveVLA addresses
+the limitation of perceptual flexibility through a coarse-to-
+fine active perception framework that adaptively adjusts the
+camera’s viewpoint and zoom-in level according to the task
+context, thereby enhancing scene exploration and facilitat-
+ing fine-grained interaction. ActiveVLA enables robots to
+attend to critical 3D regions and actively sense the environ-
+ment, allowing adaptive viewpoints and zoom-in for fine-
+grained manipulation.
+3.1. 3D Crucial Area Perception
+During each task, ActiveVLA first identifies the core region
+in the 3D scene to serve as the focus for active perception.
+Multi-View Rendering. Given RGB-D images as visual
+input, ActiveVLA reconstructs a point cloud of the scene
+using images captured by calibrated cameras. To match the
+2D image input required by the VLM backbone, we ren-
+der three orthographic projection images of the point cloud
+from top, front, and right viewpoints. Specifically, for each
+view, we render three image maps with a total of 7 channels:
+8143
+
+
+Input
+RGB-D Images:
+Instruction: “Pick up the stick 
+on the grey square”
+Point Cloud 
+Reconstruction
+Orthographic 
+Projection
+PaliGemma
+(Coarse)
+Convex
+Upsample
+...
+...
+...
+...
+...
+Lifting 
+to 3D
+Crucial Point
+and Areas
+...
+...
+Active 
+View Selection
+Active 
+3D Zoom-in Strategy
+Active View
+Projection
+PaliGemma
+(Fine)
+Convex
+Upsample
+...
+...
+...
+...
+...
+...
+...
+Action 
+Decoder
+Gripper Rotation
+Fingers Open/Close
+Collisions On/Off
+Share
+Weights
+Orthographic
+Virtual Images
+Predicted 
+Heatmaps
+Active View-based
+Virtual Images
+Predicted Heatmaps
+Instruction 
+Instruction 
+Active Perception 
+3D Action Prediction
+Crucial Area Perception 
+Image 
+Token
+Image 
+Token
+Final Outputs
+Next 
+Gripper State
+Auxiliary Ouputs
+Figure 2. The pipeline of ActiveVLA. ActiveVLA is a 3D vision-language-action framework that adopts a two-stage, coarse-to-fine
+strategy. In the coarse stage, three orthographic projections of the 3D scene and a language instruction are processed by the PaliGemma
+backbone to generate 2D heatmaps, which are then back-projected to locate the most relevant 3D region. In the fine stage, an active
+perception module selects new views and performs a 3D zoom-in on this region. The refined PaliGemma then predicts heatmaps for key
+end-effector positions, while an action decoder outputs the final 3D action.
+RGB, depth, and the coordinates of the points in the world
+frame (3 channels). The coordinates help establish the cor-
+respondence of pixels across views, i.e., if pixels from dif-
+ferent views share the same (x, y, z), they correspond to the
+same point in 3D. We use PyTorch3D [51] for rendering.
+The rendered image at viewpoint v is given by:
+  I^{(v) }(u _
+x
+,
+ u_
+y) =
+ 
+\sum _{ i =1}^N \m
+a
+thbf {c}_i \cdot \delta \big ( (u_x, u_y) - \pi ^{(v)}(\mathbf {p}_i) \big ), 
+(2)
+where \pi ^{(v)}(\cdot )
+denotes the orthographic projection. The ren-
+dered color at each pixel is taken from the point with the
+minimal depth z_i^
+{(v)}
+among all points projecting to that pixel,
+ensuring correct occlusion handling.
+3D Crucial Area Extraction. These images are then used
+as input for the VLM backbone, which is designed to pro-
+cess images along with accompanying text prompts. Since
+the VLM’s global representations are not sufficient for pre-
+cise spatial localization, we introduce a heatmap prediction
+module to recover fine-grained spatial attention and identify
+object positions within each view. To predict the heatmap,
+we first rearrange the output patch tokens \ifmm
+ode \lbrace \else \textbraceleft \fi \mathbf {t}_i\}_{i=1}^M accord-
+ing to their spatial positions to form a feature grid. A con-
+vex upsampling block is then applied to the feature grid to
+obtain a heatmap that matches the resolution of the input
+image. This process can be expressed as:
+  \
+m
+athbf {H}
+ 
+= \ma
+thc
+al
+ {U}\Big ( \mathrm {Rearrange}\big ( \{\mathbf {t}_i\}_{i=1}^M \big ) \Big ), 
+(3)
+where \protect \mathcal  {U}(\cdot ) denotes the convex upsampling block, and
+\protect \mathrm  {Rearrange}(\cdot ) rearranges the tokens into a feature grid of
+size H
+_p \times W_
+p
+. Unlike fixed interpolation methods, the up-
+sampling module learns pixel-wise weights for finer spatial
+detail recovery. The pipeline is trained with cross-entropy
+loss to predict heatmaps, which are then back-projected
+from all views to identify the crucial 3D region.
+3.2. 3D Active Perception
+ActiveVLA enables active perception, allowing robots to
+perform fine-grained manipulation. It includes two compo-
+nents: Active Viewpoint Selection and Active 3D Zoom-in.
+Active Viewpoint Selection. To improve perceptual com-
+pleteness in complex scenes, ActiveVLA proposes a hy-
+pothesis testing strategy for selecting active views that fo-
+cuses on optimal camera viewpoints centered on key re-
+gions identified during the coarse stage. The goal is to max-
+imize amodal relevance by ensuring full visibility of tar-
+get objects and increasing view diversity. Together, these
+objectives help reduce occlusion and perceptual ambiguity
+through complementary observations. Given the 3D key re-
+gion of interest pf ∈R3 (e.g., the centroid of a partially
+observed object), we generate a set of candidate camera po-
+sitions uniformly distributed around a sphere centered at pf.
+To achieve isotropic coverage, we employ a geodesic sam-
+pling strategy based on recursive subdivision of a regular
+icosahedron, producing a near-uniform point distribution on
+the spherical surface. This avoids sampling biases inherent
+in latitude-longitude parameterizations and provides scal-
+able control over viewpoint density via subdivision level.
+The total number of sampling points V(k) after k -level re-
+cursive subdivision (where k \in \mathbb {N} , a non-negative integer)
+8144
+
+
+is quantitatively described as:
+  V( k ) = 12 + 
+3
+0
+k + 
+\
+frac {20}{3}\left (4^k - 1\right ), 
+(4)
+where k = 0 corresponds to the original icosahedron (12
+vertices), and higher k indicates successive subdivisions.
+Each candidate camera position c_i is evaluated using a
+multi-objective scoring function that balances three criteria:
+• Visibility : ActiveVLA determines whether the line of
+sight from c_i to p_f is occluded by scene geometry. Us-
+ing a KDTree-based nearest-neighbor search on the ob-
+served point cloud \mathcal {S} , it samples N uniformly spaced
+points \{q_k\} along the ray and computes their nearest-
+surface distances:
+  d _k 
+= \ min _{s \in \mathcal {S}} \| q_k - s \|. 
+(5)
+If all distances exceed a threshold r ( d _ k \ge r, \, \forall k ), the
+view is marked unoccluded with v(c_ i, p _f) = 1 ; other-
+wise, v(c_ i, p _f) = 0 .
+• Distance: We normalize the distance \V e rt c_i - p_f \Vert and stan-
+dardize it across candidates to prefer moderate viewing
+ranges that balance field-of-view and detail resolution.
+• Diversity: To ensure geometric diversity among selected
+viewpoints, we compute the total angular separation be-
+tween the viewing direction of c_i and all other candidates.
+Given candidate set \ math c a l {C} = \{c_1, \dots , c_M\} and unit viewing
+vectors \ m athbf {v}_i \in \mathbb {S}^2 , the diversity score is defined as:
+  S_{\te x
+t
+ {di
+v}}(c_i) = \sum _{j \ne i} \arccos (\mathbf {v}_i \cdot \mathbf {v}_j), 
+(6)
+A larger S_{\text {div}}(c_i) indicates greater angular diversity and
+more spatially distributed views.
+These scores are Z-normalized and combined into a uni-
+fied score:
+  s _i = w_{\ t ext { vis} } \cd o t s_{\text {vis}} + w_{\text {dis}} \cdot s_{\text {dis}} + w_{\text {div}} \cdot s_{\text {div}}, 
+(7)
+where w_{ \ text {vis } } + w_{\text {dis}} + w_{\text {div}} = 1 are the weighting coeffi-
+cients, s_{\text {vis}} denotes the visibility score, s_{\text {dis}} denotes the dis-
+tance score, and s_{\text {div}} denotes the diversity score. The top-K
+highest-scoring views are selected as the next observation
+poses. Each camera is configured using the look-at formu-
+lation with eye c_i , target p_f , and a dynamically adjusted up
+vector. These views enable informative, unoccluded obser-
+vations that support robust multi-view reasoning and precise
+manipulation, with the most informative view serving as the
+basis for active 3D zoom-in.
+Active 3D Zoom-in. Previous VLA models rely on fixed
+camera views around the robot, which often fail to capture
+sufficient detail for fine-grained tasks involving small ob-
+jects (e.g., welding a hole using a welding gun).
+To overcome this limitation, ActiveVLA introduces an
+active 3D zoom-in mechanism that adaptively refines vi-
+sual perception around key interaction regions. After select-
+ing the optimal viewpoint, the system re-renders the scene
+from the same camera pose with a narrowed field of view,
+effectively magnifying the local region while maintaining
+high pixel resolution for precise gripper pose prediction.
+This simulates an optical zoom effect in virtual rendering
+space, enabling detailed observation of small-scale struc-
+tures without loss of visual fidelity. Let \alpha denote the orig-
+inal FoV (in radians), z > 1 the zoom-in factor, and d the
+distance from the camera to the region of interest. The spa-
+tial coverage width W of the rendered image (perpendicular
+to the viewing direction) is given by:
+  W( z ) = 2
+d 
+\t
+a
+n \left ( \frac {\alpha }{2z} \right ), 
+(8)
+where W(z) decreases with increasing z , while pixel res-
+olution R is preserved as R
+ = \f rac { \text {i
+m age width (pixels)}}{W(z)} 
+, ensuring
+higher detail in the magnified region.
+The zoom-in process leverages the 3D point cloud for
+scale-invariant view synthesis without geometric loss. Un-
+like fixed physical cameras, the virtual renderer produces
+high-resolution close-ups based on local 3D structure, en-
+hancing gripper pose accuracy. By separating exploration
+(view selection) from exploitation (zoom-in), ActiveVLA
+forms a hierarchical perception strategy that improves pre-
+cision manipulation and underscores the benefits of adap-
+tive observation in simulation-to-real VLA systems.
+3.3. 3D Action Prediction
+After obtaining the actively selected and zoom-in views, we
+feed them into the VLM to generate attention heatmaps.
+For translational prediction, these 2D heatmaps are back-
+projected into the 3D workspace and accumulated on a dis-
+cretized grid \ math c a l {G} = \{\mathbf {g}_1, \dots , \mathbf {g}_N\} to form a multi-view score
+volume:
+  S( \
+m
+a
+thb
+f {g}) = \s um _{v=1}^3 w_v \, h_v\!\left (\pi _v(\mathbf {g})\right ), 
+(9)
+where h_v is the attention heatmap of view v , \pi _v(\mathbf {g}) is
+the 2D projection of grid point \mathbf {g} , and w_v denotes the
+view weight. The translation target is determined as \ m
+ath bf {t} ^* = \arg \max _{\mathbf {g} \in \mathcal {G}} S(\mathbf {g}) . For rotation prediction, ActiveVLA rep-
+resents orientation using Euler angles (\ ph i , \theta , \psi ) , each dis-
+cretized into 72 bins. A hierarchical feature fusion module
+then integrates global and local context to predict rotation,
+gripper state, and a binary collision flag.
+• Global Context Encoding: We perform max-pooling
+over the vision encoder outputs of each orthographic pro-
+jection to obtain a global feature vector per view, yielding
+three global tokens that capture overall scene semantics.
+8145
+
+
+Table 1. Results on RLBench. “Avg. Rank” denotes the average rank across all 18 tasks, where a lower value signifies better overall
+performance. ActiveVLA attains first place in 10 tasks, highlighting its dominance in the benchmark.
+Models
+Avg.
+SR (%) ↑
+Avg.
+Rank ↓
+Close
+Jar
+Drag
+Stick
+Insert
+Peg
+Meat off
+Grill
+Open
+Drawer
+Place
+Cups
+Place
+Wine
+Push
+Buttons
+Image-BC (CNN) [25, 52]
+1.3
+11.56
+0.0
+0.0
+0.0
+0.0
+0.0
+4.0
+0.0
+0.0
+Image-BC (ViT) [25, 52]
+1.3
+11.61
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+C2F-ARM-BC [24, 52]
+20.1
+9.89
+24.0
+24.0
+4.0
+20.0
+20.0
+0.0
+8.0
+72.0
+HiveFormer [19]
+45.3
+8.22
+52.0
+76.0
+0.0
+100.0
+52.0
+0.0
+80.0
+84.0
+PolarNet [7]
+46.4
+7.78
+36.0
+92.0
+4.0
+100.0
+84.0
+0.0
+40.0
+96.0
+PerAct [22]
+49.4
+7.33
+55.2±4.7
+89.6±4.1
+5.6±4.1
+70.4±2.0
+88.0±5.7
+2.4±3.2
+44.8±7.8
+92.8±3.0
+Act3D [16]
+65.0
+5.28
+92.0
+92.0
+27.0
+94.0
+93.0
+3.0
+80.0
+99.0
+RVT [17]
+62.9
+5.39
+52.0±2.5
+99.2±1.6
+11.2±3.0
+88.0±2.5
+71.2±6.9
+4.0±2.5
+91.0±5.2
+100.0±0.0
+3D Diffuser Actor [28]
+81.3
+3.39
+96.0±2.5
+100.0±0.0
+65.6±4.1
+96.8±1.6
+89.6±4.1
+24.0±7.6
+93.6±4.8
+98.4±2.0
+RVT-2 [18]
+81.4
+3.00
+100.0±0.0
+99.0±1.7
+40.0±0.0
+99.0±1.7
+74.0±11.8
+38.0±4.5
+95.0±3.3
+100.0±0.0
+BridgeVLA [33]
+88.2
+2.44
+100.0±0.0
+100.0±0.0
+88.0±2.8
+100.0±0.0
+100.0±0.0
+58.4±10.0
+88.0±2.8
+98.4±2.2
+ActiveVLA (Ours)
+91.8
+1.22
+100.0±0.0
+100.0±0.0
+92.4±1.9
+100.0±0.0
+100.0±0.0
+65.6±3.2
+96.2±1.4
+100.0±0.0
+Models
+Put in
+Cupboard
+Put in
+Drawer
+Put in
+Safe
+Screw
+Bulb
+Slide
+Block
+Sort
+Shape
+Stack
+Blocks
+Stack
+Cups
+Sweep to
+Dustpan
+Turn
+Tap
+Image-BC (CNN) [25, 52]
+0.0
+8.0
+4.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+8.0
+Image-BC (ViT) [25, 52]
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+16.0
+C2F-ARM-BC [24, 52]
+0.0
+4.0
+12.0
+8.0
+16.0
+8.0
+0.0
+0.0
+0.0
+68.0
+HiveFormer [19]
+32.0
+68.0
+76.0
+8.0
+64.0
+8.0
+8.0
+0.0
+28.0
+80.0
+PolarNet [7]
+12.0
+32.0
+84.0
+44.0
+56.0
+12.0
+4.0
+8.0
+52.0
+80.0
+PerAct [22]
+28.0±4.4
+51.2±4.7
+84.0±3.6
+17.6±2.0
+74.0±13.0
+16.8±4.7
+26.4±3.2
+2.4±2.0
+52.0±0.0
+88.0±4.4
+Act3D [16]
+51.0
+90.0
+95.0
+47.0
+93.0
+8.0
+12.0
+9.0
+92.0
+94.0
+RVT [17]
+49.6±3.2
+88.0±5.7
+91.2±3.0
+48.0±5.7
+81.6±5.4
+36.0±2.5
+28.8±3.9
+26.4±8.2
+72.0±0.0
+93.6±4.1
+3D Diffuser Actor [28]
+85.6±4.1
+96.0±3.6
+97.6±2.0
+82.4±2.0
+97.6±3.2
+44.0±4.4
+68.3±3.3
+47.2±8.5
+84.0±4.4
+99.2±1.6
+RVT-2 [18]
+66.0±4.5
+96.0±0.0
+96.0±2.8
+88.0±4.9
+92.0±2.8
+35.0±7.1
+80.0±2.8
+69.0±5.9
+100.0±0.0
+99.0±1.7
+BridgeVLA [33]
+73.6±4.6
+99.2±1.8
+99.2±1.8
+87.2±6.6
+96.0±2.8
+60.8±7.7
+76.8±8.7
+81.6±3.6
+87.2±1.8
+92.8±3.3
+ActiveVLA (Ours)
+87.4±3.4
+99.5±2.1
+99.4±1.6
+89.3±5.4
+98.5±3.7
+63.3±5.3
+82.2±4.7
+84.8±2.1
+100.0±0.0
+95.3±2.8
+• Local Context Encoding: For fine-grained reasoning,
+we use an ROI-aware sampler to extract local tokens, en-
+coding detailed appearance and geometry.
+All tokens are concatenated and passed through an MLP
+head to predict rotation, gripper, and collision actions. This
+global-local fusion allows the model to combine overall
+scene understanding with fine spatial precision, enabling ac-
+curate and safe manipulation in complex environments.
+4. Experiments
+Simulation Benchmarks.
+We evaluate ActiveVLA on
+three simulation benchmarks for long-horizon and fine-
+grained manipulation. RLBench [23] features 18 tasks us-
+ing a Franka Panda robot with RGB-D inputs from four cal-
+ibrated cameras and 100 demonstrations per task. COLOS-
+SEUM [48] extends RLBench with 12 perturbation types
+involving object, scene, and camera variations for robust-
+ness evaluation. GemBench [14] further builds on RLBench
+as a hierarchical benchmark with 16 training and 44 testing
+tasks across seven core action primitives, assessing compo-
+sitionality and generalization.
+Implementation Details. Our ActiveVLA adopts the pre-
+trained VLM backbone from BridgeVLA [33], built on
+PaliGemma [3] with a SigLIP encoder [63] and Gemma de-
+coder [53], pre-trained on a 120K-image RoboPoint sub-
+set [61]. Real-world experiments are conducted on a KI-
+NOVA GEN2 robot with a RealSense D455 camera in
+an eye-to-hand setup, covering occlusion-rich manipulation
+tasks. All experiments run on eight NVIDIA H100 GPUs
+and a 192-vCPU Intel Xeon Platinum 8468 system.
+Baselines. We compare ActiveVLA with state-of-the-art
+baselines.
+Image-BC (CNN/ViT) [25] performs 2D be-
+havior cloning with convolutional or transformer back-
+bones. C2F-ARM-BC [24] and PerAct [52] adopt voxel-
+based coarse-to-fine and Perceiver Transformer policies, re-
+spectively.
+HiveFormer integrates historical observations
+via a multimodal transformer, while PolarNet [49] encodes
+3D scenes to predict heatmaps and offsets.
+Act3D [16]
+samples and ranks 3D points for action selection, and 3D
+Diffuser Actor [28] models 3D trajectories via diffusion.
+RVT [17] and RVT-2 [18] aggregate multi-view projec-
+tions in a coarse-to-fine transformer framework, whereas
+BridgeVLA [33] aligns 2D heatmaps for efficient 3D
+vision-language-action learning.
+4.1. Experimental Results
+Results on RLBench. We evaluate ActiveVLA over five
+trials for statistical reliability, with results shown in Table 1.
+ActiveVLA achieves a new state of the art on RLBench with
+a 91.8% average success rate and an average rank of 1.22.
+It performs exceptionally well in precision-demanding and
+contact-rich tasks such as Insert Peg and Open Drawer, and
+remains robust even under occlusions (e.g., Place Cups,
+65.6%). Across diverse task types including placement, as-
+sembly, and cleaning, ActiveVLA maintains consistent high
+8146
+
+
+Table 2. Results on the COLOSSEUM Benchmark. The table presents performance across 14 generalization scenarios. ”Avg. Rank”
+indicates the mean ranking of each method over all perturbations, with lower values reflecting stronger overall performance.
+Models
+Avg. SR (%) ↑
+Avg. Rank ↓
+All Perturbations
+MO-COLOR
+RO-COLOR
+MO-TEXTURE
+RO-TEXTURE
+MO-SIZE
+R3M-MLP [43]
+0.8
+6.57
+0.6
+0.4
+0.0
+0.0
+0.0
+1.8
+MVP-MLP [59]
+1.6
+6.36
+0.8
+1.2
+0.0
+0.4
+0.0
+4.44
+PerAct [22]
+27.9
+4.79
+7.2
+24.0
+29.2
+28.8
+17.71
+35.6
+RVT [17]
+35.4
+4.36
+6.4
+26.0
+31.3
+44.8
+41.1
+35.3
+RVT-2 [18]
+56.7
+2.86
+15.6 ± 0.8
+53.0 ± 0.9
+54.6 ± 0.6
+59.7 ± 0.7
+56.7 ± 1.4
+60.9 ± 0.9
+BridgeVLA [33]
+64.0
+2.07
+18.7 ± 2.2
+60.5 ± 1.1
+63.8 ± 0.1
+63.5 ± 1.5
+68.4 ± 3.3
+69.3 ± 1.0
+ActiveVLA (Ours)
+65.9
+1.07
+21.4 ± 1.8
+64.2 ± 1.5
+64.4 ± 1.2
+65.7 ± 2.1
+69.3 ± 2.6
+72.4 ± 0.8
+Models
+RO-SIZE
+Light Color
+Table Color
+Table Texture
+Distractor
+Background Texture
+RLBench
+Camera Pose
+R3M-MLP [43]
+0.0
+1.0
+1.4
+0.2
+1.6
+1.2
+2.0
+0.8
+MVP-MLP [59]
+0.0
+1.6
+1.6
+1.0
+3.8
+2.2
+2.0
+2.6
+PerAct [22]
+29.3
+29.1
+30.4
+23.2
+27.1
+33.5
+39.4
+36.3
+RVT [17]
+40.5
+34.0
+30.0
+45.2
+18.8
+46.4
+53.4
+42.2
+RVT-2 [18]
+53.4 ± 1.5
+58.0 ± 1.1
+62.6 ± 0.9
+56.6 ± 0.9
+60.8 ± 0.5
+68.7 ± 1.1
+68.8 ± 1.3
+64.4 ± 0.5
+BridgeVLA [33]
+61.7 ± 0.8
+69.7 ± 1.2
+75.7 ± 0.9
+71.3 ± 0.7
+51.8 ± 1.5
+74.8 ± 1.0
+73.1 ± 0.2
+73.8 ± 0.3
+ActiveVLA (Ours)
+64.4 ± 1.3
+70.4 ± 1.4
+78.3 ± 1.1
+72.5 ± 0.9
+54.3 ± 1.2
+75.2 ± 0.6
+74.4 ± 0.6
+76.3 ± 1.1
+“Sweep dirt to the tall dustpan”
+(a) Orthographic Projection
+(b) Predicted Heatmaps 
+(c) Virtual Views with Active View Selection 
+(d) Virtual Views with Active 3D Zoom-in 
+“Put the chocolate jello in the cupboard”
+(a) Orthographic Projection
+(b) Predicted Heatmaps 
+(c) Virtual Views with Active View Selection 
+(d) Virtual Views with Active 3D Zoom-in 
+“Place 3 cups on the cup holder”
+(a) Orthographic Projection
+(b) Predicted Heatmaps 
+(c) Virtual Views with Active View Selection 
+(d) Virtual Views with Active 3D Zoom-in 
+“Take the chicken off the grill”
+(a) Orthographic Projection
+(b) Predicted Heatmaps 
+(c) Virtual Views with Active View Selection 
+(d) Virtual Views with Active 3D Zoom-in 
+Figure 3. Qualitative results of fine-grained manipulation tasks. Left of the dotted line (coarse stage): (a) project 3D modalities onto
+orthographic images, then (b) predict heatmaps to mark critical regions. Right of the dotted line (fine stage): using these regions, perform
+(c) active view selection and (d) active 3D zoom-in for fine-grained manipulation in complex scenes.
+performance, demonstrating strong generalization in vision-
+based robotic manipulation. The qualitative results for each
+stage of active perception are presented in Figure 3.
+Results on COLOSSEUM. Results in Table 2 show that
+ActiveVLA achieves a new state of the art on COLOS-
+SEUM, with an average success rate of 65.9% and an av-
+erage rank of 1.07, outperforming all previous methods. It
+remains robust to variations in object size, color, lighting,
+and texture, obtaining 72.4% on MO-SIZE and 64.4% on
+RO-SIZE. The best performance is observed on Table Color
+(78.3%) and Camera Pose (76.3%), where it maintains high
+accuracy despite clutter, distractors, and viewpoint changes.
+Overall, ActiveVLA surpasses BridgeVLA in most cate-
+gories, confirming its stronger visual generalization and in-
+variant representation learning capability.
+Table 3. Performance on the GemBench benchmark. Results
+are reported as mean success rates without confidence intervals.
+Method
+Average
+L1
+L2
+L3
+L4
+Hiveformer [19]
+30.4
+60.3
+26.1
+35.1
+0.0
+PolarNet [7]
+38.4
+77.7
+37.1
+38.5
+0.1
+3D Diffuser Actor [28]
+44.0
+91.9
+43.4
+37.0
+0.0
+RVT-2 [18]
+44.0
+89.1
+51.0
+36.0
+0.0
+3D-LOTUS [15]
+45.7
+94.3
+49.9
+38.1
+0.3
+3D-LOTUS++ [15]
+48.0
+68.7
+64.5
+41.5
+17.4
+BridgeVLA [33]
+50.0
+91.1
+65.0
+43.8
+0.0
+ActiveVLA (Ours)
+51.3
+92.4
+66.3
+45.1
+1.2
+Results on GemBench. As shown in Table 3, ActiveVLA
+achieves the best performance across core levels L1–L3,
+with success rates of 92.4%, 66.3%, and 45.1%, surpassing
+8147
+
+
+“Pick up the banana and place it on the blue plate” (The banana was occluded by other fruits)
+“Pick up the red cube and place it on top of the green cube” (The red cube was occluded by other cubes) 
+“Pick up the purple cup on the cup holder and place it on the table” (The cup was occluded by the holder)  
+“Take out the pink towel from the drawer and place it on the table” (The towel was occluded by the drawer)   
+Figure 4. Visualization of ActiveVLA in complex manipulation
+tasks. It actively perceives and precisely completes tasks despite
+severe occlusions and complex spatial structures.
+baselines such as 3D-LOTUS++ and BridgeVLA. It attains
+an overall average of 51.3%, improving upon the previous
+state of the art by 1.3 percentage points. Although perfor-
+mance decreases on the most difficult L4 tasks (1.2%).
+Real-Robot Analysis. To evaluate the real-world perfor-
+mance of ActiveVLA, we conduct a series of real-world ma-
+nipulation experiments under complex and highly occluded
+scenarios. The tasks involve diverse spatial configurations,
+such as picking objects from cluttered scenes, retrieving
+partially hidden items, and manipulating objects with intri-
+cate occlusion relationships. As illustrated in Figure 4, Ac-
+tiveVLA demonstrates strong active perception and precise
+manipulation capabilities. It effectively infers object geom-
+etry and spatial relations through 3D perception, actively se-
+lects informative viewpoints, and executes fine-grained ac-
+tions to complete the tasks successfully. Even when key tar-
+gets are heavily occluded by other objects or environments,
+ActiveVLA maintains high accuracy and stability..
+4.2. Ablation Study
+Component Analysis. We ablate the core active percep-
+tion modules of ActiveVLA, Active View Selection (A-VS)
+and Active 3D Zoom-in (A-3Z), on an NVIDIA H100 GPU
+across RLBench, COLOSSEUM, and GemBench.
+The
+fixed-view baseline achieves 87.6% success in 0.26 s per
+trial. Adding A-VS dynamically selects informative views,
+raising performance to 89.4% at 0.45 s by improving scene
+coverage and reducing occlusion. Further introducing A-
+3Z enables virtual optical zoom for high-resolution close-
+ups, achieving 91.8% success at 0.53 s. These consistent
+Table 4. Ablation study on key components. We report the suc-
+cess rate (%) and inference time (s) over 100 trials. A-VS (Active
+View Selection) dynamically acquires informative views, while A-
+3Z (Active 3D Zoom-in) refines local focus.
+Component
+Performance
+A-VS
+A-3Z
+RLBench
+COLOSSEUM
+GemBench
+87.6/0.26
+63.6/0.33
+48.9/0.21
+"
+89.4/0.45
+64.5/0.51
+49.4/0.48
+"
+"
+91.8/0.53
+65.9/0.62
+51.3/0.59
+1
+2
+3
+4
+5
+6
+Number of View
+80.0
+82.0
+84.0
+86.0
+88.0
+90.0
+92.0
+94.0
+Success Rate (%)
+82.2%
+87.3%
+91.8%
+92.0%
+91.7%
+91.8%
+1
+2
+3
+4
+5
+6
+Zoom-in Factor
+89.0
+89.5
+90.0
+90.5
+91.0
+91.5
+92.0
+92.5
+93.0
+Success Rate (%)
+89.4%
+90.1%
+90.8%
+91.8%
+91.4%
+90.9%
+Figure 5. Success rates of ActiveVLA under different hyperpa-
+rameters: (a) Number of selected views; (b) Active 3D zoom-in
+factor. Experiments are evaluated on the RLBench benchmark.
+gains confirm that A-VS guides where to look and A-3Z
+how closely to observe, forming a hierarchical perception
+strategy for precise manipulation.
+Hyperparameter Analysis. We analyze the effects of the
+Number of Views and Zoom-in Factor on ActiveVLA. As
+shown in Figure 5, increasing the number of views im-
+proves the success rate from 82.2% (one view) to 91.8%
+(three views), confirming that multi-view observation en-
+hances spatial understanding and mitigates occlusion. Be-
+yond three views, the performance saturates while com-
+putational cost increases. Similarly, increasing the zoom-
+in factor from 1 to 4 boosts precision by enabling finer-
+grained perception, whereas excessive zoom reduces con-
+textual awareness. Therefore, we set the number of views
+to 3 and the zoom-in factor to 4 for all experiments, striking
+a balance between global context and local detail.
+5. Conclusion
+This paper presents ActiveVLA, a vision-language-action
+framework that integrates active perception into robotic ma-
+nipulation. By incorporating Active View Selection and Ac-
+tive 3D Zoom-in within a coarse-to-fine architecture, Ac-
+tiveVLA enables robots to dynamically adapt their obser-
+vation strategies for enhanced spatial reasoning and fine-
+grained control. By leveraging multi-view 3D perception
+aligned with VLMs, ActiveVLA effectively balances global
+context and fine-grained local detail during manipulation.
+Experiments in both simulated and real-world environments
+demonstrate its superior performance across diverse tasks.
+8148
+
+
+6. Acknowledgments
+This work was supported in part by the NSFC General Pro-
+gram (Grant No. 62576110), and the Science and Tech-
+nology Commission of Shanghai Municipality (Grant No.
+24511103100). The authors gratefully acknowledge their
+support.
+References
+[1] Marah Abdin, Jyoti Aneja, Hany Awadalla, Ahmed Awadal-
+lah, Ammar Ahmad Awan, Nguyen Bach, Amit Bahree,
+Arash Bakhtiari, Jianmin Bao, Harkirat Behl, et al. Phi-3
+technical report: A highly capable language model locally
+on your phone. arXiv preprint arXiv:2404.14219, 2024. 3
+[2] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin
+Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun
+Tang, et al. Qwen2. 5-vl technical report. arXiv preprint
+arXiv:2502.13923, 2025. 2
+[3] Lucas Beyer, Andreas Steiner, Andr´e Susano Pinto, Alexan-
+der Kolesnikov, Xiao Wang, Daniel Salz, Maxim Neumann,
+Ibrahim Alabdulmohsin, Michael Tschannen, Emanuele
+Bugliarello, et al. Paligemma: A versatile 3b vlm for trans-
+fer. arXiv preprint arXiv:2407.07726, 2024. 2, 6
+[4] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, et al. π0: A vision-language-
+action flow model for general robot control, 2024.
+URL
+https://arxiv. org/abs/2410.24164. 2
+[5] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, Szymon Jakubczak, Tim
+Jones, Liyiming Ke, Sergey Levine, Adrian Li-Bell, Mohith
+Mothukuri, Suraj Nair, Karl Pertsch, Lucy Xiaoyang Shi,
+James Tanner, Quan Vuong, Anna Walling, Haohuan Wang,
+and Ury Zhilinsky. π0: A vision-language-action flow model
+for general robot control, 2024. 3
+[6] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen
+Chebotar, Xi Chen, Krzysztof Choromanski, Tianli Ding,
+Danny Driess, Avinava Dubey, Chelsea Finn, et al. Rt-2:
+Vision-language-action models transfer web knowledge to
+robotic control. arXiv preprint arXiv:2307.15818, 2023. 2
+[7] Shizhe Chen, Ricardo Garcia Pinel, Cordelia Schmid, and
+Ivan Laptev. Polarnet: 3d point clouds for language-guided
+robotic manipulation.
+In Conference on Robot Learning,
+pages 1761–1781. PMLR, 2023. 6, 7
+[8] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen,
+Sen Xing, Muyan Zhong, Qinglong Zhang, Xizhou Zhu,
+Lewei Lu, et al. Internvl: Scaling up vision foundation mod-
+els and aligning for generic visual-linguistic tasks. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition, pages 24185–24198, 2024. 3
+[9] Cheng Chi, Siyuan Feng, Yilun Du, Zhenjia Xu, Eric
+Cousineau, Benjamin Burchfiel, and Shuran Song. Diffu-
+sion policy: Visuomotor policy learning via action diffusion.
+arXiv preprint arXiv:2303.04137, 2023. 3
+[10] Sudeep Dasari, Oier Mees, Sebastian Zhao, Mohan Kumar
+Srirama, and Sergey Levine. The ingredients for robotic dif-
+fusion transformers. arXiv preprint arXiv:2410.10088, 2024.
+3
+[11] Pengxiang Ding, Han Zhao, Wenjie Zhang, Wenxuan Song,
+Min Zhang, Siteng Huang, Ningxi Yang, and Donglin Wang.
+Quar-vla:
+Vision-language-action model for quadruped
+robots. pages 352–367. Springer, 2024. 3
+[12] Pengxiang Ding, Jianfei Ma, Xinyang Tong, Binghong
+Zou, Xinxin Luo, Yiguo Fan, Ting Wang, Hongchao Lu,
+Panzhong Mo, Jinxin Liu, et al. Humanoid-vla: Towards
+universal humanoid control with visual integration. arXiv
+preprint arXiv:2502.14795, 2025. 3
+[13] Hao-Shu Fang, Hongjie Fang, Zhenyu Tang, Jirong Liu,
+Chenxi Wang, Junbo Wang, Haoyi Zhu, and Cewu Lu.
+Rh20t: A comprehensive robotic dataset for learning diverse
+skills in one-shot. arXiv preprint arXiv:2307.00595, 2023. 3
+[14] Ricardo Garcia, Shizhe Chen, and Cordelia Schmid.
+To-
+wards generalizable vision-language robotic manipulation:
+A benchmark and llm-guided 3d policy.
+arXiv preprint
+arXiv:2410.01345, 2024. 2, 6
+[15] Ricardo Garcia, Shizhe Chen, and Cordelia Schmid.
+To-
+wards generalizable vision-language robotic manipulation:
+A benchmark and llm-guided 3d policy.
+In IEEE Inter-
+national Conference on Robotics and Automation (ICRA),
+2025. 7
+[16] Theophile Gervet, Zhou Xian, Nikolaos Gkanatsios, and Ka-
+terina Fragkiadaki. Act3d: 3d feature field transformers for
+multi-task robotic manipulation.
+In Conference on Robot
+Learning, pages 3949–3965. PMLR, 2023. 2, 6
+[17] Ankit Goyal, Jie Xu, Yijie Guo, Valts Blukis, Yu-Wei Chao,
+and Dieter Fox. Rvt: Robotic view transformer for 3d object
+manipulation. In Conference on Robot Learning, pages 694–
+710. PMLR, 2023. 2, 6, 7
+[18] Ankit Goyal, Valts Blukis, Jie Xu, Yijie Guo, Yu-Wei Chao,
+and Dieter Fox. Rvt-2: Learning precise manipulation from
+few demonstrations. In RSS 2024 Workshop: Data Genera-
+tion for Robotics, 2024. 2, 6, 7
+[19] Pierre-Louis Guhur, Shizhe Chen, Ricardo Garcia Pinel,
+Makarand Tapaswi, Ivan Laptev, and Cordelia Schmid.
+Instruction-driven history-aware policies for robotic manip-
+ulations. In Conference on Robot Learning, pages 175–187.
+PMLR, 2023. 6, 7
+[20] Jiangyong Huang, Silong Yong, Xiaojian Ma, Xiongkun
+Linghu, Puhao Li, Yan Wang, Qing Li, Song-Chun Zhu,
+Baoxiong Jia, and Siyuan Huang. An embodied generalist
+agent in 3d world. In ICLR 2024 Workshop: How Far Are
+We From AGI. 3
+[21] Physical Intelligence, Kevin Black, Noah Brown, James
+Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, et al. π0.5: a
+vision-language-action model with open-world generaliza-
+tion. arXiv preprint arXiv:2504.16054, 2025. 2
+[22] Andrew Jaegle, Sebastian Borgeaud, Jean-Baptiste Alayrac,
+Carl Doersch, Catalin Ionescu, David Ding, Skanda Kop-
+pula, Daniel Zoran, Andrew Brock, Evan Shelhamer, et al.
+Perceiver io: A general architecture for structured inputs &
+outputs. In International Conference on Learning Represen-
+tations. 6, 7
+8149
+
+
+[23] Stephen James, Zicong Ma, David Rovick Arrojo, and An-
+drew J Davison. Rlbench: The robot learning benchmark &
+learning environment. IEEE Robotics and Automation Let-
+ters, 5(2):3019–3026, 2020. 2, 6
+[24] Stephen James, Kentaro Wada, Tristan Laidlow, and An-
+drew J Davison. Coarse-to-fine q-attention: Efficient learn-
+ing for visual robotic manipulation via discretisation. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition, pages 13739–13748, 2022. 6
+[25] Eric Jang, Alex Irpan, Mohi Khansari, Daniel Kappler, Fred-
+erik Ebert, Corey Lynch, Sergey Levine, and Chelsea Finn.
+Bc-z: Zero-shot task generalization with robotic imitation
+learning.
+In Conference on Robot Learning, pages 991–
+1002. PMLR, 2022. 6
+[26] Yueru Jia, Jiaming Liu, Sixiang Chen, Chenyang Gu, Zhilue
+Wang, Longzan Luo, Lily Lee, Pengwei Wang, Zhongyuan
+Wang, Renrui Zhang, et al. Lift3d foundation policy: Lifting
+2d large-scale pretrained models for robust 3d robotic ma-
+nipulation. arXiv preprint arXiv:2411.18623, 2024. 3
+[27] Siddharth Karamcheti, Suraj Nair, Ashwin Balakrishna,
+Percy Liang, Thomas Kollar, and Dorsa Sadigh. Prismatic
+vlms: Investigating the design space of visually-conditioned
+language models. In Forty-first International Conference on
+Machine Learning, 2024. 2, 3
+[28] Tsung-Wei Ke, Nikolaos Gkanatsios, and Katerina Fragki-
+adaki. 3d diffuser actor: Policy diffusion with 3d scene rep-
+resentations. In 8th Annual Conference on Robot Learning,
+2024. 2, 6, 7
+[29] Alexander Khazatsky,
+Karl Pertsch,
+Suraj Nair,
+Ash-
+win Balakrishna, Sudeep Dasari, Siddharth Karamcheti,
+Soroush Nasiriany, Mohan Kumar Srirama, Lawrence Yun-
+liang Chen, Kirsty Ellis, et al.
+Droid:
+A large-scale
+in-the-wild robot manipulation dataset.
+arXiv preprint
+arXiv:2403.12945, 2024. 3
+[30] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao,
+Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Fos-
+ter, Grace Lam, Pannag Sanketi, Quan Vuong, Thomas Kol-
+lar, Benjamin Burchfiel, Russ Tedrake, Dorsa Sadigh, Sergey
+Levine, Percy Liang, and Chelsea Finn.
+Openvla:
+An
+open-source vision-language-action model. arXiv preprint
+arXiv:2406.09246, 2024. 3
+[31] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao,
+Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan P
+Foster, Pannag R Sanketi, Quan Vuong, et al. Openvla: An
+open-source vision-language-action model. In 8th Annual
+Conference on Robot Learning. 2
+[32] Chengmeng Li, Junjie Wen, Yan Peng, Yaxin Peng, Feifei
+Feng, and Yichen Zhu.
+Pointvla:
+Injecting the 3d
+world into vision-language-action models.
+arXiv preprint
+arXiv:2503.07511, 2025. 3
+[33] Peiyan Li, Yixiang Chen, Hongtao Wu, Xiao Ma, Xiangnan
+Wu, Yan Huang, Liang Wang, Tao Kong, and Tieniu Tan.
+Bridgevla: Input-output alignment for efficient 3d manipu-
+lation learning with vision-language models. arXiv preprint
+arXiv:2506.07961, 2025. 6, 7
+[34] Xinghang Li, Minghuan Liu, Hanbo Zhang, Cunjun Yu, Jie
+Xu, Hongtao Wu, Chilam Cheang, Ya Jing, Weinan Zhang,
+Huaping Liu, et al. Vision-language foundation models as
+effective robot imitators. arXiv preprint arXiv:2311.01378,
+2023. 2
+[35] Fanqi Lin, Yingdong Hu, Pingyue Sheng, Chuan Wen, Ji-
+acheng You, and Yang Gao. Data scaling laws in imitation
+learning for robotic manipulation, 2024. 3
+[36] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee.
+Improved baselines with visual instruction tuning.
+arXiv
+preprint arXiv:2310.03744, 2023. 3
+[37] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee.
+Visual instruction tuning. In Thirty-seventh Conference on
+Neural Information Processing Systems, 2023. 3
+[38] Zhenyang Liu, Yongchong Gu, Sixiao Zheng, Xiangyang
+Xue, and Yanwei Fu. Trivla: A unified triple-system-based
+unified vision-language-action model for general robot con-
+trol. arXiv preprint arXiv:2507.01424, 2025. 2
+[39] Zhenyang Liu, Yikai Wang, Kuanning Wang, Longfei Liang,
+Xiangyang Xue, and Yanwei Fu. Spatial-temporal aware vi-
+suomotor diffusion policy learning. In Proceedings of the
+IEEE/CVF International Conference on Computer Vision,
+pages 7122–7131, 2025. 3
+[40] Zhenyang Liu, Yikai Wang, Sixiao Zheng, Tongying Pan,
+Longfei Liang, Yanwei Fu, and Xiangyang Xue.
+Rea-
+songrounder: Lvlm-guided hierarchical feature splatting for
+open-vocabulary 3d visual grounding and reasoning. In Pro-
+ceedings of the Computer Vision and Pattern Recognition
+Conference, pages 3718–3727, 2025. 3
+[41] Zhenyang Liu, Sixiao Zheng, Siyu Chen, Cairong Zhao,
+Longfei Liang, Xiangyang Xue, and Yanwei Fu. A neural
+representation framework with llm-driven spatial reasoning
+for open-vocabulary 3d visual grounding.
+In Proceedings
+of the 33rd ACM International Conference on Multimedia,
+pages 1042–1051, 2025. 3
+[42] Haoyu Lu, Wen Liu, Bo Zhang, Bingxuan Wang, Kai
+Dong, Bo Liu, Jingxiang Sun, Tongzheng Ren, Zhuoshu Li,
+Hao Yang, et al. Deepseek-vl: towards real-world vision-
+language understanding. arXiv preprint arXiv:2403.05525,
+2024. 3
+[43] Suraj Nair, Aravind Rajeswaran, Vikash Kumar, Chelsea
+Finn, and Abhinav Gupta.
+R3m:
+A universal visual
+representation for robot manipulation.
+arXiv preprint
+arXiv:2203.12601, 2022. 7
+[44] Dantong Niu, Yuvan Sharma, Giscard Biamby, Jerome
+Quenum, Yutong Bai, Baifeng Shi, Trevor Darrell, and Roei
+Herzig. Llarva: Vision-action instruction tuning enhances
+robot learning. arXiv preprint arXiv:2406.11815, 2024. 3
+[45] Abby O’Neill, Abdul Rehman, Abhinav Gupta, Abhiram
+Maddukuri, Abhishek Gupta, Abhishek Padalkar, Abraham
+Lee, Acorn Pooley, Agrim Gupta, Ajay Mandlekar, et al.
+Open x-embodiment:
+Robotic learning datasets and rt-x
+models. 2024. 3
+[46] Maxime Oquab, Timoth´ee Darcet, Th´eo Moutakanni, Huy
+Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez,
+Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al.
+Dinov2: Learning robust visual features without supervision.
+arXiv preprint arXiv:2304.07193, 2023. 3
+[47] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess,
+Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and
+8150
+
+
+Sergey Levine. Fast: Efficient action tokenization for vision-
+language-action models. arXiv preprint arXiv:2501.09747,
+2025. 3
+[48] Wilbert Pumacay, Ishika Singh, Jiafei Duan, Ranjay Krishna,
+Jesse Thomason, and Dieter Fox. The colosseum: A bench-
+mark for evaluating generalization for robotic manipulation.
+arXiv preprint arXiv:2402.08191, 2024. 2, 6
+[49] Guocheng Qian, Yuchen Li, Houwen Peng, Jinjie Mai,
+Hasan Hammoud,
+Mohamed Elhoseiny,
+and Bernard
+Ghanem. Pointnext: Revisiting pointnet++ with improved
+training and scaling strategies. Advances in neural informa-
+tion processing systems, 35:23192–23204, 2022. 6
+[50] Delin Qu, Haoming Song, Qizhi Chen, Yuanqi Yao, Xinyi
+Ye, Yan Ding, Zhigang Wang, JiaYuan Gu, Bin Zhao,
+Dong Wang, et al. Spatialvla: Exploring spatial represen-
+tations for visual-language-action model.
+arXiv preprint
+arXiv:2501.15830, 2025. 2, 3
+[51] Nikhila Ravi, Jeremy Reizenstein, David Novotny, Tay-
+lor Gordon, Wan-Yen Lo, Justin Johnson, and Georgia
+Gkioxari.
+Accelerating 3d deep learning with pytorch3d.
+arXiv:2007.08501, 2020. 4
+[52] Mohit Shridhar, Lucas Manuelli, and Dieter Fox. Perceiver-
+actor: A multi-task transformer for robotic manipulation.
+In Conference on Robot Learning, pages 785–799. PMLR,
+2023. 2, 6
+[53] Gemma Team, Thomas Mesnard, Cassidy Hardin, Robert
+Dadashi, Surya Bhupatiraju, Shreya Pathak, Laurent Sifre,
+Morgane Rivi`ere, Mihir Sanjay Kale, Juliette Love, et al.
+Gemma: Open models based on gemini research and tech-
+nology. arXiv preprint arXiv:2403.08295, 2024. 6
+[54] Xinyang Tong, Pengxiang Ding, Donglin Wang, Wen-
+jie Zhang, Can Cui, Mingyang Sun, Yiguo Fan, Han
+Zhao, Hongyin Zhang, Yonghao Dang, et al.
+Quart-
+online: Latency-free large multimodal language model for
+quadruped robot learning. arXiv preprint arXiv:2412.15576,
+2024. 3
+[55] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan,
+Jinze Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin
+Ge, et al. Qwen2-vl: Enhancing vision-language model’s
+perception of the world at any resolution.
+arXiv preprint
+arXiv:2409.12191, 2024. 2, 3
+[56] Taiyi Wang, Zhihao Wu, Jianheng Liu, Jianye Hao, Jun
+Wang, and Kun Shao. Distrl: An asynchronous distributed
+reinforcement learning framework for on-device control
+agents. arXiv preprint arXiv:2410.14803, 2024. 3
+[57] Junjie Wen, Yichen Zhu, Jinming Li, Minjie Zhu, Kun Wu,
+Zhiyuan Xu, Ning Liu, Ran Cheng, Chaomin Shen, Yaxin
+Peng, et al.
+Tinyvla: Towards fast, data-efficient vision-
+language-action models for robotic manipulation.
+arXiv
+preprint arXiv:2409.12514, 2024. 3
+[58] Junjie Wen, Yichen Zhu, Jinming Li, Zhibin Tang, Chaomin
+Shen, and Feifei Feng. Dexvla: Vision-language model with
+plug-in diffusion expert for general robot control.
+arXiv
+preprint arXiv:2502.05855, 2025. 3
+[59] Tete Xiao, Ilija Radosavovic, Trevor Darrell, and Jitendra
+Malik. Masked visual pre-training for motor control. arXiv
+preprint arXiv:2203.06173, 2022. 7
+[60] Rujia Yang, Geng Chen, Chuan Wen, and Yang Gao. Fp3:
+A 3d foundation policy for robotic manipulation.
+arXiv
+preprint arXiv:2503.08950, 2025. 3
+[61] Wentao Yuan, Jiafei Duan, Valts Blukis, Wilbert Pumacay,
+Ranjay Krishna, Adithyavairavan Murali, Arsalan Mousa-
+vian, and Dieter Fox. Robopoint: A vision-language model
+for spatial affordance prediction for robotics. arXiv preprint
+arXiv:2406.10721, 2024. 6
+[62] Michał Zawalski, William Chen, Karl Pertsch, Oier Mees,
+Chelsea Finn, and Sergey Levine.
+Robotic control via
+embodied chain-of-thought reasoning.
+arXiv preprint
+arXiv:2407.08693, 2024. 3
+[63] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and
+Lucas Beyer. Sigmoid loss for language image pre-training.
+In Proceedings of the IEEE/CVF International Conference
+on Computer Vision, pages 11975–11986, 2023. 6
+[64] Han Zhao, Min Zhang, Wei Zhao, Pengxiang Ding, Siteng
+Huang, and Donglin Wang.
+Cobra: Extending mamba to
+multi-modal large language model for efficient inference.
+2025. 3
+[65] Wei Zhao, Pengxiang Ding, Min Zhang, Zhefei Gong,
+Shuanghao Bai, Han Zhao, and Donglin Wang.
+Vlas:
+Vision-language-action model with speech instructions
+for customized robot manipulation.
+arXiv preprint
+arXiv:2502.13508, 2025. 3
+[66] Haoyu Zhen, Xiaowen Qiu, Peihao Chen, Jincheng Yang,
+Xin Yan, Yilun Du, Yining Hong, and Chuang Gan. 3d-vla:
+A 3d vision-language-action generative world model. arXiv
+preprint arXiv:2403.09631, 2024. 2, 3
+[67] Zhongyi Zhou, Yichen Zhu, Minjie Zhu, Junjie Wen, Ning
+Liu, Zhiyuan Xu, Weibin Meng, Ran Cheng, Yaxin Peng,
+Chaomin Shen, et al.
+Chatvla: Unified multimodal un-
+derstanding and robot control with vision-language-action
+model. arXiv preprint arXiv:2502.14420, 2025. 3
+[68] Minjie Zhu, Yichen Zhu, Xin Liu, Ning Liu, Zhiyuan Xu,
+Chaomin Shen, Yaxin Peng, Zhicai Ou, Feifei Feng, and Jian
+Tang. Mipha: A comprehensive overhaul of multimodal as-
+sistant with small language models. Proceedings of the AAAI
+Conference on Artificial Intelligence, 2025. 3
+[69] Yichen Zhu, Minjie Zhu, Ning Liu, Zhiyuan Xu, and Yaxin
+Peng. Llava-phi: Efficient multi-modal assistant with small
+language model.
+In Proceedings of the 1st International
+Workshop on Efficient Multimedia Computing under Limited,
+pages 18–22, 2024. 3
+8151

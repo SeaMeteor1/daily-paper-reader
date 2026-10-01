@@ -1,0 +1,406 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 916,
+      "height": 633
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 1,
+      "index": 2,
+      "width": 640,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 1,
+      "index": 3,
+      "width": 518,
+      "height": 322
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 1,
+      "index": 4,
+      "width": 640,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 1,
+      "index": 5,
+      "width": 640,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 1,
+      "index": 6,
+      "width": 640,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 1,
+      "index": 7,
+      "width": 1559,
+      "height": 889
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 1,
+      "index": 8,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 1,
+      "index": 9,
+      "width": 4551,
+      "height": 1856
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 1,
+      "index": 10,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-011.webp",
+      "caption": "",
+      "page": 2,
+      "index": 11,
+      "width": 518,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-012.webp",
+      "caption": "",
+      "page": 2,
+      "index": 12,
+      "width": 639,
+      "height": 469
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-013.webp",
+      "caption": "",
+      "page": 2,
+      "index": 13,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-014.webp",
+      "caption": "",
+      "page": 2,
+      "index": 14,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-015.webp",
+      "caption": "",
+      "page": 2,
+      "index": 15,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-016.webp",
+      "caption": "",
+      "page": 2,
+      "index": 16,
+      "width": 1472,
+      "height": 1472
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-017.webp",
+      "caption": "",
+      "page": 2,
+      "index": 17,
+      "width": 518,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-018.webp",
+      "caption": "",
+      "page": 3,
+      "index": 18,
+      "width": 1785,
+      "height": 1193
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-019.webp",
+      "caption": "",
+      "page": 3,
+      "index": 19,
+      "width": 1785,
+      "height": 1193
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-020.webp",
+      "caption": "",
+      "page": 3,
+      "index": 20,
+      "width": 1785,
+      "height": 1193
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-021.webp",
+      "caption": "",
+      "page": 3,
+      "index": 21,
+      "width": 1576,
+      "height": 994
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-022.webp",
+      "caption": "",
+      "page": 4,
+      "index": 22,
+      "width": 1037,
+      "height": 677
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-023.webp",
+      "caption": "",
+      "page": 4,
+      "index": 23,
+      "width": 697,
+      "height": 268
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-024.webp",
+      "caption": "",
+      "page": 4,
+      "index": 24,
+      "width": 667,
+      "height": 268
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-025.webp",
+      "caption": "",
+      "page": 4,
+      "index": 25,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-026.webp",
+      "caption": "",
+      "page": 4,
+      "index": 26,
+      "width": 396,
+      "height": 394
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-027.webp",
+      "caption": "",
+      "page": 4,
+      "index": 27,
+      "width": 769,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-028.webp",
+      "caption": "",
+      "page": 4,
+      "index": 28,
+      "width": 715,
+      "height": 267
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-029.webp",
+      "caption": "",
+      "page": 4,
+      "index": 29,
+      "width": 699,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-030.webp",
+      "caption": "",
+      "page": 4,
+      "index": 30,
+      "width": 665,
+      "height": 267
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-031.webp",
+      "caption": "",
+      "page": 4,
+      "index": 31,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-032.webp",
+      "caption": "",
+      "page": 4,
+      "index": 32,
+      "width": 699,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-033.webp",
+      "caption": "",
+      "page": 4,
+      "index": 33,
+      "width": 691,
+      "height": 180
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-034.webp",
+      "caption": "",
+      "page": 4,
+      "index": 34,
+      "width": 1193,
+      "height": 593
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-035.webp",
+      "caption": "",
+      "page": 4,
+      "index": 35,
+      "width": 717,
+      "height": 180
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-036.webp",
+      "caption": "",
+      "page": 4,
+      "index": 36,
+      "width": 553,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-037.webp",
+      "caption": "",
+      "page": 4,
+      "index": 37,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-038.webp",
+      "caption": "",
+      "page": 4,
+      "index": 38,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-039.webp",
+      "caption": "",
+      "page": 4,
+      "index": 39,
+      "width": 518,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-040.webp",
+      "caption": "",
+      "page": 4,
+      "index": 40,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-041.webp",
+      "caption": "",
+      "page": 4,
+      "index": 41,
+      "width": 514,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-042.webp",
+      "caption": "",
+      "page": 5,
+      "index": 42,
+      "width": 640,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-043.webp",
+      "caption": "",
+      "page": 5,
+      "index": 43,
+      "width": 1703,
+      "height": 1083
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-044.webp",
+      "caption": "",
+      "page": 5,
+      "index": 44,
+      "width": 898,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-045.webp",
+      "caption": "",
+      "page": 6,
+      "index": 45,
+      "width": 1221,
+      "height": 741
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-046.webp",
+      "caption": "",
+      "page": 6,
+      "index": 46,
+      "width": 1258,
+      "height": 737
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-047.webp",
+      "caption": "",
+      "page": 6,
+      "index": 47,
+      "width": 1261,
+      "height": 736
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-048.webp",
+      "caption": "",
+      "page": 6,
+      "index": 48,
+      "width": 1230,
+      "height": 749
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-049.webp",
+      "caption": "",
+      "page": 7,
+      "index": 49,
+      "width": 5196,
+      "height": 1142
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lee-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cvpr-2026-paper/fig-050.webp",
+      "caption": "",
+      "page": 8,
+      "index": 50,
+      "width": 2005,
+      "height": 868
+    }
+  ]
+}

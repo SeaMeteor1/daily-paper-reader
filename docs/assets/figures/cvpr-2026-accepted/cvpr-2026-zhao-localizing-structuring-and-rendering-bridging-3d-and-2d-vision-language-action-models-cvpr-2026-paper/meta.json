@@ -1,0 +1,1342 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 7979,
+      "height": 3669
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 1,
+      "index": 2,
+      "width": 6743,
+      "height": 6561
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 1,
+      "index": 3,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 1,
+      "index": 4,
+      "width": 7979,
+      "height": 2521
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 1,
+      "index": 5,
+      "width": 427,
+      "height": 287
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 1,
+      "index": 6,
+      "width": 554,
+      "height": 497
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 1,
+      "index": 7,
+      "width": 625,
+      "height": 358
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 1,
+      "index": 8,
+      "width": 626,
+      "height": 361
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 1,
+      "index": 9,
+      "width": 626,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 1,
+      "index": 10,
+      "width": 620,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-011.webp",
+      "caption": "",
+      "page": 1,
+      "index": 11,
+      "width": 3713,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-012.webp",
+      "caption": "",
+      "page": 1,
+      "index": 12,
+      "width": 288,
+      "height": 1703
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-013.webp",
+      "caption": "",
+      "page": 1,
+      "index": 13,
+      "width": 1934,
+      "height": 2039
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-014.webp",
+      "caption": "",
+      "page": 1,
+      "index": 14,
+      "width": 443,
+      "height": 1243
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-015.webp",
+      "caption": "",
+      "page": 1,
+      "index": 15,
+      "width": 444,
+      "height": 1243
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-016.webp",
+      "caption": "",
+      "page": 1,
+      "index": 16,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-017.webp",
+      "caption": "",
+      "page": 1,
+      "index": 17,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-018.webp",
+      "caption": "",
+      "page": 1,
+      "index": 18,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-019.webp",
+      "caption": "",
+      "page": 1,
+      "index": 19,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-020.webp",
+      "caption": "",
+      "page": 1,
+      "index": 20,
+      "width": 1936,
+      "height": 336
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-021.webp",
+      "caption": "",
+      "page": 1,
+      "index": 21,
+      "width": 269,
+      "height": 1243
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-022.webp",
+      "caption": "",
+      "page": 1,
+      "index": 22,
+      "width": 269,
+      "height": 1243
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-023.webp",
+      "caption": "",
+      "page": 1,
+      "index": 23,
+      "width": 3292,
+      "height": 1703
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-024.webp",
+      "caption": "",
+      "page": 1,
+      "index": 24,
+      "width": 445,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-025.webp",
+      "caption": "",
+      "page": 1,
+      "index": 25,
+      "width": 1175,
+      "height": 1175
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-026.webp",
+      "caption": "",
+      "page": 1,
+      "index": 26,
+      "width": 1175,
+      "height": 1175
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-027.webp",
+      "caption": "",
+      "page": 1,
+      "index": 27,
+      "width": 1223,
+      "height": 465
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-028.webp",
+      "caption": "",
+      "page": 1,
+      "index": 28,
+      "width": 1306,
+      "height": 587
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-029.webp",
+      "caption": "",
+      "page": 1,
+      "index": 29,
+      "width": 501,
+      "height": 450
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-030.webp",
+      "caption": "",
+      "page": 1,
+      "index": 30,
+      "width": 871,
+      "height": 587
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-031.webp",
+      "caption": "",
+      "page": 1,
+      "index": 31,
+      "width": 475,
+      "height": 368
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-032.webp",
+      "caption": "",
+      "page": 1,
+      "index": 32,
+      "width": 572,
+      "height": 481
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-033.webp",
+      "caption": "",
+      "page": 1,
+      "index": 33,
+      "width": 2289,
+      "height": 259
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-034.webp",
+      "caption": "",
+      "page": 1,
+      "index": 34,
+      "width": 4544,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-035.webp",
+      "caption": "",
+      "page": 1,
+      "index": 35,
+      "width": 1458,
+      "height": 523
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-036.webp",
+      "caption": "",
+      "page": 1,
+      "index": 36,
+      "width": 2881,
+      "height": 1011
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-037.webp",
+      "caption": "",
+      "page": 1,
+      "index": 37,
+      "width": 4544,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-038.webp",
+      "caption": "",
+      "page": 1,
+      "index": 38,
+      "width": 1980,
+      "height": 960
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-039.webp",
+      "caption": "",
+      "page": 1,
+      "index": 39,
+      "width": 537,
+      "height": 489
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-040.webp",
+      "caption": "",
+      "page": 1,
+      "index": 40,
+      "width": 1980,
+      "height": 960
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-041.webp",
+      "caption": "",
+      "page": 1,
+      "index": 41,
+      "width": 443,
+      "height": 1414
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-042.webp",
+      "caption": "",
+      "page": 1,
+      "index": 42,
+      "width": 2330,
+      "height": 1124
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-043.webp",
+      "caption": "",
+      "page": 1,
+      "index": 43,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-044.webp",
+      "caption": "",
+      "page": 1,
+      "index": 44,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-045.webp",
+      "caption": "",
+      "page": 1,
+      "index": 45,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-046.webp",
+      "caption": "",
+      "page": 3,
+      "index": 46,
+      "width": 4428,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-047.webp",
+      "caption": "",
+      "page": 3,
+      "index": 47,
+      "width": 6937,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-048.webp",
+      "caption": "",
+      "page": 3,
+      "index": 48,
+      "width": 453,
+      "height": 383
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-049.webp",
+      "caption": "",
+      "page": 3,
+      "index": 49,
+      "width": 2289,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-050.webp",
+      "caption": "",
+      "page": 3,
+      "index": 50,
+      "width": 4544,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-051.webp",
+      "caption": "",
+      "page": 3,
+      "index": 51,
+      "width": 2881,
+      "height": 1011
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-052.webp",
+      "caption": "",
+      "page": 3,
+      "index": 52,
+      "width": 4544,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-053.webp",
+      "caption": "",
+      "page": 3,
+      "index": 53,
+      "width": 3144,
+      "height": 247
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-054.webp",
+      "caption": "",
+      "page": 3,
+      "index": 54,
+      "width": 6274,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-055.webp",
+      "caption": "",
+      "page": 3,
+      "index": 55,
+      "width": 273,
+      "height": 466
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-056.webp",
+      "caption": "",
+      "page": 3,
+      "index": 56,
+      "width": 568,
+      "height": 327
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-057.webp",
+      "caption": "",
+      "page": 3,
+      "index": 57,
+      "width": 272,
+      "height": 466
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-058.webp",
+      "caption": "",
+      "page": 3,
+      "index": 58,
+      "width": 518,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-059.webp",
+      "caption": "",
+      "page": 3,
+      "index": 59,
+      "width": 286,
+      "height": 492
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-060.webp",
+      "caption": "",
+      "page": 3,
+      "index": 60,
+      "width": 288,
+      "height": 492
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-061.webp",
+      "caption": "",
+      "page": 3,
+      "index": 61,
+      "width": 540,
+      "height": 310
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-062.webp",
+      "caption": "",
+      "page": 3,
+      "index": 62,
+      "width": 752,
+      "height": 816
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-063.webp",
+      "caption": "",
+      "page": 3,
+      "index": 63,
+      "width": 1465,
+      "height": 230
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-064.webp",
+      "caption": "",
+      "page": 3,
+      "index": 64,
+      "width": 701,
+      "height": 501
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-065.webp",
+      "caption": "",
+      "page": 3,
+      "index": 65,
+      "width": 699,
+      "height": 500
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-066.webp",
+      "caption": "",
+      "page": 3,
+      "index": 66,
+      "width": 701,
+      "height": 501
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-067.webp",
+      "caption": "",
+      "page": 3,
+      "index": 67,
+      "width": 489,
+      "height": 356
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-068.webp",
+      "caption": "",
+      "page": 3,
+      "index": 68,
+      "width": 671,
+      "height": 470
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-069.webp",
+      "caption": "",
+      "page": 3,
+      "index": 69,
+      "width": 1458,
+      "height": 449
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-070.webp",
+      "caption": "",
+      "page": 3,
+      "index": 70,
+      "width": 2881,
+      "height": 864
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-071.webp",
+      "caption": "",
+      "page": 3,
+      "index": 71,
+      "width": 764,
+      "height": 764
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-072.webp",
+      "caption": "",
+      "page": 3,
+      "index": 72,
+      "width": 646,
+      "height": 419
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-073.webp",
+      "caption": "",
+      "page": 3,
+      "index": 73,
+      "width": 784,
+      "height": 193
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-074.webp",
+      "caption": "",
+      "page": 3,
+      "index": 74,
+      "width": 1480,
+      "height": 249
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-075.webp",
+      "caption": "",
+      "page": 3,
+      "index": 75,
+      "width": 1162,
+      "height": 1347
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-076.webp",
+      "caption": "",
+      "page": 3,
+      "index": 76,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-077.webp",
+      "caption": "",
+      "page": 3,
+      "index": 77,
+      "width": 943,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-078.webp",
+      "caption": "",
+      "page": 3,
+      "index": 78,
+      "width": 944,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-079.webp",
+      "caption": "",
+      "page": 3,
+      "index": 79,
+      "width": 931,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-080.webp",
+      "caption": "",
+      "page": 3,
+      "index": 80,
+      "width": 931,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-081.webp",
+      "caption": "",
+      "page": 3,
+      "index": 81,
+      "width": 4544,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-082.webp",
+      "caption": "",
+      "page": 3,
+      "index": 82,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-083.webp",
+      "caption": "",
+      "page": 3,
+      "index": 83,
+      "width": 1347,
+      "height": 1347
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-084.webp",
+      "caption": "",
+      "page": 3,
+      "index": 84,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-085.webp",
+      "caption": "",
+      "page": 3,
+      "index": 85,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-086.webp",
+      "caption": "",
+      "page": 3,
+      "index": 86,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-087.webp",
+      "caption": "",
+      "page": 3,
+      "index": 87,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-088.webp",
+      "caption": "",
+      "page": 3,
+      "index": 88,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-089.webp",
+      "caption": "",
+      "page": 3,
+      "index": 89,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-090.webp",
+      "caption": "",
+      "page": 3,
+      "index": 90,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-091.webp",
+      "caption": "",
+      "page": 3,
+      "index": 91,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-092.webp",
+      "caption": "",
+      "page": 3,
+      "index": 92,
+      "width": 3486,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-093.webp",
+      "caption": "",
+      "page": 5,
+      "index": 93,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-094.webp",
+      "caption": "",
+      "page": 5,
+      "index": 94,
+      "width": 530,
+      "height": 351
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-095.webp",
+      "caption": "",
+      "page": 5,
+      "index": 95,
+      "width": 472,
+      "height": 426
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-096.webp",
+      "caption": "",
+      "page": 5,
+      "index": 96,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-097.webp",
+      "caption": "",
+      "page": 5,
+      "index": 97,
+      "width": 1601,
+      "height": 410
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-098.webp",
+      "caption": "",
+      "page": 5,
+      "index": 98,
+      "width": 1236,
+      "height": 295
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-099.webp",
+      "caption": "",
+      "page": 5,
+      "index": 99,
+      "width": 910,
+      "height": 293
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-100.webp",
+      "caption": "",
+      "page": 5,
+      "index": 100,
+      "width": 1229,
+      "height": 300
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-101.webp",
+      "caption": "",
+      "page": 5,
+      "index": 101,
+      "width": 916,
+      "height": 298
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-102.webp",
+      "caption": "",
+      "page": 5,
+      "index": 102,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-103.webp",
+      "caption": "",
+      "page": 5,
+      "index": 103,
+      "width": 386,
+      "height": 406
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-104.webp",
+      "caption": "",
+      "page": 5,
+      "index": 104,
+      "width": 442,
+      "height": 405
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-105.webp",
+      "caption": "",
+      "page": 5,
+      "index": 105,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-106.webp",
+      "caption": "",
+      "page": 5,
+      "index": 106,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-107.webp",
+      "caption": "",
+      "page": 5,
+      "index": 107,
+      "width": 429,
+      "height": 422
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-108.webp",
+      "caption": "",
+      "page": 5,
+      "index": 108,
+      "width": 640,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-109.webp",
+      "caption": "",
+      "page": 5,
+      "index": 109,
+      "width": 1578,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-110.webp",
+      "caption": "",
+      "page": 5,
+      "index": 110,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-111.webp",
+      "caption": "",
+      "page": 5,
+      "index": 111,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-112.webp",
+      "caption": "",
+      "page": 5,
+      "index": 112,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-113.webp",
+      "caption": "",
+      "page": 5,
+      "index": 113,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-114.webp",
+      "caption": "",
+      "page": 5,
+      "index": 114,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-115.webp",
+      "caption": "",
+      "page": 5,
+      "index": 115,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-116.webp",
+      "caption": "",
+      "page": 5,
+      "index": 116,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-117.webp",
+      "caption": "",
+      "page": 5,
+      "index": 117,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-118.webp",
+      "caption": "",
+      "page": 5,
+      "index": 118,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-119.webp",
+      "caption": "",
+      "page": 5,
+      "index": 119,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-120.webp",
+      "caption": "",
+      "page": 5,
+      "index": 120,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-121.webp",
+      "caption": "",
+      "page": 5,
+      "index": 121,
+      "width": 1690,
+      "height": 1126
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-122.webp",
+      "caption": "",
+      "page": 5,
+      "index": 122,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-123.webp",
+      "caption": "",
+      "page": 5,
+      "index": 123,
+      "width": 1706,
+      "height": 1279
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-124.webp",
+      "caption": "",
+      "page": 5,
+      "index": 124,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-125.webp",
+      "caption": "",
+      "page": 5,
+      "index": 125,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-126.webp",
+      "caption": "",
+      "page": 5,
+      "index": 126,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-127.webp",
+      "caption": "",
+      "page": 5,
+      "index": 127,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-128.webp",
+      "caption": "",
+      "page": 5,
+      "index": 128,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-129.webp",
+      "caption": "",
+      "page": 5,
+      "index": 129,
+      "width": 1440,
+      "height": 810
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-130.webp",
+      "caption": "",
+      "page": 5,
+      "index": 130,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-131.webp",
+      "caption": "",
+      "page": 5,
+      "index": 131,
+      "width": 1440,
+      "height": 810
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-132.webp",
+      "caption": "",
+      "page": 5,
+      "index": 132,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-133.webp",
+      "caption": "",
+      "page": 5,
+      "index": 133,
+      "width": 1440,
+      "height": 810
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-134.webp",
+      "caption": "",
+      "page": 5,
+      "index": 134,
+      "width": 1440,
+      "height": 810
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-135.webp",
+      "caption": "",
+      "page": 5,
+      "index": 135,
+      "width": 1440,
+      "height": 810
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-136.webp",
+      "caption": "",
+      "page": 5,
+      "index": 136,
+      "width": 1549,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-137.webp",
+      "caption": "",
+      "page": 5,
+      "index": 137,
+      "width": 1489,
+      "height": 853
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-138.webp",
+      "caption": "",
+      "page": 5,
+      "index": 138,
+      "width": 1561,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-139.webp",
+      "caption": "",
+      "page": 5,
+      "index": 139,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-140.webp",
+      "caption": "",
+      "page": 5,
+      "index": 140,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-141.webp",
+      "caption": "",
+      "page": 5,
+      "index": 141,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-142.webp",
+      "caption": "",
+      "page": 5,
+      "index": 142,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-143.webp",
+      "caption": "",
+      "page": 5,
+      "index": 143,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-144.webp",
+      "caption": "",
+      "page": 5,
+      "index": 144,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-145.webp",
+      "caption": "",
+      "page": 5,
+      "index": 145,
+      "width": 1524,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-146.webp",
+      "caption": "",
+      "page": 5,
+      "index": 146,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-147.webp",
+      "caption": "",
+      "page": 6,
+      "index": 147,
+      "width": 1664,
+      "height": 1148
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-148.webp",
+      "caption": "",
+      "page": 6,
+      "index": 148,
+      "width": 1664,
+      "height": 1148
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-149.webp",
+      "caption": "",
+      "page": 6,
+      "index": 149,
+      "width": 1690,
+      "height": 1125
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-150.webp",
+      "caption": "",
+      "page": 6,
+      "index": 150,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-151.webp",
+      "caption": "",
+      "page": 6,
+      "index": 151,
+      "width": 1518,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-152.webp",
+      "caption": "",
+      "page": 6,
+      "index": 152,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-153.webp",
+      "caption": "",
+      "page": 6,
+      "index": 153,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-154.webp",
+      "caption": "",
+      "page": 7,
+      "index": 154,
+      "width": 634,
+      "height": 218
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-155.webp",
+      "caption": "",
+      "page": 7,
+      "index": 155,
+      "width": 620,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-156.webp",
+      "caption": "",
+      "page": 7,
+      "index": 156,
+      "width": 640,
+      "height": 480
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-157.webp",
+      "caption": "",
+      "page": 7,
+      "index": 157,
+      "width": 640,
+      "height": 467
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-158.webp",
+      "caption": "",
+      "page": 7,
+      "index": 158,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-159.webp",
+      "caption": "",
+      "page": 7,
+      "index": 159,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-160.webp",
+      "caption": "",
+      "page": 7,
+      "index": 160,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-161.webp",
+      "caption": "",
+      "page": 7,
+      "index": 161,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-162.webp",
+      "caption": "",
+      "page": 7,
+      "index": 162,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-163.webp",
+      "caption": "",
+      "page": 7,
+      "index": 163,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-164.webp",
+      "caption": "",
+      "page": 7,
+      "index": 164,
+      "width": 4552,
+      "height": 1878
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-165.webp",
+      "caption": "",
+      "page": 7,
+      "index": 165,
+      "width": 2602,
+      "height": 2025
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-166.webp",
+      "caption": "",
+      "page": 7,
+      "index": 166,
+      "width": 1525,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhao-localizing-structuring-and-rendering-bridging-3d-and-2d-vision-language-action-models-cvpr-2026-paper/fig-167.webp",
+      "caption": "",
+      "page": 8,
+      "index": 167,
+      "width": 6990,
+      "height": 2988
+    }
+  ]
+}

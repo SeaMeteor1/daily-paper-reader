@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-eskandar-videoweaver-multimodal-multi-view-video-to-video-transfer-for-embodied-agents-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 5,
+      "index": 1,
+      "width": 1104,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-eskandar-videoweaver-multimodal-multi-view-video-to-video-transfer-for-embodied-agents-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 5,
+      "index": 2,
+      "width": 1104,
+      "height": 288
+    }
+  ]
+}

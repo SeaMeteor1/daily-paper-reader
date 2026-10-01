@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-fu-mergevla-cross-skill-model-merging-toward-a-generalist-vision-language-action-agent-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 3,
+      "index": 1,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-fu-mergevla-cross-skill-model-merging-toward-a-generalist-vision-language-action-agent-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 3,
+      "index": 2,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-fu-mergevla-cross-skill-model-merging-toward-a-generalist-vision-language-action-agent-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 3,
+      "index": 3,
+      "width": 512,
+      "height": 512
+    }
+  ]
+}

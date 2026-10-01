@@ -1,0 +1,730 @@
+Title: When Robots Obey the Patch: Universal Transferable Patch Attacks on Vision-Language-Action Models
+
+URL Source: https://openaccess.thecvf.com/content/CVPR2026/papers/Lu_When_Robots_Obey_the_Patch_Universal_Transferable_Patch_Attacks_on_CVPR_2026_paper.pdf
+
+Published Time: Sat, 16 May 2026 16:49:54 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# When Robots Obey the Patch: Universal Transferable Patch Attacks on Vision-Language-Action Models 
+
+# Hui Lu 1,2 Yi Yu 2* Yiming Yang 3 Chenyu Yi 2 Qixin Zhang 3 Bingquan Shen 4
+
+# Alex C. Kot 2 Xudong Jiang 21ROSE Lab, Interdisciplinary Graduate Programme, Nanyang Technological University 
+
+> 2
+
+# ROSE Lab, School of Electrical and Electronic Engineering, Nanyang Technological University 
+
+> 3
+
+# CCDS, Nanyang Technological University 4DSO National Laboratories  
+
+> {hui007, yu.yi, yiming014, cyyi, qixin.zhang, eackot, exdjiang }@ntu.edu.sg, sbingqua@dso.org.sg
+
+# Abstract 
+
+Vision-Language-Action (VLA) models are vulnerable to adversarial attacks, yet universal and transferable attacks remain underexplored, as most existing patches overfit to a single model and fail in black-box settings. To address this gap, we present a systematic study of universal, transfer-able adversarial patches against VLA-driven robots under unknown architectures, finetuned variants, and sim-to-real shifts. We introduce UPA-RFAS (Universal Patch Attack via Robust Feature, Attention, and Semantics), a unified framework that learns a single physical patch in a shared feature space while promoting cross-model transfer. UPA-RFAS combines (i) a feature-space objective with an ω1 de-viation prior and repulsive InfoNCE loss to induce trans-ferable representation shifts, (ii) a robustness-augmented two-phase min-max procedure where an inner loop learns invisible sample-wise perturbations and an outer loop opti-mizes the universal patch against this hardened neighbor-hood, and (iii) two VLA-specific losses: Patch Attention Dominance to hijack text →vision attention and Patch Se-mantic Misalignment to induce image-text mismatch with-out labels. Experiments across diverse VLA models, ma-nipulation suites, and physical executions show that UPA-RFAS consistently transfers across models, tasks, and view-points, exposing a practical patch-based attack surface and establishing a strong baseline for future defenses. Code is at https://github.com/yuyi-sd/UPA-RFAS .
+
+# 1. Introduction 
+
+Vision-Language-Action (VLA) models have made signif-icant strides, facilitating open-world manipulation [5, 6], language-conditioned planning [23], and cross-embodiment *Corresponding author. transfer [7, 89]. By coupling a visual encoder with lan-guage grounding and an action head, modern VLA models are capable of parsing free-form instructions and executing multi-step skills in both simulation and the physical world [34, 54]. Despite their potential, such multi-modal pipelines are vulnerable to structured visual perturbations, aka ad-versarial attacks [8, 14, 27–29, 32, 64, 70, 76–85], which can mislead perception, disrupt cross-modal alignment, and cascade into unsafe actions. This issue is particularly severe in robotics, as attacks that merely flip a class in perception can translate into performance drops, collisions, or viola-tions of task constraints on real-world systems [47, 57, 73]. Motivated by that, we conduct a systematic study of uni-versal and transferable adversarial patches for VLA-driven robots, where black-box conditions, varying camera poses, and domain shifts from simulation to the real world are the norm in practical robotic deployments. Though vulnerabilities in VLAs have received growing attention [15, 47, 57, 67, 80], universal and transferable at-tacks remain largely under-explored. Reported patches of-ten co-adapt to a specific model, datasets, or prompt tem-plate, and their success degrades sharply on unseen archi-tectures or finetuned variants [24], precisely the black-box regimes that matter for safety assessment. As a result, current evaluations can overestimate security when the at-tacker lacks white-box access, and underestimate the risks of patch-based threats that exploit cross-modal bottlenecks [21]. Bridging this gap requires attacks that generalize across families of VLAs ( e.g., OpenVLA [23], lightweight OFT variants [24], and flow-based policies such as εo [5]). We bridge the surrogate and victim gap by learning a uni-versal patch in a shared feature space, guided by two prin-ciples: enlarge surrogate-side deviations that provably per-sist on the target, and concentrate changes along stable di-rections. An ω1 deviation term drives sparse, high-salience shifts [10] that avoid surrogate-specific quirks, while a re-This CVPR paper is the Open Access version, provided by the Computer Vision Foundation. Except for this watermark, it is identical to the accepted version; the final published version of the proceedings is available on IEEE Xplore. 22867 Instructions: What action should the robot take to pick up the can? 
+
+> Patch Semantic Misalignment
+> Vision Encoder
+> vf
+> Visual Projector
+> prj f
+> 𝓙𝐢𝐧 𝐌𝐢𝐧𝐢𝐦𝐢𝐳𝐞
+
+Phase 1 Inner Minimization Benign Feature 
+
+𝛿 𝜎     
+
+> probe phrase
+> ෤zz
+> Vision Encoder vfVisual Projector
+> prj f
+> ොp
+> Language Tokenizer
+> ෤z
+> entire text Ƹt෤z
+> Language -model Backbone
+> 𝒇𝐥𝐥𝐦 𝓙𝐨𝐮𝐭 𝐌𝐚𝐱𝐢𝐦𝐢𝐳𝐞
+
+Phase 2 Outer Maximization 
+
+> 𝑰𝒏𝒑𝒖𝒕
+
+𝛿 𝜎 ∗ 
+
+> 𝑰𝒏𝒑𝒖𝒕 Patch Attention Dominance
+
+... ...     
+
+> Patch Non-Patch
+> ℒPAD
+> Visual-token Attention on Action Queries Patch Non-patch ΔΔ
+> Forward Process Back Propagation
+> ↑↓
+> Pull Close Push Away
+> §3.6
+> §3.5
+> Training Frozen
+> ℒPSM
+
+Figure 1. Overall transferable patch attack (UPA-RFAS) for VLA robotics. The framework operates in two coordinated stages within a shared feature-space objective. Phase 1 – Inner minimization learns a small, invisible, sample-wise perturbation ω via PGD that minimizes the feature objective Jin (§ 3.3) with the patch frozen (§ 3.4). Phase 2 – Outer maximization freezes ω and optimizes a 
+
+single physical patch ε to maximize Jout (§ 3.7), which combines an ω1 deviation with a repulsive contrastive term and two VLA-specific objectives: Patch Attention Dominance (PAD) (§ 3.5) and Patch Semantic Misalignment (PSM) (§ 3.6). Red dashed arrows indicate back-propagation. UPA-RFAS yields a universal physical patch that transfers across models, prompts, and viewpoints. pulsive InfoNCE loss [11] pushes patched features away from their clean anchors along batch-consistent, high-CCA directions [46], strengthening black-box transfer. To further raise universality, we adopt a Robustness-augmented Uni-versal Patch Attack (RAUP). The inner minimization loop learns a small, sample-wise invisible perturbation that re-duces the feature-space objective around each input, em-ulating local adversarial training and hardening the sur-rogate. The outer maximization loop then optimizes a single physical patch against this hardened neighborhood with randomized placements and transformations, distill-ing the stable, cross-input directions revealed by the inner loop. For robotics, we further couple feature transfer with policy-relevant signals: (i) the Patch Attention Dominance (PAD) loss increases patch-routed text →vision attention and suppresses non-patch increments with a one-sided mar-gin, yielding location-agnostic attention attraction; (ii) the Patch Semantic Misalignment (PSM) loss pulls the pooled patch representation toward probe-phrase anchors while re-pelling it from the current instruction embedding, creating a persistent image–text mismatch that perturbs instruction-conditioned policies without labels. Together, these com-ponents form Universal Patch Attack via Robust Fea-ture, Attention, and Semantics (UPA-RFAS) , a univer-sal, transferable patch framework that aligns attack feature shifts, cross-modal attention, and semantic steering. Our contributions are summarized as follows: • We present the first universal, transferable patch attack framework for VLA robotics, using a feature-space objec-tive that combines ω1 deviation with repulsive contrastive alignment for model-agnostic transfer. • We propose a robustness-augmented universal patch at-tack, with invisible sample-wise perturbations as hard augmenters and a universal patch trained under heavy ge-ometric randomization. • We design two VLA-specific losses: Patch Attention Dominance and Patch Semantic Misalignment to hijack text →vision attention and misground instructions. • Extensive experiments across VLA models, tasks, and sim-to-real settings show strong black-box transfer, re-vealing a practical patch-based threat and a transferable baseline for future defenses. 
+
+# 2. Related Work Vision-Language-Action (VLA) Models. Advances in large vision–language models (LVLMs) [3, 44, 50, 72, 86] have prompted robotic manipulation to leverage the pow-erful capabilities of vision–language modeling. VLA mod-els extend LVLMs to robotic control by coupling percep-tion, language grounding, and action generation. Autore-gressive VLAs discretize actions into tokens and learn end-to-end policies from large demonstrations, yielding scal-able instruction-conditioned manipulation [7, 23, 31, 45, 61, 89]. Diffusion-based VLAs generate continuous trajecto-ries with denoisers for smooth rollouts and flexible condi-tioning, at the cost of higher inference latency [4–6, 30, 62]. RL-enhanced VLAs optimize robustness and adaptability beyond supervised imitation by introducing reinforcement objectives over VLA backbones [18, 39, 51]. VLA mod-els exemplify strong vision–language alignment for com-positional task understanding and end-to-end action gener-ation, while raising new questions about robustness under instruction-conditioned deployment. 
+
+Adversarial Attacks in Robotics. Adversarial attacks are commonly grouped by access level: white-box meth-ods assume full knowledge and directly use model gra-dients [17, 55, 69, 71], whereas black-box methods op-erate without internals-either by querying the model for 22868 feedback [9, 35, 36] or by exploiting cross-model trans-ferability of crafted examples [40, 41, 63]. To strengthen transfer, optimization-driven approaches refine or stabi-lize gradient signals to avoid local minima arising from mismatched decision boundaries across architectures [12, 26, 33, 37, 58, 87]. Augmentation-based strategies diver-sify inputs to induce gradient variation and reduce over-fitting to a single surrogate [13, 33, 56, 59, 66, 88]. Fi-nally, feature-space attacks aim at intermediate represen-tations to promote cross-model invariance and further im-prove transfer [16, 60, 74, 75]. Patch-based physical attacks [8, 19, 48, 65, 68] are practical for real-world deployment, remaining effective under changes in viewpoint and illu-mination, which makes them suitable for robotic systems. VLA models [20, 52] couple visual and linguistic modali-ties to align perception with action, and visual streams are high-dimensional and can be subtly perturbed in ways that are difficult to detect [2, 53]. Accordingly, our work tar-gets the visual modality with a universal, transferable patch attack. To our knowledge, it is the first to investigate black-box transfer vulnerabilities of VLAs in real-world settings. 
+
+# 3. Methodology 3.1. Preliminary Adversarial Patch Attack. We consider a robot whose de-cisions are based on RGB visual streams xt ↑ [0 , 1] H→W →3
+
+across time step t. An adversary tampers with this stream using a single universal patch ω ↑ [0 , 1] hp→wp→3. At each time step t, an area-preserving geometric transformation 
+
+Tt ↓ T (e.g., random position, skew, and rotation) is sam-pled, and the transformed patch is rendered onto the frame. Given MTt ↑ {0, 1}H→W as the binary placement mask in-duced by Tt, and R(ω; Tt) ↑ [0 , 1] H→W →3 as the rendered patch, the pasting function P and resulting patched frame is 
+
+˜xt = P(xt, ω, T t)= (1 ↔ MTt
+
+) ↗ xt + MTt ↗ R(ω; Tt) s.t. S(ω) < ϑ,
+
+(1) where ↗ is the Hadamard product, 1 is an all-ones matrix, 
+
+S(·) returns the patch area ( i.e., hp ↘ wp), and ϑ is an area budget controlling the maximal visible size of the patch. Let ε denote a victim policy. Given visual inputs x drawn from a task distribution p(x) and random patch placements 
+
+Tt ↓ T , an adversarial patch attack aims to learn a sin-gle universal patch ω that maximizes an evaluation objective 
+
+Jeval (e.g., task loss increase or action-space deviation [57]) under pasting P in Eq. 1 and these randomized conditions: 
+
+ωω ↑ arg max  
+
+> S(ω)<ε
+
+Ex↑p(x)
+
+> Tt↑T
+
+[
+
+Jeval 
+
+(
+
+P(x, ω, T t); ε
+
+)] 
+
+. (2) This objective captures a single patch that is robustly effec-tive across time, viewpoints, and scene configurations. 
+
+VLAs. We follow the OpenVLA formulation [23], where a policy is decomposed into a vision encoder fv, a visual pro-jector fprj , and a language-model backbone fllm equipped with an action head fact . Given an RGB observation x and an instruction c, the model predicts an action vector y as 
+
+y = OpenVLA( x, c ) = fact 
+
+(fllm 
+
+([ fprj (fv(x)) , tok( c)] )) .
+
+(3) The computation can be unpacked as: (i) the vision encoder 
+
+fv maps the image into a set of multi-granularity visual em-beddings, for example by concatenating DINOv2 [44] and SigLIP [72] features, yielding Ev ↑ RNv→Dv from x; (ii) 
+
+the projector fprj aligns these embeddings to the LLM to-ken space, producing visual tokens Zv ↑ RN →
+
+> v→Dt
+
+; (iii) the backbone fllm takes the concatenation of Zv and the tok-enized command tok( c), and fuses them into hidden states 
+
+Hϑ; (iv) the action head fact decodes Hϑ into the continu-ous control output y ↑ RDa (e.g., a 7-DoF command). 
+
+## 3.2. Problem Formulation 
+
+Existing VLA patch attacks [57] assume white-box access to the victim model, which limits their practicality and says little about cross-policy transfer. In our setting, the attacker instead only has gradient access to a single surrogate model 
+
+ˆε and aims to learn one universal patch that transfers to a family of unseen target policies !tgt . To formalize this threat model, we separate optimization and evaluation : the patch is optimized in the surrogate feature space via a differ-entiable objective Jtr , and its success is assessed by an eval-uation objective Jeval on target policies drawn from !tgt .Following [57], we adopt the untargeted attack setting, and summarize this transferable patch attack as follows. 
+
+Definition 1 (Transferable adversarial patch attack via VLA feature space) Let ˆε be a surrogate model and !tgt afamily of target policies. Let fˆϖ(·) extract features from ˆε.A patch ω is a universal transferable adversarial patch in the VLA feature space , it satisfies 
+
+max 
+
+> ωs
+
+Eϖ↑!tgt Ex↑p(x)
+
+> Tt↑T
+
+[
+
+Jeval 
+
+(
+
+P(x, ωs, T t); ε
+
+)] 
+
+s.t. ωs ↑ arg max  
+
+> ω
+
+Ex↑p(x)
+
+> Tt↑T
+
+[
+
+Jtr 
+
+(
+
+P(x, ω, T t); ˆ ε
+
+)] 
+
+,
+
+(4) 
+
+where Jtr measures feature discrepancy using ”:
+
+Jtr 
+
+(
+
+P(x, ω, T t); ˆ ε
+
+)
+
+= ”
+
+(
+
+fˆϖ
+
+(P(x, ω, T t)), f ˆϖ
+
+(x))
+
+. (5) Here, P is the pasting function defined in Eq. 1, and Jtr 
+
+is the transferable attack strategy. Although ˆε and ε differ in training recipe and data, we probe whether their feature spaces admit a stable cross-model relation as follows: 
+
+Shared Representational Structure across VLA Policies. 
+
+Empirically, we observe a strong linear relationship be-tween the surrogate and target feature spaces. Let zs and 22869 zt denote visual features from ˆε and ε on the same in-puts. We first apply Canonical Correlation Analysis (CCA) to test whether these representations lie in a shared linear subspace : large top Canonical Correlation indicates a near-invertible linear map aligning the two subspaces [43, 46]. In parallel, we fit a linear regression probe from zs to zt and use the explained variance ( R2) to quantify how well a sin-gle linear map accounts for the target features, complement-ing CCA’s subspace view [1, 25]. In our case, R2 ≃ 0.654 
+
+together with near-unity top-k Canonical Correlations indi-cates a shared low-dimensional subspace, with some resid-ual components not captured by one linear map. Conse-quently, patch updates that steer ˆε’s features within this shared subspace tend to induce homologous displacements in ε, supporting the transferability of patches. Motivated by these observations, we make the following Assumption 1. 
+
+## 3.3. Learning Transferable Patches with Feature-space ω1 and Contrastive Misalignment 
+
+Let fˆϖ, f ϖ : X → Rd be the surrogate and target encoders with dimension d, where f· consists of vision encoder fv
+
+and visual projector fprj . For any pair (xi, ˜xi), define the surrogate-side feature deviation ”zi := fˆϖ(˜ xi) ↔ fˆϖ(xi)
+
+and the target-side deviation ”gi := fϖ(˜ xi) ↔ fϖ(xi).
+
+Assumption 1 (Linear alignment with bounded residual) 
+
+There exists a matrix Aω ↑ Rd→d such that 
+
+fϖ(x) = fˆϖ(x) Aω + e(x), (6) 
+
+where the alignment residual e(x) satisfies ⇐ e(˜ x) ↔
+
+e(x) ⇐2 ⇒ ϖE for all pairs (x, ˜x) considered. 
+
+Assumption 1 states that the effect of a surrogate devi-ation must persist on the target with strength governed by 
+
+ϱmin (Aω), the smallest singular value of the alignment map 
+
+Aω. The proposition below makes this dependence explicit. 
+
+Proposition 1 (Lower-bounded target displacement) 
+
+Under Assumption 1, for any (xi, ˜xi)
+
+∥∥”gi
+
+∥∥2 ⇑ ϱmin (Aω) ∥∥”zi
+
+∥∥2 ↔ ϖE, (7) 
+
+and, using H¨ older’s inequality ⇐v⇐1 ⇒ ⇓d⇐v⇐2,
+
+∥∥”gi
+
+∥∥1 ⇑ ϱmin (Aω)
+
+⇓d
+
+∥∥”zi
+
+∥∥1 ↔ ϖE. (8) Proof is in Appendix A. Proposition 1 links target-side devi-ation to the surrogate-side. Therefore, any strategy that en-larges ⇐”zi⇐ (e.g., via an ω1 objective) necessarily induces a nontrivial response on the target. Thus we can capture why we could use L1 loss L1 to maximize feature discrepancy: 
+
+Corollary 1 (Effect of maximizing ω1 deviation) If an at-tack increases the surrogate-side ω1 deviation, e.g. by max-imizing L1 = ⇐”zi⇐1, then the target-side deviation obeys the linear lower bound in Eq. 8. In particular, when the alignment is well-conditioned ( ϱmin (Aω) not small) and the residual coupling ϖE is modest, increasing ⇐”zi⇐1 neces-sarily induces a nontrivial increase of ⇐”gi⇐1.
+
+Repulsive Contrastive Regularization. Complementing the L1 deviation term, we introduce a repulsive contrastive objective that explicitly pushes the patched feature ˜zi away from its clean anchor zi. For each sample i, we still treat 
+
+(zi, ˜zi) as a distinguished pair and {˜zj}j↓ =i as a reference set, and adopt the InfoNCE [11] as a repulsion term 
+
+Lcon = ↔ 1
+
+N
+
+> N
+
+∑
+
+> i=1
+
+log exp(sim( zi, ˜zi)/ς )
+
+∑Nj=1 exp(sim( zi, ˜zj)/ς ) , (9) where sim denotes cosine similarity and ς is a tempera-ture. Maximizing (minimizing) Lcon encourages the simi-larity sim( zi, ˜zi) to decrease (increase) , effectively pushing 
+
+˜zi away (pulling ˜zi close) from its clean anchor and con-centrating the change along directions that are consistently shared across the batch. 
+
+Overall Feature-space Objective. Combining both com-ponents, we obtain the objective for ” as given in Eq. 5: 
+
+Jtr = L1 + φcon Lcon , (10) where L1 is the ω1 loss term and Lcon is the repulsive con-trastive objective, and φ > 0 balances their contributions. 
+
+## 3.4. Robustness-augmented Universal Patch Attack Emulate Robust Surrogates without Retraining VLAs. 
+
+Transfer-based attacks on image classifiers have shown that adversarial examples generated on adversarially trained 
+
+or slightly robust source models transfer significantly bet-ter than those crafted on standard models [22, 49]. Ro-bust training encourages the source model to rely on more “universal” features shared across architectures, so pertur-bations aligned with these features exhibit stronger cross-model transferability. A natural strategy would be to use an adversarially trained VLA as the surrogate. However, adversarially trained large VLA policies is practically pro-hibitive: it requires massive interactive data and computing, and can substantially degrade task performance. Instead, we still optimize a single universal physical patch , but augment it with a sample-wise, invisible perturbation that emulates 
+
+adversarial (robust) training on the surrogate. This pertur-bation is applied globally and updated to counteract patch-induced feature deviations, effectively “hardening” the sur-rogate along the directions the patch tries to exploit. Since the universal patch is localized while the sample-wise per-turbations remain invisible and input-specific, their inter-22870 ference is limited, and the patch can then exploit the robust feature directions revealed by this hardening step. 
+
+Bi-level Robustness-augmented Optimization. Formally, let ω denote the universal patch and ε a sample-wise per-turbation confined to the patch mask. Given a optimiz-ing loss Jtr on the surrogate ˆε, we consider the following robustness-augmented bi-level objective: 
+
+ωω ↑ arg max  
+
+> S(ω)<ε
+
+Ex↑p(x)
+
+> Tt↑T
+
+Jtr 
+
+(
+
+P(x+εω(x), ω, T t); ˆ ε
+
+)
+
+s.t. εω(x) ↑ arg min 
+
+> ↔ε↔↑↗ϱω
+
+Ex↑p(x)
+
+> Tt↑T
+
+Jtr 
+
+(
+
+P(x+ε, ω, T t); ˆ ε
+
+)
+
+.
+
+(11) The inner problem “adversarially trains” the surrogate lo-cally by finding a small, sample-wise perturbation to reduce 
+
+the attack loss, and the outer problem then maximizes the same loss with respect to ω in this hardened neighborhood. To further strengthen transferability, the outer maximiza-tion is not driven by the feature displacement alone. In the following subsections, we introduce additional loss com-ponents that shape where the model attends and what se-mantics the patch encodes, and jointly optimize them within this robustness-augmented framework. 
+
+## 3.5. Patch Attention Dominance: Cross-Modal Hi-jack Loss Action-relevant Queries as the Attack Handle. In VLA policies, actions are largely driven by a small set of action-relevant text queries whose cross-modal attention to vision decides which visual regions control the policy. Our uni-versal patch is therefore designed as a location-agnostic attention attractor : regardless of placement, skew, or ori-entation, it should redirect the attention of these action-relevant queries from true semantic regions to the patch .Concretely, we aim to increase the attention increments on the patch vision tokens while reducing increments on non-patch tokens, based on the difference between patched and clean runs under random placements. 
+
+Patch-induced Attention Increments for Action-relevant queries. From clean and patched runs, we collect the last N
+
+attention blocks A from fllm , average over heads, and slice out the text →vision submatrix via tv( ·):
+
+¯A(l) 
+
+> c
+
+= 1
+
+> HH
+
+∑
+
+> h=1
+
+A(l)
+
+> c, :,h, :,:
+
+, B(l) 
+
+> c
+
+= tv ( ¯A(l)
+
+> c
+
+),
+
+¯A(l) 
+
+> p
+
+= 1
+
+> HH
+
+∑
+
+> h=1
+
+A(l)
+
+> p, :,h, :,:
+
+, B(l) 
+
+> p
+
+= tv ( ¯A(l)
+
+> p
+
+),
+
+(12) where l = L ↔ N + 1 , . . . , L indexes the last N layers. We row-normalize over vision tokens (index p) and aver-age across layers to obtain attention shares , then define the patch-induced share increment: 
+
+! = 1
+
+> N
+
+∑
+
+> l
+
+rn (B(l)
+
+> p
+
+) ↔ 1
+
+> N
+
+∑
+
+> l
+
+rn (B(l)
+
+> c
+
+) ↑ RB→T →P , (13) where rn( ·) denotes row-normalization over p. By optimiz-ing ! rather than raw attention, the objective depends only on patch-induced changes. 
+
+Action-relevant Queries. To focus precisely on action-relevant queries and avoid surrogate-specific overfitting, we restrict the optimization to the top-ϑ text tokens (per batch) that already receive the highest clean attention: 
+
+˜! = ! ↗ ϑ, ϑ = TopKMask (Bc; ϑ), (14) where TopKMask returns a binary mask over the text po-sitions, broadcast across vision tokens. These top-ϑ tokens are our proxy for action-relevant queries. 
+
+Patch vs. Non-patch Attention Increments. To capture the effect of patch location on visual tokens, we map the pixel-level mask MTt ↑ {0, 1}H→W to a token-level mask 
+
+Mz ↑ [0 , 1] p via bilinear interpolation, where p is the num-ber of visual tokens ( e.g., p = g2 for a g ↘ g ViT grid), and then flatten it to length p. We then aggregate the attention increments routed from action-relevant queries into patch versus non-patch vision tokens: 
+
+dpatch = ⇔ ˜!, Mz↖p, d non = ⇔ ˜!, 1 ↔ Mz↖p,
+
+non top = max p
+
+( ˜! ↗ (1 ↔ Mz)), (15) where ⇔·, ·↖p sums over the vision index p. dpatch (dnon )measures how much extra attention the patch induces on patch (non-patch) tokens from action-relevant text queries. 
+
+Patch Attention Dominance (PAD) Loss. Finally, we de-fine the attention-hijack objective to maximize by explicitly 
+
+increasing patch-related increments and decreasing non-patch increments, with a margin against the strongest non-patch route: 
+
+LPAD = E[dpatch ] ↔ φ E[ReLU( dnon )]
+
+↔ E
+
+[
+
+ReLU (m ↔ (dpatch ↔ non top) )]
+
+, (16) where E[·] averages over the selected (action-relevant) text tokens. The first term increases patch attention increments, the second penalizes positive increments on non-patch to-kens, and the margin term enforces that the patch’s incre-ment exceeds the strongest non-patch increment by at least 
+
+m. Together, these terms induce Patch Attention Domi-nance , where action-relevant queries direct their additional attention to the patch rather than true semantic regions. 
+
+## 3.6. Patch Semantic Misalignment: Text-Similarity Attack Loss Semantic Steering beyond Attention. Merely hijacking cross-modal attention does not guarantee a consistent be-havioral bias across models or tasks. To further enhance 22871 transferability, we constrain the patch also in semantic 
+
+space: we steer the visual representation of patch-covered tokens toward a set of cross-model-stable action/direction primitives ( probe phrases ), while simultaneously pushing it away from the holistic representation of the current instruction. The probes ( e.g., “put”, “pick up”, “place”, “open”, “close”, “left”, “right”) act as architecture-agnostic anchors, and the repulsion from the instruction embedding induces a persistent, context-dependent semantic misalign-ment that more reliably derails the policy decoder. 
+
+Patch Pooling and Semantic Anchors. Let zj ↑ RD be vi-sual token features and mj ↑ Mz the corresponding patch-token mask. We pool and ω2–normalize the patch feature: 
+
+ˆvpatch =
+
+∥∥∥∥∥( P∑
+
+> j=1
+
+mj zj
+
+)/( P∑
+
+> j=1
+
+mj + ϖ
+
+)∥∥∥∥∥2
+
+. (17) Let {ˆpk}Kk=1 be normalized probe prototypes (e.g., action and direction anchors), and let ˆt denote a normalized repre-sentation of the whole current instruction ( e.g., the mean of the last-layer text states from fllm ). 
+
+Patch Semantic Misalignment (PSM) Loss. We then de-fine the text-similarity attack loss to maximize as 
+
+LPSM = ↼
+
+[
+
+log 
+
+> K
+
+∑
+
+> k=1
+
+exp 
+
+( ˆv↘ 
+
+> patch
+
+ˆpk
+
+ς
+
+)
+
+↔ ↽ ˆv↘
+
+> patch
+
+ˆt, (18) with temperatures ς > 0 and weights ↼, ↽ > 0.Eq. 17 yields a location-agnostic semantic descriptor for the patch-covered tokens. In Eq. 18, the first (LogSumExp) term pulls ˆvpatch toward any probe prototype, avoiding de-pendence on a single phrase while focusing gradients on the most compatible anchors as ς decreases. The second term pushes the patch feature away from the instruction em-bedding, inducing a persistent, context-dependent semantic mismatch, with ↼, ↽ balancing pull and push. The loss is fully differentiable w.r.t. patch parameters via zj and com-plements attention hijacking by steering the attended con-tent toward a stable, transferable semantic direction. 
+
+## 3.7. Universal Patch Attack via Robust Feature, At-tention, and Semantics (UPA-RFAS) 
+
+The overall optimization process is in Algorithm 1 where: 
+
+Inner Minimization. Given x at time t and the current patch ω, we initialize a global invisible perturbation ε(0) =
+
+0 and update it by Projected Gradient Descent (PGD) [42]: 
+
+ε(i+1) ↙ !
+
+> ↔·↔↑↗ϱω
+
+(
+
+ε(i) ↔⇀ε∝εJin 
+
+(
+
+P(x+ε(i), ω, T t); ˆ ε
+
+))
+
+,
+
+(19) where Jin = Jtr is in Eq. 10, !↔·↔↑↗ϱω projects onto the 
+
+ω≃ ball of radius ⇁ς, ⇀ε is the step size, and Tt is sampled once from T across iterations. εω is the final perturbation. 
+
+Algorithm 1 UPA-RFAS 1: Input: surrogate fˆϖ, subset Ds, universal patch ω ↑
+
+[0 , 1] hp→wp→3, budget ⇁ς, inner steps I, outer steps K,step sizes ⇀ε, ⇀ω, weights φcon , φPAD , φPSM  
+
+> 2:
+
+for mini-batch data (x, c, t ) ′ Ds do  
+
+> 3:
+
+# Inner minimization 4: Initialize sample-wise perturbation ε(1) ↙ 0 
+
+> 5:
+
+Sample Tt ↓ T 
+
+> 6:
+
+for i = 1 to I do  
+
+> 7:
+
+Jin = Jtr 
+
+(
+
+P(x + ε(i), ω, T t); ˆ ε
+
+)
+
+via Eq. 1 and 10 8: ε(i+1) ↙ !↔·↔↑↗ϱω
+
+(ε(i) ↔ ⇀ς∝εJin 
+
+) 
+
+> 9:
+
+end for  
+
+> 10:
+
+εω ↙ ε(I)
+
+#Outer maximization 11: for k = 1 to K do  
+
+> 12:
+
+Sample Tt ↓ T 
+
+> 13:
+
+Compute Jout via Eq. 1, 16, 18 and 20 14: ω ↙ AdamW 
+
+(
+
+↔Jout 
+
+(
+
+P(x+εω(x), ω, T t); ˆ ε
+
+)
+
+; ⇀ω
+
+) 
+
+> 15:
+
+ω ↙ Clip [0 ,1] (ω) 
+
+> 16:
+
+end for  
+
+> 17:
+
+end for  
+
+> 18:
+
+return ω
+
+Outer Maximization. With εω(x) fixed, we update the universal patch ω by AdamW [38] to maximize the objective with additional losses under randomized transformations: 
+
+ω ↙ AdamW 
+
+(
+
+↔Jout 
+
+(
+
+P(x+εω(x), ω, T t); ˆ ε
+
+)
+
+; ⇀ω
+
+)
+
+,
+
+Jout = L1 +φcon Lcon +φPAD LPAD +φPSM LPSM ,
+
+(20) where the patch ω ↑ [0 , 1] hp→wp→3 respects the area budget, and ⇀ω is the learning rate. At each iteration, we sample 
+
+Tt ↓ T and clamp ω to the valid range [0 , 1] .
+
+# 4. Experiments Datasets. We evaluate our attacks on BridgeData V2 [54] and LIBERO [34] using the corresponding VLA mod-els. BridgeData V2 is a real-world corpus spanning 24 environments and 13 manipulation skills ( e.g., grasping, placing, object rearrangement), comprising 60,096 trajecto-ries. LIBERO is a simulation suite with four task families-Spatial, Object, Goal, and Long, where LIBERO-Long combines diverse objects, layouts, and extended horizons, making multi-step planning particularly challenging. 
+
+Baseline. We adopt RoboticAttack [57]’s 6 objectives as the baselines, including Untargeted Manipulation Attack (UMA), Untargeted Action Discrepancy Attack (UADA), and Targeted Manipulation Attack (TMA) corresponding to 22872 Table 1. Task success rate (%) when transferring from the surrogate OpenVLA-7B to different victim models on LIBERO. objective                                                                                                                                                                            
+
+> Victim: OpenVLA-oft-w Victim: OpenVLA-oft
+> Simulated Physical Simulated Physical spatial object goal long avg. spatial object goal long avg. spatial object goal long avg. spatial object goal long avg. Benign 99 99 98 97 98.25 99 99 98 97 98.25 98 98 98 94 97.00 98 98 98 94 97.00 UMA 125 86 40 31 45.50 83 89 76 73 80.25 79 95 69 361.50 96 90 90 83 89.75 UMA 1→346 88 38 39 52.75 90 87 83 81 85.25 90 93 57 360.75 96 81 93 80 87.50 UADA 135 82 27 21 41.25 71 90 57 74 73.00 94 86 61 361.00 92 96 79 84 87.75 UADA 1→337 74 21 33 41.25 65 88 46 61 65.00 87 90 64 461.25 92 95 61 90 84.50 TMA 169 89 58 61 69.25 78 92 74 83 81.75 99 93 81 25 74.50 98 92 84 86 90.00 TMA 747 78 47 34 51.50 90 96 89 90 91.25 83 93 75 62 78.25 97 88 89 87 90.25 Our 7010 65.75 26 53 54 28 40.25 66 43 62 343.50 69 74 76 27 61.50
+
+different Degree-of-freedom (DoF). For each, experiments follow the original loss definitions and evaluation protocol. We further consider both simulated and physical victim settings : a model trained in simulation on the LIBERO-Long suite using the OpenVLA-7B-LIBERO-Long variant, and a model trained on real-world BridgeData v2 data with the OpenVLA-7B model, respectively. 
+
+Surrogate and Victim VLAs. We evaluate universal, transferable patches under a strict black-box transfer pro-tocol. Surrogate models are chosen from publicly available, widely used VLA [23] to reflect prevailing design trends. The primary surrogate models are OpenVLA-7B trained on physical dataset BridgeData V2 [54] and OpenVLA-7B-LIBERO-Long fine-tuned on LIBERO-Long. During trans-fer, no information about victim models is used, including weights, architecture details beyond public model names, fine-tuning datasets, recipes, or hyperparameters. Specifi-cally, we select OpenVLA-oft [24] and ε series [5, 6] mod-els as victim models. Built on OpenVLA, OpenVLA-oft in-troduces an optimized fine-tuning recipe that notably im-proves success rates (from 76.5% to 97.1%) and delivers 
+
+↓26 ↘ throughput. To stress cross-recipe and cross-task vulnerability, we test on four variants fine-tuned on four distinct LIBERO task suites, as well as a multi-suite model trained jointly on all four ( OpenVLA-oft-w ). The ε family differs fundamentally from OpenVLA in backbone choice, pretraining/fine-tuning data, and training strategy, making transfer substantially harder. We therefore assess black-box transfer on ε0 [5], which provide a stringent test of model-agnostic patch behavior across heterogeneous VLA designs. 
+
+Implementation & Evaluation Details. We evaluate on the LIBERO benchmark [34]. Each suite contains 10 tasks, and each task is attempted in 10 independent trials, yielding 100 rollouts per suite, following [5]. Consistent with [57], patch placement sites are predetermined for each suite to avoid occluding objects in the test scenes. More implemen-tation details can be found in the Appendix B. Regarding the evaluation metric, we adopt the concept of Success Rate (SR) introduced in LIBERO [34] across all setting. 
+
+## 4.1. Main Results 
+
+We first evaluate the white-box performance of our patches, where the victim model is identical to the surrogate. The re-sults in Appendix C demonstrate that our method achieves strong white-box attack capability. For the OpenVLA-7B 
+
+[23] to OpenVLA-oft-w [24] transfer experiment, Tab. 1 shows that our patch objective induces the strongest degra-dation of task success rates. In the simulated setting, the clean policy succeeds on 98.25% of tasks on average, while our method reduces the success rate to only 5.75%, corre-sponding to more than a 92% point drop. Existing objec-tives such as UMA, UADA, and TMA do transfer to the victim but remain much less destructive: their average suc-cess rates stay between 41.25% and 69.25%, and they leave certain categories almost intact, for example, object-centric tasks still above 74% success for UMA and UADA. In con-trast, our patch almost completely disables the policy across all four task types. Tab. 1 also reports the attack results un-der physical setting. A similar trend appears: all baselines still retain high average success (65.00%-91.25%), whereas our method again yields the lowest success rate of 40.25%. This indicates that our patch objective not only transfers more effectively to the simulated environments, but also produces substantially stronger degradation under the phys-ical environment, establishing a consistently harder univer-sal patch baseline across both settings. Beyond the transfer from OpenVLA-7B to OpenVLA-oft-w, we further evaluate transfer to four different OpenVLA-oft variants that are separately fine-tuned on different LIBERO task suites, creating a larger distribution and pol-icy gap from the surrogate. Tab. 1 shows that our objective still achieves consistently stronger transfer than all base-lines across both simulated and physical setups, highlight-ing the effectiveness of our design. Additional transfer re-sults , including attacks transferred to ε0, are in Appendix D, and show that our methods still enhance attacks in the most challenging case of transferring to entirely different VLAs. 22873 Table 2. Ablation for transfer to openvla-oft under physical setting. objective spatial object goal long avg. Our 69 74 76 27 61.50 w/o RUPA 70 75 71 33 62.25 w/o PAD 68 67 77 38 62.50 w/o PSM 69 72 81 32 63.50 w/o Jtr 90 86 94 73 85.75 w/o Lcon 93 63 79 48 70.75 w/o L1 74 74 77 31 64.00 Table 3. Ablation on text-probe phrasing for transfer to openvla-oft in the physical setting. objective spatial object goal long avg. Our 69 74 76 27 61.50 Action 76 67 94 48 71.25 Direction 72 75 78 75 75.00 
+
+## 4.2. Ablation Study Impact of Each Design. Tab. 2 further validates the role of each component in our objective. Dropping any single module (RUPA, PAD, or PSM) consistently weakens the at-tack, reflected by higher average success rates than the full model. The most severe degradation appears in the w/o J tr 
+
+variant, where the average success rate jumps to 85.75%, close to the benign and baseline levels. Since J tr jointly contains both L1 and Lcon (i.e., it removes the entire first-stage feature-space minimization), this indicates that our feature-space ω1 and contrastive misalignment objectives, together with the RUPA designs, are essential for strong transfer. Moreover, the impact of Lcon is noticeably larger than that of L1. By Prop. 1 and Cor. 1, L1 is a distance-based term that mainly controls the magnitude of the sur-rogate deviation, whereas Lcon , built on cosine similarity, focuses on feature angles and thus shapes the direction of the displacement. Consequently, even without L1, Lcon 
+
+can still drive patched features away from their clean an-chors along transferable directions, so the attack remains relatively strong. 
+
+Impact of Text Probes. Tab. 3 analyzes how text-probe phrasing influences transfer in the physical setting. We compare our default probes, which jointly encode both ac-tion and spatial direction, against two reduced variants: Ac-tion probes that only include verbs ( e.g., “put”, “pick up”, “place”, “turn on”, “push”, “open”, “close”) and Direction 
+
+probes that only contain spatial words ( e.g., “left”, “right”, “bottom”, “back”, “middle”, “top”, “front”). Using action-only or direction-only probes markedly weakens the attack: the average success rate increases to 71.25% and 75.00%, respectively, compared to 61.5% with our design. This suggests that jointly encoding action and directional cues produces text queries that more closely match the policy’s         
+
+> (a) UADA 1-3(b) TMA with DoF 7 (c) Ours
+> (d) UADA 1-3(e) TMA with DoF 7 (f) Ours
+> Figure 2. Patch visualization and comparison. The first row is trained in a simulated setting, and the second row is trained in a physical setting.
+
+action-relevant channels, thereby enabling more effective cross-model transfer. Ablation study of more specific pa-rameters can be found in Appendix E. 
+
+## 4.3. Patch Pattern Analysis 
+
+As shown in Fig. 2, we can see that baseline end-to-end methods [57] produce scene-tied patterns: UADA yields textures that closely resemble the robot gripper in both simulation and physical settings (Fig. 2a and 2d), while TMA generates more abstract yet surrogate-specific shapes (Fig. 2b and 2e). These behaviors indicate overfitting to object/embodiment cues, which hampers cross-model and cross-setting transfer. In contrast, our universal transferable patch (Fig. 2c and 2f) is learned in feature space to perturb higher-level, model-agnostic representations shared across VLAs. By jointly optimizing feature-space, attention, and semantic objectives, our patch combines the strengths of prior designs, avoids object mimicry, and yields a univer-sal patch that reliably transfers across tasks, embodiments, and environments, resulting in stronger black-box transfer. 
+
+# 5. Conclusion 
+
+In this paper, we present the first study of universal, trans-ferable patch attacks on VLA-driven robots and intro-duce UPA-RFAS, a unified framework that couples an ω1
+
+feature deviation with repulsive contrastive alignment to steer perturbations into model-agnostic, high-transfer direc-tions. UPA-RFAS integrates a robustness-augmented patch optimization and two VLA-specific losses, Patch Atten-tion Dominance and Patch Semantic Misalignment, which achieve strong black-box transfer across models, tasks, and sim-to-real settings, revealing a practical patch-based threat and a solid baseline for future defenses. 22874 Acknowledgement 
+
+This work was carried out at the Rapid-Rich Object Search (ROSE) Lab, School of Electrical & Electronic Engineer-ing, Nanyang Technological University (NTU), Singapore. This research is supported by the National Research Foun-dation, Singapore and Infocomm Media Development Au-thority under its Trust Tech Funding Initiative and the DSO National Laboratories, Singapore, under the project agree-ment No. DSOCL25023. Any opinions, findings and con-clusions or recommendations expressed in this material are those of the author(s) and do not reflect the views of Na-tional Research Foundation, Singapore and Infocomm Me-dia Development Authority. 
+
+# References 
+
+[1] Guillaume Alain and Yoshua Bengio. Understanding inter-mediate layers using linear classifier probes. arXiv preprint arXiv:1610.01644 , 2016. 4 [2] Anish Athalye, Nicholas Carlini, and David Wagner. Obfus-cated gradients give a false sense of security: Circumventing defenses to adversarial examples. In Proc. Int’l Conf. Ma-chine Learning , pages 274–283. PMLR, 2018. 3 [3] Lucas Beyer, Andreas Steiner, Andr´ e Susano Pinto, Alexan-der Kolesnikov, Xiao Wang, Daniel Salz, Maxim Neumann, Ibrahim Alabdulmohsin, Michael Tschannen, Emanuele Bugliarello, et al. Paligemma: A versatile 3b vlm for trans-fer. arXiv preprint arXiv:2407.07726 , 2024. 2 [4] Johan Bjorck, Fernando Casta˜ neda, Nikita Cherniadev, Xingye Da, Runyu Ding, Linxi Fan, Yu Fang, Dieter Fox, Fengyuan Hu, Spencer Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv preprint arXiv:2503.14734 , 2025. 2 [5] Kevin Black et al. ε0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 ,2024. 1, 7, 2 [6] Kevin Black et al. ε0.5: a vision-language-action model with open-world generalization. 2025. 1, 2, 7 [7] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen Chebotar, Joseph Dabis, Chelsea Finn, Keerthana Gopalakr-ishnan, Karol Hausman, Alex Herzog, Jasmine Hsu, et al. Rt-1: Robotics transformer for real-world control at scale. 
+
+arXiv preprint arXiv:2212.06817 , 2022. 1, 2 [8] Tom B Brown, Dandelion Man´ e, Aurko Roy, Mart´ ın Abadi, and Justin Gilmer. Adversarial patch. arXiv preprint arXiv:1712.09665 , 2017. 1, 3 [9] Pin-Yu Chen, Huan Zhang, Yash Sharma, Jinfeng Yi, and Cho-Jui Hsieh. Zoo: Zeroth order optimization based black-box attacks to deep neural networks without training substi-tute models. In Proceedings of the 10th ACM workshop on artificial intelligence and security , 2017. 3 [10] Pin-Yu Chen, Yash Sharma, Huan Zhang, Jinfeng Yi, and Cho-Jui Hsieh. Ead: elastic-net attacks to deep neural net-works via adversarial examples. In Proc. AAAI Conf. on Ar-tificial Intelligence , 2018. 1 [11] Ting Chen, Simon Kornblith, Mohammad Norouzi, and Ge-offrey Hinton. A simple framework for contrastive learn-ing of visual representations. In Proc. Int’l Conf. Machine Learning , pages 1597–1607. PmLR, 2020. 2, 4 [12] Yinpeng Dong, Fangzhou Liao, Tianyu Pang, Hang Su, Jun Zhu, Xiaolin Hu, and Jianguo Li. Boosting adversarial at-tacks with momentum. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , 2018. 3 [13] Yinpeng Dong, Tianyu Pang, Hang Su, and Jun Zhu. Evading defenses to transferable adversarial examples by translation-invariant attacks. In Proc. IEEE Int’l Conf. Com-puter Vision and Pattern Recognition , 2019. 3 [14] Kevin Eykholt, Ivan Evtimov, Earlence Fernandes, Bo Wei, Yongdae Bo, Amir Rahmati, Dawn Song, Patrick Traynor, Atul Prakash, and Tadayoshi Kohno. Robust physical-world attacks on deep learning visual classification. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , 2018. 1[15] Senyu Fei, Siyin Wang, Junhao Shi, Zihao Dai, Jikun Cai, Pengfang Qian, Li Ji, Xinzhe He, Shiduo Zhang, Zhaoye Fei, et al. Libero-plus: In-depth robustness analysis of vision-language-action models. arXiv preprint arXiv:2510.13626 ,2025. 1 [16] Aditya Ganeshan, Vivek BS, and R Venkatesh Babu. Fda: Feature disruptive attack. In Proc. IEEE Int’l Conf. Com-puter Vision , 2019. 3 [17] Ian J Goodfellow, Jonathon Shlens, and Christian Szegedy. Explaining and harnessing adversarial examples. In 
+
+Proc. Int’l Conf. Learning Representations , 2015. 2 [18] Yanjiang Guo, Jianke Zhang, Xiaoyu Chen, Xiang Ji, Yen-Jen Wang, Yucheng Hu, and Jianyu Chen. Improving vision-language-action model with online reinforcement learning. 
+
+arXiv preprint arXiv:2501.16664 , 2025. 2 [19] Hao Huang, Ziyan Chen, Huanran Chen, Yongtao Wang, and Kevin Zhang. T-sea: Transfer-based self-ensemble attack on object detection. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , pages 20514–20523, 2023. 3 [20] Wenlong Huang, Chen Wang, Ruohan Zhang, Yunzhu Li, Jiajun Wu, and Li Fei-Fei. Voxposer: Composable 3d value maps for robotic manipulation with language models. arXiv preprint arXiv:2307.05973 , 2023. 3 [21] Xiaojun Jia, Sensen Gao, Simeng Qin, Tianyu Pang, Chao Du, Yihao Huang, Xinfeng Li, Yiming Li, Bo Li, and Yang Liu. Adversarial attacks against closed-source mllms via fea-ture optimal alignment. arXiv preprint arXiv:2505.21494 ,2025. 1 [22] Haydn T Jones, Jacob M Springer, Garrett T Kenyon, and Juston S Moore. If you’ve trained one you’ve trained them all: inter-architecture similarity increases with robustness. In Uncertainty in Artificial Intelligence , pages 928–937. PMLR, 2022. 4 [23] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Foster, Grace Lam, Pannag Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. 1, 2, 3, 7 22875 [24] Moo Jin Kim, Chelsea Finn, and Percy Liang. Fine-tuning vision-language-action models: Optimizing speed and suc-cess. arXiv preprint arXiv:2502.19645 , 2025. 1, 7, 2 [25] Simon Kornblith, Mohammad Norouzi, Honglak Lee, and Geoffrey Hinton. Similarity of neural network representa-tions revisited. In Proc. Int’l Conf. Machine Learning , pages 3519–3529. PMlR, 2019. 4 [26] Alexey Kurakin, Ian J Goodfellow, and Samy Bengio. Ad-versarial examples in the physical world. In Artificial intelli-gence safety and security , pages 99–112. 2018. 3 [27] Fengpeng Li, Kemou Li, Haiwei Wu, Jinyu Tian, and Jiantao Zhou. DAT: Improving adversarial robustness via genera-tive amplitude mix-up in frequency domain. In Proc. An-nual Conf. Neural Information Processing Systems , pages 127099–127128, 2024. 1 [28] Fengpeng Li, Kemou Li, Haiwei Wu, Jinyu Tian, and Jiantao Zhou. Toward robust learning via core feature-aware adver-sarial training. IEEE Trans. on Information Forensics and Security , 20:6236–6251, 2025. [29] Fengpeng Li, Kemou Li, Qizhou Wang, Bo Han, and Jiantao Zhou. AEGIS: Adversarial target–guided retention-data-free robust concept erasure from diffusion models. In Proc. Int’l Conf. Learning Representations , 2026. 1 [30] Qixiu Li, Yaobo Liang, Zeyu Wang, Lin Luo, Xi Chen, Mozheng Liao, Fangyun Wei, Yu Deng, Sicheng Xu, Yizhong Zhang, et al. Cogact: A foundational vision-language-action model for synergizing cognition and action in robotic manipulation. arXiv preprint arXiv:2411.19650 ,2024. 2 [31] Xiaoqi Li, Mingxu Zhang, Yiran Geng, Haoran Geng, Yux-ing Long, Yan Shen, Renrui Zhang, Jiaming Liu, and Hao Dong. Manipllm: Embodied multimodal large language model for object-centric robotic manipulation. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , pages 18061–18070, 2024. 2 [32] Xiao Li, Yiming Zhu, Yifan Huang, Wei Zhang, Yingzhe He, Jie Shi, and Xiaolin Hu. Pbcat: Patch-based composite adversarial training against physically realizable attacks on object detection. arXiv preprint arXiv:2506.23581 , 2025. 1 [33] Jiadong Lin, Chuanbiao Song, Kun He, Liwei Wang, and John E Hopcroft. Nesterov accelerated gradient and scale invariance for adversarial attacks. arXiv preprint arXiv:1908.06281 , 2019. 3 [34] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu, Yuke Zhu, and Peter Stone. Libero: Benchmarking knowl-edge transfer for lifelong robot learning. In Proc. Annual Conf. Neural Information Processing Systems , pages 44776– 44791, 2023. 1, 6, 7 [35] Jun Liu, Jiantao Zhou, Jiandian Zeng, and Jinyu Tian. Di-fattack: Query-efficient black-box adversarial attack via dis-entangled feature space. In Proc. AAAI Conf. on Artificial Intelligence , pages 3666–3674, 2024. 3 [36] Jun Liu, Jiantao Zhou, Jiandian Zeng, Jinyu Tian, and Zheng Li. Difattack++: Query-efficient black-box adversarial at-tack via hierarchical disentangled feature space in cross-domain. arXiv preprint arXiv:2406.03017 , 2024. 3 [37] Yanpei Liu, Xinyun Chen, Chang Liu, and Dawn Song. Delving into transferable adversarial examples and black-box attacks. In Proc. Int’l Conf. Learning Representations ,2017. 3 [38] Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 , 2017. 6 [39] Guanxing Lu, Wenkai Guo, Chubin Zhang, Yuheng Zhou, Haonan Jiang, Zifeng Gao, Yansong Tang, and Ziwei Wang. Vla-rl: Towards masterful and general robotic manipula-tion with scalable reinforcement learning. arXiv preprint arXiv:2505.18719 , 2025. 2 [40] Hui Lu, Yi Yu, Song Xia, Yiming Yang, Deepu Rajan, Boon Poh Ng, Alex Kot, and Xudong Jiang. From pretrain to pain: Adversarial vulnerability of video foundation mod-els without task knowledge. In Proc. AAAI Conf. on Artificial Intelligence , 2026. 3 [41] Hui Lu, Yi Yu, Yiming Yang, Chenyu Yi, Xueyi Ke, Qixing Zhang, Bingquan Shen, Alex Kot, and Xudong Jiang. Make anything match your target: Universal adversarial perturba-tions against closed-source mllms via multi-crop routed meta optimization. arXiv preprint arXiv:2601.23179 , 2026. 3 [42] Aleksander Madry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras, and Adrian Vladu. Towards deep learn-ing models resistant to adversarial attacks. arXiv preprint arXiv:1706.06083 , 2017. 6 [43] Ari Morcos, Maithra Raghu, and Samy Bengio. Insights on representational similarity in neural networks with canoni-cal correlation. In Proc. Annual Conf. Neural Information Processing Systems , 2018. 4 [44] Maxime Oquab, Timoth´ ee Darcet, Th´ eo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. Dinov2: Learning robust visual features without supervision. 
+
+arXiv preprint arXiv:2304.07193 , 2023. 2, 3 [45] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and Sergey Levine. Fast: Efficient action tokenization for vision-language-action models. arXiv preprint arXiv:2501.09747 ,2025. 2 [46] Maithra Raghu, Justin Gilmer, Jason Yosinski, and Jascha Sohl-Dickstein. Svcca: Singular vector canonical correlation analysis for deep learning dynamics and interpretability. In 
+
+Proc. Annual Conf. Neural Information Processing Systems ,2017. 2, 4 [47] Alexander Robey, Zachary Ravichandran, Vijay Kumar, Hamed Hassani, and George J Pappas. Jailbreaking llm-controlled robots. In 2025 IEEE International Conference on Robotics and Automation (ICRA) , pages 11948–11956. IEEE, 2025. 1 [48] Prashant Shekhar, Bidur Devkota, Dumindu Samaraweera, Laxima Niure Kandel, and Manoj Babu. Do adversarial patches generalize? attack transferability study across real-time segmentation models in autonomous vehicles. In 2025 IEEE Security and Privacy Workshops (SPW) , pages 322– 328. IEEE, 2025. 3 [49] Jacob Springer, Melanie Mitchell, and Garrett Kenyon. Alittle robustness goes a long way: Leveraging robust features 22876 for targeted transfer attacks. In Proc. Annual Conf. Neural Information Processing Systems , pages 9759–9773, 2021. 4 [50] Andreas Steiner, Andr´ e Susano Pinto, Michael Tschannen, Daniel Keysers, Xiao Wang, Yonatan Bitton, Alexey Grit-senko, Matthias Minderer, Anthony Sherbondy, Shangbang Long, et al. Paligemma 2: A family of versatile vlms for transfer. arXiv preprint arXiv:2412.03555 , 2024. 2 [51] Shuhan Tan, Kairan Dou, Yue Zhao, and Philipp Kr¨ ahenb¨ uhl. Interactive post-training for vision-language-action models. arXiv preprint arXiv:2505.17016 , 2025. 2 [52] Octo Model Team, Dibya Ghosh, Homer Walke, Karl Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey Hejna, Tobias Kreiman, Charles Xu, et al. Octo: An open-source generalist robot policy. arXiv preprint arXiv:2405.12213 , 2024. 3 [53] Florian Tramer. Detecting adversarial examples is (nearly) as hard as classifying them. In Proc. Int’l Conf. Machine Learning , pages 21692–21702. PMLR, 2022. 3 [54] Homer Rich Walke, Kevin Black, Tony Z Zhao, Quan Vuong, Chongyi Zheng, Philippe Hansen-Estruch, An-dre Wang He, Vivek Myers, Moo Jin Kim, Max Du, et al. Bridgedata v2: A dataset for robot learning at scale. In Con-ference on Robot Learning , pages 1723–1736. PMLR, 2023. 1, 6, 7 [55] Chong Wang, Yi Yu, Lanqing Guo, and Bihan Wen. Benchmarking adversarial robustness of image shadow re-moval with shadow-adaptive attacks. In Proc. IEEE Int’l Conf. Acoustics, Speech, and Signal Processing , 2024. 2 [56] Kunyu Wang, Xuanran He, Wenxuan Wang, and Xiaosen Wang. Boosting Adversarial Transferability by Block Shuf-fle and Rotation. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , 2024. 3 [57] Taowen Wang, Cheng Han, James Liang, Wenhao Yang, Dongfang Liu, Luna Xinyu Zhang, Qifan Wang, Jiebo Luo, and Ruixiang Tang. Exploring the adversarial vulnerabilities of vision-language-action models in robotics. In Proc. IEEE Int’l Conf. Computer Vision , pages 6948–6958, 2025. 1, 3, 6, 7, 8, 4 [58] Xiaosen Wang and Kun He. Enhancing the transferability of adversarial attacks through variance tuning. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , 2021. 3[59] Xiaosen Wang, Xuanran He, Jingdong Wang, and Kun He. Admix: Enhancing the transferability of adversarial attacks. In Proc. IEEE Int’l Conf. Computer Vision , 2021. 3 [60] Zhibo Wang, Hengchang Guo, Zhifei Zhang, Wenxin Liu, Zhan Qin, and Kui Ren. Feature importance-aware transfer-able adversarial attacks. In Proc. IEEE Int’l Conf. Computer Vision , 2021. 3 [61] Junjie Wen, Yichen Zhu, Jinming Li, Minjie Zhu, Zhibin Tang, Kun Wu, Zhiyuan Xu, Ning Liu, Ran Cheng, Chaomin Shen, et al. Tinyvla: Towards fast, data-efficient vision-language-action models for robotic manipulation. IEEE Robotics and Automation Letters , 2025. 2 [62] Junjie Wen, Yichen Zhu, Minjie Zhu, Zhibin Tang, Jin-ming Li, Zhongyi Zhou, Xiaoyu Liu, Chaomin Shen, Yaxin Peng, and Feifei Feng. Diffusionvla: Scaling robot foun-dation models via unified diffusion and autoregression. In 
+
+Proc. Int’l Conf. Machine Learning , 2025. 2 [63] Song Xia, Wenhan Yang, Yi Yu, Xun Lin, Henghui Ding, Lingyu Duan, and Xudong Jiang. Transferable adversarial attacks on sam and its downstream models. In Proc. Annual Conf. Neural Information Processing Systems , pages 87545– 87568, 2024. 3 [64] Song Xia, Yi Yu, Xudong Jiang, and Henghui Ding. Mitigat-ing the curse of dimensionality for certified robustness via dual randomized smoothing. In Proc. Int’l Conf. Learning Representations , 2024. 1 [65] Zihao Xiao, Xianfeng Gao, Chilin Fu, Yinpeng Dong, Wei Gao, Xiaolu Zhang, Jun Zhou, and Jun Zhu. Improv-ing transferability of adversarial patches on face recognition with generative models. In Proc. IEEE Int’l Conf. Computer Vision and Pattern Recognition , pages 11845–11854, 2021. 3[66] Cihang Xie, Zhishuai Zhang, Yuyin Zhou, Song Bai, Jianyu Wang, Zhou Ren, and Alan L Yuille. Improving trans-ferability of adversarial examples with input diversity. In 
+
+Proc. IEEE Int’l Conf. Computer Vision and Pattern Recog-nition , 2019. 3 [67] Haochuan Xu, Yun Sing Koh, Shuhuai Huang, Zirun Zhou, Di Wang, Jun Sakuma, and Jingfeng Zhang. Model-agnostic adversarial attack and defense for vision-language-action models. arXiv preprint arXiv:2510.13237 , 2025. 1 [68] Kaidi Xu, Gaoyuan Zhang, Sijia Liu, Quanfu Fan, Mengshu Sun, Hongge Chen, Pin-Yu Chen, Yanzhi Wang, and Xue Lin. Adversarial t-shirt! evading person detectors in a phys-ical world. In Proc. IEEE European Conf. Computer Vision ,pages 665–681. Springer, 2020. 3 [69] Yi Yu, Wenhan Yang, Yap-Peng Tan, and Alex C Kot. Towards robust rain removal against adversarial attacks: A comprehensive benchmark analysis and beyond. In 
+
+Proc. IEEE Int’l Conf. Computer Vision and Pattern Recog-nition , 2022. 2 [70] Yi Yu, Song Xia, Xun Lin, Chenqi Kong, Wenhan Yang, Shi-jian Lu, Yap-Peng Tan, and Alex C Kot. Towards model resistant to transferable adversarial examples via trigger ac-tivation. IEEE Trans. on Information Forensics and Security ,2025. 1 [71] Yi Yu, Qixin Zhang, Shuhan Ye, Xun Lin, Qianshan Wei, Kun Wang, Wenhan Yang, Dacheng Tao, and Xudong Jiang. Time is all it takes: Spike-retiming attacks on event-driven spiking neural networks. In Proc. Int’l Conf. Learning Rep-resentations , 2026. 2 [72] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. Sigmoid loss for language image pre-training. In Proc. IEEE Int’l Conf. Computer Vision , 2023. 2, 3 [73] Hangtao Zhang, Chenyu Zhu, Xianlong Wang, Ziqi Zhou, Changgan Yin, Minghui Li, Lulu Xue, Yichen Wang, Sheng-shan Hu, Aishan Liu, et al. Badrobot: Jailbreaking embodied llms in the physical world. arXiv preprint arXiv:2407.20242 ,2024. 1 [74] Jianping Zhang, Weibin Wu, Jen-tse Huang, Yizhan Huang, Wenxuan Wang, Yuxin Su, and Michael R Lyu. Improv-ing adversarial transferability via neuron attribution-based 22877 attacks. In Proc. IEEE Int’l Conf. Computer Vision and Pat-tern Recognition , 2022. 3 [75] Yaoyuan Zhang, Yu-an Tan, Tian Chen, Xinrui Liu, Quanxin Zhang, and Yuanzhang Li. Enhancing the transferability of adversarial examples with random patch. In International Joint Conference on Artificial Intelligence , 2022. 3 [76] Mengnan Zhao, Lihe Zhang, Yuqiu Kong, and Baocai Yin. Fast adversarial training with smooth convergence. In 
+
+Proc. IEEE Int’l Conf. Computer Vision , pages 4720–4729, 2023. 1 [77] Mengnan Zhao, Lihe Zhang, Yuqiu Kong, and Baocai Yin. Catastrophic overfitting: A potential blessing in disguise. In 
+
+Proc. IEEE European Conf. Computer Vision , pages 293– 310. Springer, 2024. [78] Mengnan Zhao, Lihe Zhang, Wei Wang, Yuqiu Kong, and Baocai Yin. Adversarial attacks on scene graph genera-tion. IEEE Trans. on Information Forensics and Security ,19:3210–3225, 2024. [79] Mengnan Zhao, Lihe Zhang, Jingwen Ye, Huchuan Lu, Bao-cai Yin, and Xinchao Wang. Adversarial training: A survey. 
+
+arXiv preprint arXiv:2410.15042 , 2024. [80] Xueyang Zhou, Guiyao Tie, Guowen Zhang, Hechang Wang, Pan Zhou, and Lichao Sun. Badvla: Towards back-door attacks on vision-language-action models via objective-decoupled optimization. arXiv preprint arXiv:2505.16640 ,2025. 1 [81] Ziqi Zhou, Shengshan Hu, Minghui Li, Hangtao Zhang, Yechao Zhang, and Hai Jin. Advclip: Downstream-agnostic adversarial examples in multimodal contrastive learning. In 
+
+ACM Trans. Multimedia , pages 6311–6320, 2023. [82] Ziqi Zhou, Minghui Li, Wei Liu, Shengshan Hu, Yechao Zhang, Wei Wan, Lulu Xue, Leo Yu Zhang, Dezhong Yao, and Hai Jin. Securely fine-tuning pre-trained encoders against adversarial examples. In Proceedings of the 2024 IEEE Symposium on Security and Privacy (SP’24) , 2024. [83] Ziqi Zhou, Yufei Song, Minghui Li, Shengshan Hu, Xian-long Wang, Leo Yu Zhang, Dezhong Yao, and Hai Jin. Dark-sam: Fooling segment anything model to segment nothing. In Proc. Annual Conf. Neural Information Processing Sys-tems , 2024. [84] Ziqi Zhou, Yifan Hu, Yufei Song, Zijing Li, Shengshan Hu, Leo Yu Zhang, Dezhong Yao, Long Zheng, and Hai Jin. Van-ish into thin air: Cross-prompt universal adversarial attacks for sam2. In Proc. Annual Conf. Neural Information Pro-cessing Systems , 2025. [85] Ziqi Zhou, Bowen Li, Yufei Song, Shengshan Hu, Wei Wan, Leo Yu Zhang, Dezhong Yao, and Hai Jin. Numbod: Aspatial-frequency fusion attack against object detectors. In 
+
+Proc. AAAI Conf. on Artificial Intelligence , 2025. 1 [86] Bin Zhu, Bin Lin, Munan Ning, Yang Yan, Jiaxi Cui, HongFa Wang, Yatian Pang, Wenhao Jiang, Junwu Zhang, Zongwei Li, et al. Languagebind: Extending video-language pretrain-ing to n-modality by language-based semantic alignment. 
+
+arXiv preprint arXiv:2310.01852 , 2023. 2 [87] Hegui Zhu, Yuchen Ren, Xiaoyan Sui, Lianping Yang, and Wuming Jiang. Boosting adversarial transferability via gra-dient relevance attack. In Proc. IEEE Int’l Conf. Computer Vision , 2023. 3 [88] Rongyi Zhu, Zeliang Zhang, Susan Liang, Zhuo Liu, and Chenliang Xu. Learning to transform dynamically for better adversarial transferability. In Proc. IEEE Int’l Conf. Com-puter Vision and Pattern Recognition , 2024. 3 [89] Brianna Zitkovich, Tianhe Yu, Sichun Xu, Peng Xu, Ted Xiao, Fei Xia, Jialin Wu, Paul Wohlhart, Stefan Welker, Ayzaan Wahid, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In Conference on Robot Learning , pages 2165–2183. PMLR, 2023. 1, 2 22878

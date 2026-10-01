@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 512,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 1,
+      "index": 2,
+      "width": 512,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 8,
+      "index": 3,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 8,
+      "index": 4,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 8,
+      "index": 5,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 8,
+      "index": 6,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 8,
+      "index": 7,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-mao-beyond-success-refining-elegant-robot-manipulation-from-mixed-quality-data-via-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 8,
+      "index": 8,
+      "width": 960,
+      "height": 540
+    }
+  ]
+}

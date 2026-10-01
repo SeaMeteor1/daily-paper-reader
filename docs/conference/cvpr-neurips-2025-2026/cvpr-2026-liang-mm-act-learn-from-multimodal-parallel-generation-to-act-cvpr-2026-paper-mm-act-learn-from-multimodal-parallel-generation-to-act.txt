@@ -1,0 +1,303 @@
+Title: MM-ACT: Learn from Multimodal Parallel Generation to Act
+
+URL Source: https://openaccess.thecvf.com/content/CVPR2026/papers/Liang_MM-ACT_Learn_from_Multimodal_Parallel_Generation_to_Act_CVPR_2026_paper.pdf
+
+Published Time: Sat, 16 May 2026 16:52:51 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# MM-ACT: Learn from Multimodal Parallel Generation to Act 
+
+# Haotian Liang 1,2* Xinyi Chen 5,2* Bin Wang 6,2* Mingkang Chen 4 Yitian Liu 3
+
+# Yuhao Zhang 3 Zanxin Chen 3 Tianshuo Yang 4,2 Yilun Chen 2 Jiangmiao Pang 2
+
+# Dong Liu 1 Xiaokang Yang 3 Yao Mu 3,2 † Wenqi Shao 2 Ping Luo 4       
+
+> 1University of Science and Technology of China 2Shanghai AI Laboratory 3Shanghai Jiao Tong University
+> 4The University of Hong Kong 5Fudan University 6Zhejiang University
+> lianghaotian@mail.ustc.edu.cn xinyichen25@m.fudan.edu.cn muyao@sjtu.edu.cn pluo@cs.hku.hk
+
+# Abstract 
+
+A generalist robotic policy needs both semantic un-derstanding for task planning and the ability to inter-act with the environment through predictive capabilities. To tackle this, we present MM-ACT, a unified Vision-Language-Action (VLA) model that integrates text, image, and action in shared token space and performs genera-tion across all three modalities. MM-ACT adopts a re-mask parallel decoding strategy for text and image gen-eration, and employs a one-step parallel decoding strat-egy for action generation to improve efficiency. We intro-duce Context-Shared Multimodal Learning, a unified train-ing paradigm that supervises generation in all three modal-ities from a shared context, enhancing action generation through cross-modal learning. Experiments were conducted on the LIBERO simulation and Franka real-robot setups as well as RoboTwin2.0 to assess in-domain and out-of-domain performances respectively. Our approach achieves a success rate of 96.3% on LIBERO, 72.0% across three tasks of real Franka, and 52.38% across eight bimanual tasks of RoboTwin2.0 with an additional gain of 9.25% from cross-modal learning. We release our codes, models and data at https://github.com/HHYHRHY/MM-ACT .
+
+# 1. Introduction 
+
+A generalist robotic policy requires both high-level seman-tic understanding and the ability to interact effectively with the environment. In recent years, Vision-Language-Action (VLA) models [3, 19–21, 24, 28, 46] have emerged as a promising paradigm for building generalist robotic poli-cies. These approaches typically build upon large-scale pretrained Vision-Language Models (VLMs) by integrat-ing action heads or expert modules to bridge perception and 
+
+> *Equal contribution.
+> †Corresponding author.
+
+control. However, while the underlying VLMs excel at vi-sual and semantic understanding, they often lack an explicit model of physical dynamics [15, 45, 51], which limits their ability to guide temporal action generation [10, 54]. Other works [7, 14, 18, 35, 59] further extend the con-ventional state-to-action imitation learning paradigm into a visual-prediction-driven decision and planning framework. By incorporating visual prediction into the policy learn-ing process, these approaches enable models to explicitly or implicitly model future visual dynamics, thereby achiev-ing stronger predictability and planning capabilities in com-plex interactive environments. Although these world mod-els [4, 37] excel in temporal and environmental dynamics, they are primarily trained for predictive objectives rather than task-oriented planning. This leads to limited instruc-tion understanding and sub-task planning capabilities. Recent unified VLA approaches have largely inherited the development paradigm of unified understanding and generation models [11, 34, 39, 43]. Instead of rethinking the policy architecture, these methods design action generation by closely following the base model’s modeling paradigm. For example, some works like [50] retain the autoregressive text generation paradigm while adopting parallel decoding strategy for image and action generation, forcing the model to learn to handle single-token prediction and block-level tokens prediction in forward process. This in turn requires multiple attention mechanisms and substantially increases both architectural and training pipeline complexity. Oth-ers such as [6, 40] adopt a fully autoregressive generation paradigm for text, image and action generation, which leads to slow inference speed for action generation. To address these challenges, we propose MM-ACT, a unified model that jointly generates text, image, and ac-tion using a parallel decoding strategy. MM-ACT integrates text, image and action into a unified sequence of discrete tokens through modality-specific tokenizers, and learns to predict task planning, future image prediction and action chunk using block-level masked token prediction. For text This CVPR paper is the Open Access version, provided by the Computer Vision Foundation. Except for this watermark, it is identical to the accepted version; the final published version of the proceedings is available on IEEE Xplore. 35080 Text Token Action Token Mask Token Image Token 
+
+# AR Unified VLA PD Unified VLA AR PD 
+
+Auto-regressive Parallel Decoding 
+
+# Hybrid Unified VLA                       
+
+> ①②③Generation Choices: AR AR AR AR PD PD PD
+> Task Planning Future Image Prediction Action Generation Figure 1. Comparison of different unified VLA paradigms. (a) Autoregressive (AR) unified VLA [50]: All three modalities—text, image, and action—are generated using an autoregressive approach. (b) Hybrid unified VLA [6, 40]: Text is generated autoregressively, while image and action are generated using a re-mask parallel decoding approach. (c) Parallel decoding (PD) unified VLA (Ours):
+> Converts images and instructions into a multimodal interleaved input, with text, image, and action generated through parallel decoding. This approach supports three separate generation settings: 1 ⃝sub-task planning, 2 ⃝future image prediction, and 3 ⃝action generation. 1⃝
+> 2⃝adopt a multiple-step parallel decoding strategy with re-masking, while 3 ⃝utilizes a one-step parallel decoding strategy.
+
+and image generation, MM-ACT adopts a re-mask paral-lel decoding strategy, while for action generation it em-ploys a one-step parallel decoding strategy to achieve low-latency inference. We further analyze the trade-offs be-tween these two strategies in terms of effectiveness and efficiency. Figure 1 compares our parallel-decoding uni-fied VLA with prior autoregressive and hybrid unified VLA paradigms. In contrast to prior approaches that rely on au-toregressive text modeling, MM-ACT uses bidirectional at-tention over the full multimodal sequence, providing a more unified architecture that simplifies the training pipeline. Rather than combining modality-specific decoders, MM-ACT fully unifies text, image, and action by representing them as equivalent discrete tokens and optimizes them with a masked-token objective under same decoding principle without modality specific attention or decoder design. Building upon this unified modeling, we further pro-pose Context-Shared Multimodal Learning , a training pipeline for three modalities generation. For identical mul-timodal context from robot’s current views, task instruc-tions, text descriptions and robot’s states, we annotate data across the following categories: task planning, which in-volves planning the overall task and determining which sub-task to execute; future image prediction, consisting of im-age that represent the completion image of executed action chunk; and action chunk, referring to the chunk-step actions from expert data at the current timestep t. After initial train-ing steps on text and image generation, we further perform forward processes for all three modalities under the shared context, aggregating their losses within same gradient ac-cumulation step for optimization. During deployment, the model performs action-only generation with one-step de-coding for efficiency. Since inference does not require ad-ditional multimodal generation, our method reduces latency and runs stably at a 40Hz action rate. Our experiments aim to validate the feasibility of our modeling approach and the action generation’s enhance-ment via our training pipeline. In simulation experiments, MM-ACT achieves an average of 96.3% performance on Libero, 52.38% in 8 tasks on RoboTwin2.0 and 72.0% on Franka real-world experiments, consistently outperforming overall baselines. Moreover, our proposed training pipeline achieves a 9.25% improvement in action generation perfor-mance compared to action-only learning baseline. Addi-tionally, we demonstrate that either text-action or image-action joint training can also yield performance gains. 
+
+# 2. Related Work 
+
+2.1. Discrete Diffusion Language Model 
+
+Discrete diffusion models have recently emerged as promis-ing alternatives to autoregressive language models. Unlike token-by-token decoding in AR models, diffusion-based ap-proaches generate sequences through iterative denoising of corrupted inputs. Early models [1, 17] demonstrated the feasibility of applying discrete denoising to text. Sub-sequent work [30] introduced improvements in masking strategies and training objectives. Large-scale bidirectional diffusion transformers [27, 44] further advanced perfor-mance, achieving competitive results across text and mul-timodal tasks. These efforts establish discrete diffusion as a viable and increasingly competitive generation paradigm. 35081 In this work, we explore extending discrete diffusion mod-els to the domain of action parallel decoding. 
+
+2.2. Unified Vision-Language Models 
+
+Autoregressive architectures have long been dominant in multimodal understanding, while diffusion-based models have become fundamental for image generation. Recently, there has been an increasing focus on developing unified frameworks [53] that combine these tasks. Unified models’ architectures can generally be abstracted into three com-ponents: modality-specific encoder, modality-fusion back-bone, and modality-specific decoder. For autoregressive ar-chitectures [13, 16, 34, 39, 42], both visual and language tokens are processed in a sequential manner, the modality-fusion backbone autoregressively predicts multimodal out-puts. For diffusion-based architectures [22, 32, 38, 44], the denoising process is extended from timestep and noise to incorporate multimodal contexts, such as textual content, images, or joint embeddings. In hybrid autoregressive and diffusion architectures [11, 43, 57], text tokens are gen-erated autoregressively, while image tokens are generated through a multi-step denoising process. We aim to unify the training objectives and attention mechanisms for mul-timodal generation to simplify the training design. At the same time, we aim to maintain fast action generation by adopting parallel decoding for actions. Therefore, we have chosen MMaDA [44] as the base model. 
+
+2.3. Vision-Language-Action Models 
+
+The Vision-Language-Action (VLA) model primarily aims to transform general visual-language inputs into a sequence of executable action outputs within a unified framework. Early methods built upon large-scale pre-trained Vision-Language Models (VLMs) by incorporating action heads or specialized action expert modules [3, 5, 19–21, 28, 33, 60]. This allowed the model to simultaneously pos-sess visual perception, language understanding, and action decision-making capabilities—achieving an end-to-end in-tegration of vision, language, and action in one unified sys-tem. To bridge the latency gap between VLMs and the real-time demands of action systems, a dual-system de-sign [2, 24, 29, 31, 49] is commonly adopted, decoupling the overall architecture into an upstream VLM and a down-stream action-prediction head. The latter either directly de-codes actions from the latent action tokens generated by the VLM, or employs an additional diffusion-based action head to the VLM’s outputs or intermediate hidden representa-tions. Various reasoning strategies [9, 12, 46, 48, 58] have also been used to augment the action model, ranging from purely language-based reasoning to multimodal reasoning capabilities. However, these approaches typically perform diffusion-based fine-tuning for action generation directly on top of autoregressive (AR) pre-trained backbones, result-ing in an objective misalignment between AR-based pre-training (token prediction) and diffusion-based fine-tuning (denoising). This inconsistency can introduce optimization misalignment and hinder the model’s ability to effectively leverage its pre-trained knowledge. Based on [27], [23] in-troduces discrete diffusion into action modeling and demon-strating the effectiveness of this approach. In contrast to the above methods, our proposed model is built upon a diffusion unified model [44] (dLLM) as the foundation for the VLA. This design ensures that the model follows a consistent parallel decoding based generation ob-jective during all training stages, thereby achieving better control and generalization capabilities. 
+
+# 3. Method 
+
+3.1. Model Design 
+
+We leverage an 8B-parameter Transformer-based [36] mask tokens predictor equipped with bidirectional atten-tion mechanisms to facilitate generation tasks across three modalities. Our model represents text, image and robot’s proprioceptive states as a single sequence of discrete to-kens, drawn from the concatenated vocabularies of three modality-specific tokenizers. We add a modal token be-fore the context that specifies the target generation modal-ity, append a fixed-length <mask> token block after the context. At inference time, we adopt different decoding strategies and compute probabilities at specific tokenizer positions corresponding to the modal token. Following MMaDA [44], we use the LLaDA [27] model’s tokenizer for text and employ pretrained image quantizer from Show-o [43], encoding and decoding image inputs and outputs, which uses 8,192 tokens as the image codebook. For image inputs, we first pad each image to a square, downsample it to 256×256 and encode it into 256 tokens. For image genera-tion, the model outputs 256 tokens, and the image quantizer decodes them into a 256×256 image. For robot’s states in-puts and action outputs, we adopt the bin tokenizer [19] as the quantization method, allocating 2,048 tokens dedicated to action generation. On the input side, each continuous scalar is first normed to the range of [-1, 1], then is quan-tized to a token in the codebook; on the output side, tokens are detokenized back into continuous scalars to represent continuous action values. We concatenate action codebook to the end of the tokenizers, without affecting the original text tokenizer and image codebook. 
+
+3.2. Context-Shared Multimodal Learning 
+
+Context-Shared Multimodal Input We use a shared context for the generation tasks across the three modal-ities. The context for each modality is defined as 
+
+Cmodal = <modal> + sharedinput , where the modal token  <modal> ∈ { <|mm2a|> , <|mmu|> , <|t2i|> }.35082 MM-ACT Unmask   
+
+> &Remask
+> Vision Token Text Token State/Action Token Mask Token
+> Prompt Response
+
+# ... 
+
+> Response Block
+
+# ... ... ... 
+
+> Tokenizer
+> Modal Token
+
+# ...  
+
+> *· denotes a space ** <|token|> denotes a placeholder for special tokens
+> Response
+
+# ... 
+
+> Response Block
+
+# ...         
+
+> One-Step
+> (a) (b)
+> or
+> <|sostate|> [2.087e-04, 2.440e-02, 5.136e-03, ..., 9.819e-02 ]<|eostate|>
+> [subtask] I need to finish this task by grasping hamburg with left grippers, placing hamburg on tray..., so now I should continue to ...
+> Action Chunk
+> Multi-view Images Generated Image
+> <|eoi|> Move·the·soft·hamburg·with·smooth ·wrapper·and·the·French·fries·to·the·dark·brown ·tray·using·both·arms.·Robot·state: <|mm2a|> Robot ·observation: <|soi|>
+
+Figure 2. The architecture of MM-ACT. MM-ACT uses modality-specific tokenizers to tokenize text, image, and action into discrete tokens within a shared space. Given the shared multimodal input, the model determines whether to execute task planning, future image prediction, or action generation based on the modal token, with each task corresponding to the generation of text, image, or action. 
+
+sharedinput is a modality-interleaved token sequence that follows a predefined template to convert the inputs of robot’s multi-view observations, task instructions, text de-scriptions, and optionally the robot’s states. We append a fixed-length block for image and action modals after Cmodal . Specifically, the text block size is set to 256 to accommodate task planning sequence. We con-catenate variable-length textual annotations after the con-text and append <eos> tokens to match the maximum se-quence length. The image block size is also 256, enabling the generation of a single image. The action block size 
+
+Nact block = daction ∗ Nchunk size , where daction is the di-mension of action and Nchunk size is the number of actions in one chunk. It enables chunk-wise action generation, with 
+
+Nchunk size kept fixed during both training and inference. We set the same maximum sequence length for the inputs of all three modalities, and shorter sequences are padded with the <pad> token to match this maximum length. 
+
+Multimodal Learning with Unified Objective The gen-eration tasks across the three modalities share a common context, and we append modality-specific blocks with mask tokens after the context to train generation capability. Un-like approaches that combine multiple objectives, such as autoregressive text generation and diffusion-based genera-tion for images [57] or actions [41], we adopt the same optimization objective to train generation across all three modalities. We model the specific block of each modality as a token sequence x0 =  x10, x 20, . . . , x L
+
+> 0
+
+, L is the se-quence length. For a continuous time t ∈ (0 , 1] , construct a masked sequence xt by independently masking each po-sition with probability pmask = fmodal (t), where fmodal is the function of mask schedule in each modal. The condi-tional distribution of xit can be formed as: 
+
+qt(xit | fmodal (t), x i
+
+> 0
+
+) = (1 − fmodal (t)) 1{xit = xi
+
+> 0
+
+}
+
++ fmodal (t) 1{xit = <mask> }.
+
+(1) We use a linear schedule for text modality followed by LLaDA [27], and a cosine schedule for both the image and action modalities to better align with the noise schedule for continuous denoising. The conditional distribution of xt
+
+can then be written as: 
+
+qt(xt | x0) = 
+
+> L
+
+Y
+
+> i=1
+
+qt(xit | fmodal (t), x i
+
+> 0
+
+) (2) We set t = 1 for action modal to train the model generating all tokens from a fully masked sequence in a single forward pass, the masked sequence xt = <mask> × L.Formally, MM-ACT is trained as a mask token predictor, a parametric model pθ (· | Cmodal , x t) that takes Cmodal and 
+
+xt as inputs and predicts all masked tokens simultaneously. We define a unified cross-entropy loss over the masked to-kens across the three modalities. 35083 w/ <|mm2a|> <|t2i|> <|mmu|>          
+
+> Vision Tokenizer
+> [pos xpos ypos zrot x
+> rot yrot zgripper] Robotic·Prompt:·language
+> ·instructions,·descriptions
+> Language Tokenizer Action Tokenizer
+> MMMM
+
+# ... M M M M...         
+
+> w/ w/
+> MM-ACT
+> Rob otic ·Prompt :·language
+> ·instructions ,·descriptions
+
+# ...    
+
+> Prob Mask for Training
+> 1026 973 869 1756
+
+# ...       
+
+> Mask-All
+> [M] otic ·Prompt :[M]
+> ·instructions ,·descriptions
+
+Figure 3. Training pipeline of MM-ACT. Within the shared context, ground truth of three modalities are masked according to the decoding strategy of each modality, and appended to the context. The model takes these inputs to perform forward processes across three modality generation tasks, computing the loss specifically on the masked tokens. 
+
+L(θ) = − Et,x 0,x t
+
+h X
+
+> modal ∈M
+
+λmodal 
+
+t
+
+X
+
+> i∈I modal
+
+1{xit = M }× log pθ (xi 
+
+> 0
+
+| Cmodal , x t)
+
+i
+
+.
+
+(3) where x0 is sampled from the training data, xt is sam-pled from qt(xt | x0), M is <mask> token. The indicator function 1[·] ensures that the cross-entropy loss is computed only for masked tokens. M =
+
+{<|mm2a|> , <|mmu|> , <|t2i|> }, and λmodal repre-sents the weight of each modal’s loss, used to control the impact of each modal on model optimization during train-ing process. In Figure 3, we provide an illustration of our mask data construction process during training. We adopt a two-stage training strategy. In Stage 1, we set 
+
+λmm2a to 0 and initially train the model exclusively on text and image generation tasks, optimizing until the losses for text and image modalities reach low values. In Stage 2, we primarily focus on supervising action generation, adjusting 
+
+λmmu and λt2i to approximately 0.05–0 .1 to maintain their generative capabilities. 
+
+Parallel Decoding Strategy We formulate the model as a block-level masked-token predictor. For action genera-tion, we produce all action tokens in a single forward pass to maintain efficiency. We also introduce re-mask decod-ing strategy for action generation in our design, adopt a low-confidence remasking strategy and use a cosine noise schedule consistent with MAGVIT-v2 [47]. We compare effectiveness and efficiency in Appendix A.2. We employ re-mask decoding strategy for image generation, with same re-mask strategy and noise schedule to action. For text generation, we limit the generation sequence length to 256 tokens. This constraint is adopted because task planning annotations in our manipulation tasks can typ-ically be completed within this range. Furthermore, this limit aligns with the default block size of LLaDA [27], allowing us to restrict the entire generation process to a single block. As a result, we do not employ the semi-autoregressive approach for text generation. Instead, text, image, and action generation are all performed within one block. Logits are computed for all masked positions, and a subset of tokens selected either randomly or based on con-fidence scores is predicted. The masking schedule is linear, and the forward process is repeated for a fixed number of steps. More details can be found in Appendix C. 
+
+# 4. Experiments 
+
+Our experiments center around two primary questions: (1) whether our model architecture can effectively perform ac-tion generation to accomplish manipulation tasks in both in-domain and out-of-domain settings; and (2) what kind of improvements our training pipeline provides across genera-tion tasks in different modalities. In 4.1,we describe the benchmarks and experimental se-tups used in both simulation and real-robot environments. 4.2 introduces the datasets and training details. 4.3 presents the evaluation results for action generation. 4.4 provides an analysis of how our training pipeline improves action gen-eration and how the image modality is affected under the training pipeline. Additional details about experiments of modalities effects and ablation studies on decoding strate-gies of each modalities and robot’s state in text or image’s context can be found in Appendix A. 35084 Model Spatial SR (%) Object SR (%) Goal SR (%) Long SR (%) Average SR (%) 
+
+OpenVLA [19] 84.7 88.4 79.2 53.7 76.5 
+
+π0 + FAST [28] 96.4 96.8 88.6 60.2 85.5 
+
+π0 [3] 96.8 98.8 95.8 85.2 94.2 OpenVLA-OFT [20] 96.2 98.3 96.2 90.7 95.4 CoT-VLA [55] 87.5 91.6 87.6 69.0 81.1 TraceVLA[56] 84.6 85.2 75.1 54.1 74.8 DreamVLA [52] 97.5 94.0 89.5 89.5 92.6 WorldVLA (512*512) [6] 87.6 96.2 83.4 60.0 81.8 UniVLA [40] 95.4 98.8 93.6 94.0 95.5 
+
+MM-ACT (Vanilla) 97.8 99.4 94.8 88.0 95.0 
+
+MM-ACT (+Text in Long) - - - 93.0( +5.0% ) 96.3                                                                      
+
+> Table 1. LIBERO task performance results (%). Bold values denote the best performance, and underlined values denote the second-best.
+> Model Adjust Bottle Beat Hammer Block Click Bell Dump Bin Bigbin
+> π0[3] 89% 68% 40% 61%
+> OpenVLA-OFT [20] 64% 7% 24% 31%
+> MM-ACT (Vanilla) 51% 61% 86% 13%
+> MM-ACT (+Text) 75% 67% 91% 13%
+> MM-ACT (+Image) 72% 64% 91% 8%
+> MM-ACT (+Text&Image) 71% 78% 95% 13%
+> Model Move Playingcard Away Lift Pot Place Burger Fries Place Can Basket
+> π0[3] 47% 29% 41% 10% OpenVLA-OFT [20] 17% 3% 31% 8%
+> MM-ACT (Vanilla) 30% 40% 46% 18%
+> MM-ACT (+Text) 24% 28% 56% 18%
+> MM-ACT (+Image) 39% 31% 72% 13%
+> MM-ACT (+Text&Image) 39% 31% 73% 19% Overall Avg: π0= 48.13%, OpenVLA-OFT = 23.13%, MM-ACT (Vanilla) = 43.13% MM-ACT (+Text) = 46.5%( +3.37% )MM-ACT (+Image) = 48.75%( +5.62% )MM-ACT (+Text&Image) = 52.38% (+9.25% )
+> Table 2. RoboTwin task performance results. Bold values denote the best performance, and underlined values denote the second-best.
+
+4.1. Benchmark 
+
+Simulation Benchmark We conducted validation of di-verse tasks in the simulation experiments. 
+
+LIBERO [25] is a benchmark based on the Franka robotic arm, designed to evaluate lifelong learning and knowledge transfer capabilities in robots. In this work, we adopt four sub-benchmarks from LIBERO: Libero-Spatial for spatial reasoning, Libero-Object for object-centric un-derstanding, Libero-Goal for goal-conditioned variations, and Libero-Long for long-horizon, compositional tasks. Each sub-benchmark contains 10 distinct tasks, and each task is provided with 50 tele-operated demonstrations. 
+
+RoboTwin [8, 26] is a simulation benchmark de-signed for bimanual robotic manipulation. We employ Robotwin2.0 [8] for our experiments. This simulation plat-form provides a multi-task data collection and evaluation framework across multiple robot embodiments. By intro-ducing a large variety of scenes and objects for domain ran-domization, it both scales up the available robot training data and enables out-of-domain, unseen evaluation. In this work, we adopt the Agilex Piper dual-arm setup and eval-uate on eight representative tasks in unseen settings, where the task instructions, environments and object locations are all unseen in training datasets. 
+
+Real-world Experiments We employ Franka real-world experiments for testing the in-domain action generation ability among our model and baselines. We use an Intel RealSense D435 camera mounted on the wrist and an Intel RealSense D435i camera positioned as a third-person view to provide visual observations for the model. We design three manipulation tasks—press button, stack small block on big block, and sort vegetables and fruits (see Figure 4 for task illustrations). For each task and each model, we conduct 20 evaluation trials. For different tasks, we employ distinct success rate calculation methods. For press button and stack block, the task is considered successful when the entire task is completed. For sort vegetables and fruits, the success rate is calculated based on the number of objects 35085 D435 Camera Franka Research 3 Robotiq 2F-85 Gripper  
+
+> Task 1: Press Button Task 2: Stack Small Block on Big Block Task 3: Sort Vegetables and Fruits
+> D435I Camera
+
+(a) (b) Figure 4. (a) Franka real-world setup. The Franka Research 3 robot, equipped with a D435i camera as an external camera, a D435 camera as a wrist camera, and a Robotiq 2F-85 gripper, is shown in the experimental setup. (b) Task examples. Press Button: The robot presses the blue button. Stack Small Block on Big Block: The robot stacks the small yellow block on top of the large yellow block. Sort Vegetables and Fruits: The robot places fruits from the rack into the right plate and vegetables into the left plate. 
+
+correctly placed in the right spot. 
+
+Baselines We evaluate our method against three major paradigms: (1) VLM-based VLA (e.g. OpenVLA [19], OpenVLA-OFT [20], π0 [3]), which focus primarily on semantic understanding but generally lack dynamic mod-eling; (2) Visual Prediction VLA (e.g. CoT-VLA [55], TraceVLA [56], DreamVLA [52]), which emphasize future prediction but have relatively limited task reasoning; and (3) Unified VLA based on the unified model architecture (e.g, UniVLA [40], WorldVLA [6]), which possess the ability to generate multiple modalities and is capable of performing visual or textual reasoning. 
+
+4.2. Implementation Details 
+
+Datasets For LIBERO benchmark, we use the official datasets provided from the benchmark. To verify whether our training pipeline can leverage text-based task planning to improve action generation, we focus on the long-horizon LIBERO-Long setting. We manually decompose each of the 10 tasks into a sequence of subtasks, annotate keyframes corresponding to subtask transitions for every episode, and then generate subtask planning labels for each frame using a template-based scheme. For RoboTwin2.0 benchmark, we collect 500 expert episodes per task under the domain-randomized setting and automatically filter out trajectories exhibiting undesirable behaviors such as overly long pauses, resulting in a total of about 70k training samples. We further design an au-tomatic subtask-annotation framework on simulation plat-form, based on the rule-based trajectory generation used for collecting RoboTwin expert data. We timestamp each in-vocation of motion, grasp, and place primitives from the skill library, and attach task-specific language descriptions for each skill function called in each task. This allows us to automatically obtain the executed action chunk, the corre-sponding subtask language annotation and the future image after action execution for every frame. For each Franka real-robot task, we collect 100 demon-stration trajectories via manual teleoperation. All of our model weights are directly trained from the base weights of MMaDA [44] on the above datasets. More details of our datasets can be found in Appendix B. 
+
+Training Details We train our model with batch size of 128 and action chunk size of 8 across three experiments. For LIBERO benchmarks, we train four separate models, one per benchmark, for about 15k steps each. For eight RoboTwin tasks, we adopt multi-task training and optimize action generation for about 27k steps. In the Franka real-robot experiments, we train for roughly 8k steps per task. More details can be found at Appendix A.3. 
+
+4.3. Evaluation Results 
+
+Benchmark Results As shown in Table 1, MM-ACT achieves the best average success rate of 96.3%, surpassing all existing baselines. Specifically, the vanilla version of MM-ACT achieves success rates of 97.8%, 99.4%, 94.8%, and 88.0% on Libero-Spatial, Libero-Object, Libero-Goal, and Libero-Long respectively. For VLM-based VLA, our approach outperforms OpenVLA by 19.8%, π0 + FAST by 10.8%, π0 by 2.1%, and OpenVLA-OFT by 0.9%. For Vi-sual Prediction VLA, our method surpasses CoT-VLA by 15.2%, TraceVLA by 21.5%, and DreamVLA by 3.7%. In the case of Unified VLA, our approach exceeds WorldVLA by 14.5% and UniVLA by 0.8%. This validates the effec-tiveness of MM-ACT in terms of model architecture and training paradigms. Furthermore, as shown in the last two rows of the table, jointly optimizing the model for both task planning and action generation during training effectively improves its capability in long-horizon planning. In partic-ular, the success rate on Libero-Long increases from 88.0% to 93.0%, achieving a notable improvement of +5.0%. Table 2 presents the main results of different VLA mod-els on the RoboTwin benchmark across eight manipulation tasks. MM-ACT achieved the best average performance of 35086 Model Press Button Stack Block Sort Vegetable and Fruits Average 
+
+π0 [3] 75.0 70.0 65.0 70.0 OpenVLA-OFT [20] 70.0 50.0 56.0 58.6 
+
+MM-ACT 80.0 70.0 66.0 72.0 
+
+Table 3. Main results of Franka Real-world Experiments. (a) Task: Lift Pot. Top: Predictions by our model. Bottom: Ground truth. (b) Task: Adjust Bottle. Top: Predictions by our model. Bottom: Ground truth. 
+
+> (c) Task: Beat Block Hammer. Top: Predictions by our model. Bottom: Ground truth. (d) Task: Place Burger Fries. Top: Predictions by our model. Bottom: Ground truth.
+
+Figure 5. Visualization of image generation by MM-ACT on RoboTwin unseen environments. (a) and (b) show the generation results in clean scenes, (c) and (d) show the generation results in domain-randomized scenes. All of the scenes test the model’s performance in the out-of-domain setting. The top part shows the images generated by our model, while the bottom part represents the ground truth. 
+
+52.38%, surpassing π0 by 4.25% and OpenVLA-OFT by 29.25% in terms of average success rate. As detailed in Table 3, in the real-world Franka experi-ments, MM-ACT achieved the highest average success rate of 72.0%, far surpassing π0 at 70.0% and OpenVLA-OFT at 58.6%. This clearly demonstrates the superiority of MM-ACT and further confirms its ability to successfully tackle challenging real-world tasks. 
+
+4.4. Analysis on Training Pipeline 
+
+Action Enhancement via Multimodal Learning We present the experimental results of multimodal learning in Table 1 and Table 2. Specifically, Table 1 demonstrates the effectiveness of our training pipeline, where we si-multaneously train task planning and action generation on the LIBERO-Long long-horizon tasks. Compared with the baseline trained under an identical setting but generating ac-tions only, our approach achieves a 5.0% improvement in success rate. Table 2 further compares the success rates among action-only training, text-action training, image-action training, and unified text-image-action training. Our context-shared multimodal learning approach has led to an increase in success rates for action generation, with a 3.37% improvement when co-trained with text, a 5.62% increase when co-trained with image, and a 9.25% boost when all three modalities—text, image and action—were jointly trained, achieving the highest success rate of 52.38%. This also validates the effectiveness of our training pipeline. 
+
+Image Quality Assessment Figure 5 presents the gener-ation results of MM-ACT (+Image) in clean and cluttered unseen scenes on RoboTwin. It can be observed that the generated images closely resemble the subgoal image, re-taining key information and effectively predicting dynamic changes in the environment. More experimental results can be found in Appendix A.1. 
+
+# 5. Conclusion 
+
+We present MM-ACT, a unified Vision-Language-Action model that generates text, image, and robot’s action through a shared discrete token space and parallel decoding with bidirectional attention. To enhance cross-modal learning, we propose Context-Shared Multimodal Learning, which jointly supervises all modalities from the same context, fos-tering synergy among task planning, future image predic-tion and action generation. MM-ACT achieves strong re-sults across benchmarks: 96.3% on LIBERO, 52.38% on RoboTwin2.0 eight tasks, and 72.0% on Franka real-world tasks, with context-shared multimodal learning pipeline yielding +9.25% gains in out-of-domain performance. Ab-lation studies validate the trade-offs between one-step par-allel decoding and re-mask strategy. Overall, MM-ACT of-fers a compact and effective framework for discrete multi-modal generation in embodied agents. 35087 Acknowledgments 
+
+This paper was supported by Shanghai Artificial Intel-ligence Laboratory, partially supported by the National Key R&D Program of China No.2022ZD0161000 and the General Research Fund of Hong Kong No.17208825. 
+
+# References 
+
+[1] Jacob Austin, Daniel D. Johnson, Jonathan Ho, Daniel Tar-low, and Rianne van den Berg. Structured denoising diffu-sion models in discrete state-spaces. In Advances in Neural Information Processing Systems 34 (NeurIPS 2021) , pages 17981–17993, 2021. 2 [2] Johan Bjorck, Fernando Casta˜ neda, Nikita Cherniadev, Xingye Da, Runyu Ding, Linxi Fan, Yu Fang, Dieter Fox, Fengyuan Hu, Spencer Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv preprint arXiv:2503.14734 , 2025. 3 [3] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom, Karol Hausman, Brian Ichter, et al. \pi 0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 , 2024. 1, 3, 6, 7, 8 [4] Andreas Blattmann, Tim Dockhorn, Sumith Kulal, Daniel Mendelevitch, Maciej Kilian, Dominik Lorenz, Yam Levi, Zion English, Vikram Voleti, Adam Letts, et al. Stable video diffusion: Scaling latent video diffusion models to large datasets. arXiv preprint arXiv:2311.15127 , 2023. 1 [5] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen Chebotar, Joseph Dabis, Chelsea Finn, Keerthana Gopalakr-ishnan, Karol Hausman, Alexander Herzog, Jasmine Hsu, Julian Ibarz, Brian Ichter, Alex Irpan, Tomas Jackson, Sally Jesmonth, Nikhil J. Joshi, Ryan Julian, Dmitry Kalash-nikov, Yuheng Kuang, Isabel Leal, Kuang-Huei Lee, Sergey Levine, Yao Lu, Utsav Malla, Deeksha Manjunath, Igor Mordatch, Ofir Nachum, Carolina Parada, Jodilyn Peralta, Emily Perez, Karl Pertsch, Jornell Quiambao, Kanishka Rao, Michael S. Ryoo, Grecia Salazar, Pannag R. Sanketi, Kevin Sayed, Jaspiar Singh, Sumedh Sontakke, Austin Stone, Clay-ton Tan, Huong Tran, Vincent Vanhoucke, Steve Vega, Quan Vuong, Fei Xia, Ted Xiao, Peng Xu, Sichun Xu, Tianhe Yu, and Brianna Zitkovich. Rt-1: Robotics transformer for real-world control at scale. In Robotics: Science and Systems (RSS) , 2023. 3 [6] Jun Cen, Chaohui Yu, Hangjie Yuan, Yuming Jiang, Siteng Huang, Jiayan Guo, Xin Li, Yibing Song, Hao Luo, Fan Wang, et al. Worldvla: Towards autoregressive action world model. arXiv preprint arXiv:2506.21539 , 2025. 1, 2, 6, 7 [7] Jiayi Chen, Wenxuan Song, Pengxiang Ding, Ziyang Zhou, Han Zhao, Feilong Tang, Donglin Wang, and Haoang Li. Unified diffusion vla: Vision-language-action model via joint discrete denoising diffusion process. arXiv preprint arXiv:2511.01718 , 2025. 1 [8] Tianxing Chen, Zanxin Chen, Baijun Chen, Zijian Cai, Yibin Liu, Zixuan Li, Qiwei Liang, Xianliang Lin, Yiheng Ge, Zhenyu Gu, et al. Robotwin 2.0: A scalable data gen-erator and benchmark with strong domain randomization for robust bimanual robotic manipulation. arXiv preprint arXiv:2506.18088 , 2025. 6 [9] Xinyi Chen, Yilun Chen, Yanwei Fu, Ning Gao, Jiaya Jia, Weiyang Jin, Hao Li, Yao Mu, Jiangmiao Pang, Yu Qiao, et al. Internvla-m1: A spatially guided vision-language-action framework for generalist robot policy. arXiv preprint arXiv:2510.13778 , 2025. 3 [10] Wei Chow, Jiageng Mao, Boyi Li, Daniel Seita, Vitor Guizilini, and Yue Wang. Physbench: Benchmarking and enhancing vision-language models for physical world under-standing. arXiv preprint arXiv:2501.16411 , 2025. 1 [11] Chaorui Deng, Deyao Zhu, Kunchang Li, Chenhui Gou, Feng Li, Zeyu Wang, Shu Zhong, Weihao Yu, Xiaonan Nie, Ziang Song, et al. Emerging properties in unified multimodal pretraining. arXiv preprint arXiv:2505.14683 , 2025. 1, 3 [12] Shengliang Deng, Mi Yan, Songlin Wei, Haixin Ma, Yuxin Yang, Jiayi Chen, Zhiqi Zhang, Taoyu Yang, Xuheng Zhang, Wenhao Zhang, et al. Graspvla: a grasping foundation model pre-trained on billion-scale synthetic action data. arXiv preprint arXiv:2505.03233 , 2025. 3 [13] Runpei Dong, Chunrui Han, Yuang Peng, Zekun Qi, Zheng Ge, Jinrong Yang, Liang Zhao, Jianjian Sun, Hongyu Zhou, Haoran Wei, et al. Dreamllm: Synergistic multimodal com-prehension and creation. arXiv preprint arXiv:2309.11499 ,2023. 3 [14] Yilun Du, Sherry Yang, Bo Dai, Hanjun Dai, Ofir Nachum, Josh Tenenbaum, Dale Schuurmans, and Pieter Abbeel. Learning universal policies via text-guided video genera-tion. Advances in neural information processing systems ,36:9156–9172, 2023. 1 [15] Ning Gao, Yilun Chen, Shuai Yang, Xinyi Chen, Yang Tian, Hao Li, Haifeng Huang, Hanqing Wang, Tai Wang, and Jiangmiao Pang. Genmanip: Llm-driven simulation for gen-eralizable instruction-following manipulation. In Proceed-ings of the Computer Vision and Pattern Recognition Con-ference , pages 12187–12198, 2025. 1 [16] Yuying Ge, Sijie Zhao, Jinguo Zhu, Yixiao Ge, Kun Yi, Lin Song, Chen Li, Xiaohan Ding, and Ying Shan. Seed-x: Mul-timodal models with unified multi-granularity comprehen-sion and generation. arXiv preprint arXiv:2404.14396 , 2024. 3[17] Emiel Hoogeboom, Didrik Nielsen, Priyank Jaini, Patrick Forr´ e, and Max Welling. Argmax flows and multinomial dif-fusion: Learning categorical distributions. In Advances in Neural Information Processing Systems 34 (NeurIPS 2021) ,pages 12454–12465, 2021. 2 [18] Yucheng Hu, Yanjiang Guo, Pengchao Wang, Xiaoyu Chen, Yen-Jen Wang, Jianke Zhang, Koushil Sreenath, Chaochao Lu, and Jianyu Chen. Video prediction policy: A general-ist robot policy with predictive visual representations. arXiv preprint arXiv:2412.14803 , 2024. 1 [19] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Foster, Grace Lam, Pannag Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. 1, 3, 6, 7 [20] Moo Jin Kim, Chelsea Finn, and Percy Liang. Fine-tuning 35088 vision-language-action models: Optimizing speed and suc-cess. arXiv preprint arXiv:2502.19645 , 2025. 6, 7, 8 [21] Hao Li, Shuai Yang, Yilun Chen, Yang Tian, Xiaoda Yang, Xinyi Chen, Hanqing Wang, Tai Wang, Feng Zhao, Dahua Lin, et al. Cronusvla: Transferring latent motion across time for multi-frame prediction in manipulation. arXiv preprint arXiv:2506.19816 , 2025. 1, 3 [22] Zijie Li, Henry Li, Yichun Shi, Amir Barati Farimani, Yu-val Kluger, Linjie Yang, and Peng Wang. Dual diffusion for unified image generation and understanding. In Proceedings of the Computer Vision and Pattern Recognition Conference ,pages 2779–2790, 2025. 3 [23] Zhixuan Liang, Yizhuo Li, Tianshuo Yang, Chengyue Wu, Sitong Mao, Tian Nian, Liuao Pei, Shunbo Zhou, Xiaokang Yang, Jiangmiao Pang, et al. Discrete diffusion vla: Bring-ing discrete diffusion to action decoding in vision-language-action policies. arXiv preprint arXiv:2508.20072 , 2025. 3 [24] Fanqi Lin, Ruiqian Nai, Yingdong Hu, Jiacheng You, Jun-ming Zhao, and Yang Gao. Onetwovla: A unified vision-language-action model with adaptive reasoning. arXiv preprint arXiv:2505.11917 , 2025. 1, 3 [25] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu, Yuke Zhu, and Peter Stone. Libero: Benchmarking knowl-edge transfer for lifelong robot learning. Advances in Neural Information Processing Systems , 36:44776–44791, 2023. 6 [26] Yao Mu, Tianxing Chen, Shijia Peng, Zanxin Chen, Zeyu Gao, Yude Zou, Lunkai Lin, Zhiqiang Xie, and Ping Luo. Robotwin: Dual-arm robot benchmark with generative digi-tal twins (early version). In European Conference on Com-puter Vision , pages 264–273. Springer, 2024. 6 [27] Shen Nie, Fengqi Zhu, Zebin You, Xiaolu Zhang, Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong Wen, and Chongxuan Li. Large language diffusion models. arXiv preprint arXiv:2502.09992 , 2025. 2, 3, 4, 5 [28] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and Sergey Levine. Fast: Efficient action tokenization for vision-language-action models. arXiv preprint arXiv:2501.09747 ,2025. 1, 3, 6 [29] Delin Qu, Haoming Song, Qizhi Chen, Zhaoqing Chen, Xianqiang Gao, Xinyi Ye, Qi Lv, Modi Shi, Guanghui Ren, Cheng Ruan, et al. Eo-1: Interleaved vision-text-action pretraining for general robot control. arXiv preprint arXiv:2508.21112 , 2025. 3 [30] Subham Sekhar Sahoo, Marianne Arriola, Aaron Gokaslan, Edgar Mariano Marroquin, Justin T. Chiu, Alexander M. Rush, Yair Schiff, and Volodymyr Kuleshov. Simple and effective masked diffusion language models. In 38th Con-ference on Neural Information Processing Systems (NeurIPS 2024) , 2024. 2 [31] Lucy Xiaoyang Shi, Brian Ichter, Michael Equi, Liyim-ing Ke, Karl Pertsch, Quan Vuong, James Tanner, Anna Walling, Haohuan Wang, Niccolo Fusai, et al. Hi robot: Open-ended instruction following with hierarchical vision-language-action models. arXiv preprint arXiv:2502.19417 ,2025. 3 [32] Qingyu Shi, Jinbin Bai, Zhuoran Zhao, Wenhao Chai, Kaidong Yu, Jianzong Wu, Shuangyong Song, Yunhai Tong, Xiangtai Li, Xuelong Li, et al. Muddit: Liberating gener-ation beyond text-to-image with a unified discrete diffusion model. arXiv preprint arXiv:2505.23606 , 2025. 3 [33] Wenxuan Song, Jiayi Chen, Pengxiang Ding, Han Zhao, Wei Zhao, Zhide Zhong, Zongyuan Ge, Jun Ma, and Haoang Li. Accelerating vision-language-action model integrated with action chunking via parallel decoding. arXiv preprint arXiv:2503.02310 , 2025. 3 [34] Chameleon Team. Chameleon: Mixed-modal early-fusion foundation models. arXiv preprint arXiv:2405.09818 , 2024. 1, 3 [35] Yang Tian, Sizhe Yang, Jia Zeng, Ping Wang, Dahua Lin, Hao Dong, and Jiangmiao Pang. Predictive inverse dynamics models are scalable learners for robotic manipulation. arXiv preprint arXiv:2412.15109 , 2024. 1 [36] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. 3 [37] Team Wan, Ang Wang, Baole Ai, Bin Wen, Chaojie Mao, Chen-Wei Xie, Di Chen, Feiwu Yu, Haiming Zhao, Jianx-iao Yang, Jianyuan Zeng, Jiayu Wang, Jingfeng Zhang, Jin-gren Zhou, Jinkai Wang, Jixuan Chen, Kai Zhu, Kang Zhao, Keyu Yan, Lianghua Huang, Mengyang Feng, Ningyi Zhang, Pandeng Li, Pingyu Wu, Ruihang Chu, Ruili Feng, Shiwei Zhang, Siyang Sun, Tao Fang, Tianxing Wang, Tianyi Gui, Tingyu Weng, Tong Shen, Wei Lin, Wei Wang, Wei Wang, Wenmeng Zhou, Wente Wang, Wenting Shen, Wenyuan Yu, Xianzhong Shi, Xiaoming Huang, Xin Xu, Yan Kou, Yangyu Lv, Yifei Li, Yijing Liu, Yiming Wang, Yingya Zhang, Yi-tong Huang, Yong Li, You Wu, Yu Liu, Yulin Pan, Yun Zheng, Yuntao Hong, Yupeng Shi, Yutong Feng, Zeyinzi Jiang, Zhen Han, Zhi-Fan Wu, and Ziyu Liu. Wan: Open and advanced large-scale video generative models, 2025. 1 [38] Jin Wang, Yao Lai, Aoxue Li, Shifeng Zhang, Jiacheng Sun, Ning Kang, Chengyue Wu, Zhenguo Li, and Ping Luo. Fudoki: Discrete flow-based unified understanding and generation via kinetic-optimal velocities. arXiv preprint arXiv:2505.20147 , 2025. 3 [39] Xinlong Wang, Xiaosong Zhang, Zhengxiong Luo, Quan Sun, Yufeng Cui, Jinsheng Wang, Fan Zhang, Yueze Wang, Zhen Li, Qiying Yu, et al. Emu3: Next-token prediction is all you need. arXiv preprint arXiv:2409.18869 , 2024. 1, 3 [40] Yuqi Wang, Xinghang Li, Wenxuan Wang, Junbo Zhang, Yingyan Li, Yuntao Chen, Xinlong Wang, and Zhaoxi-ang Zhang. Unified vision-language-action model. arXiv preprint arXiv:2506.19850 , 2025. 1, 2, 6, 7 [41] Junjie Wen, Yichen Zhu, Jinming Li, Zhibin Tang, Chaomin Shen, and Feifei Feng. Dexvla: Vision-language model with plug-in diffusion expert for general robot control. arXiv preprint arXiv:2502.05855 , 2025. 4 [42] Chenfei Wu, Jiahao Li, Jingren Zhou, Junyang Lin, Kaiyuan Gao, Kun Yan, Sheng-ming Yin, Shuai Bai, Xiao Xu, Yilei Chen, et al. Qwen-image technical report. arXiv preprint arXiv:2508.02324 , 2025. 3 [43] Jinheng Xie, Weijia Mao, Zechen Bai, David Junhao Zhang, Weihao Wang, Kevin Qinghong Lin, Yuchao Gu, Zhijie 35089 Chen, Zhenheng Yang, and Mike Zheng Shou. Show-o: One single transformer to unify multimodal understanding and generation. arXiv preprint arXiv:2408.12528 , 2024. 1, 3[44] Ling Yang, Ye Tian, Bowen Li, Xinchen Zhang, Ke Shen, Yunhai Tong, and Mengdi Wang. Mmada: Mul-timodal large diffusion language models. arXiv preprint arXiv:2505.15809 , 2025. 2, 3, 7 [45] Rui Yang, Hanyang Chen, Junyu Zhang, Mark Zhao, Cheng Qian, Kangrui Wang, Qineng Wang, Teja Venkat Koripella, Marziyeh Movahedi, Manling Li, et al. Embodiedbench: Comprehensive benchmarking multi-modal large language models for vision-driven embodied agents. arXiv preprint arXiv:2502.09560 , 2025. 1 [46] Shuai Yang, Hao Li, Yilun Chen, Bin Wang, Yang Tian, Tai Wang, Hanqing Wang, Feng Zhao, Yiyi Liao, and Jiang-miao Pang. Instructvla: Vision-language-action instruction tuning from understanding to manipulation. arXiv preprint arXiv:2507.17520 , 2025. 1, 3 [47] Lijun Yu, Jos´ e Lezama, Nitesh B Gundavarapu, Luca Ver-sari, Kihyuk Sohn, David Minnen, Yong Cheng, Vighnesh Birodkar, Agrim Gupta, Xiuye Gu, et al. Language model beats diffusion–tokenizer is key to visual generation. arXiv preprint arXiv:2310.05737 , 2023. 5 [48] Michał Zawalski, William Chen, Karl Pertsch, Oier Mees, Chelsea Finn, and Sergey Levine. Robotic control via embodied chain-of-thought reasoning. arXiv preprint arXiv:2407.08693 , 2024. 3 [49] Andy Zhai, Brae Liu, Bruno Fang, Chalse Cai, Ellie Ma, Ethan Yin, Hao Wang, Hugo Zhou, James Wang, Lights Shi, et al. Igniting vlms toward the embodied space. arXiv preprint arXiv:2509.11766 , 2025. 3 [50] Jianke Zhang, Yanjiang Guo, Yucheng Hu, Xiaoyu Chen, Xi-ang Zhu, and Jianyu Chen. Up-vla: A unified understanding and prediction model for embodied agent. arXiv preprint arXiv:2501.18867 , 2025. 1, 2 [51] Shiduo Zhang, Zhe Xu, Peiju Liu, Xiaopeng Yu, Yuan Li, Qinghui Gao, Zhaoye Fei, Zhangyue Yin, Zuxuan Wu, Yu-Gang Jiang, et al. Vlabench: A large-scale benchmark for language-conditioned robotics manipulation with long-horizon reasoning tasks. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 11142– 11152, 2025. 1 [52] Wenyao Zhang, Hongsi Liu, Zekun Qi, Yunnan Wang, Xin-qiang Yu, Jiazhao Zhang, Runpei Dong, Jiawei He, Fan Lu, He Wang, et al. Dreamvla: a vision-language-action model dreamed with comprehensive world knowledge. arXiv preprint arXiv:2507.04447 , 2025. 6, 7 [53] Xinjie Zhang, Jintao Guo, Shanshan Zhao, Minghao Fu, Lunhao Duan, Jiakui Hu, Yong Xien Chng, Guo-Hua Wang, Qing-Guo Chen, Zhao Xu, et al. Unified multimodal under-standing and generation models: Advances, challenges, and opportunities. arXiv preprint arXiv:2505.02567 , 2025. 3 [54] Enyu Zhao, Vedant Raval, Hejia Zhang, Jiageng Mao, Zeyu Shangguan, Stefanos Nikolaidis, Yue Wang, and Daniel Seita. Manipbench: Benchmarking vision-language models for low-level robot manipulation. arXiv preprint arXiv:2505.09698 , 2025. 1 [55] Qingqing Zhao, Yao Lu, Moo Jin Kim, Zipeng Fu, Zhuoyang Zhang, Yecheng Wu, Zhaoshuo Li, Qianli Ma, Song Han, Chelsea Finn, et al. Cot-vla: Visual chain-of-thought rea-soning for vision-language-action models. In Proceedings of the Computer Vision and Pattern Recognition Conference ,pages 1702–1713, 2025. 6, 7 [56] Ruijie Zheng, Yongyuan Liang, Shuaiyi Huang, Jianfeng Gao, Hal Daum´ e III, Andrey Kolobov, Furong Huang, and Jianwei Yang. Tracevla: Visual trace prompting enhances spatial-temporal awareness for generalist robotic policies. 
+
+arXiv preprint arXiv:2412.10345 , 2024. 6, 7 [57] Chunting Zhou, Lili Yu, Arun Babu, Kushal Tirumala, Michihiro Yasunaga, Leonid Shamis, Jacob Kahn, Xuezhe Ma, Luke Zettlemoyer, and Omer Levy. Transfusion: Pre-dict the next token and diffuse images with one multi-modal model. arXiv preprint arXiv:2408.11039 , 2024. 3, 4 [58] Zhongyi Zhou, Yichen Zhu, Minjie Zhu, Junjie Wen, Ning Liu, Zhiyuan Xu, Weibin Meng, Yaxin Peng, Chaomin Shen, Feifei Feng, et al. Chatvla: Unified multimodal understand-ing and robot control with vision-language-action model. In 
+
+Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing , pages 5377–5395, 2025. 3 [59] Fangqi Zhu, Hongtao Wu, Song Guo, Yuxiao Liu, Chilam Cheang, and Tao Kong. Irasim: Learning interactive real-robot action simulators. arXiv preprint arXiv:2406.14540 ,2024. 1 [60] Brianna Zitkovich, Tianhe Yu, Sichun Xu, Peng Xu, Ted Xiao, Fei Xia, Jialin Wu, Paul Wohlhart, Stefan Welker, Ayzaan Wahid, Quan Vuong, Vincent Vanhoucke, Huong Tran, Radu Soricut, Anikait Singh, Jaspiar Singh, Pierre Sermanet, Pannag R. Sanketi, Grecia Salazar, Michael S. Ryoo, Krista Reymann, Kanishka Rao, Karl Pertsch, Igor Mordatch, Henryk Michalewski, Yao Lu, Sergey Levine, Lisa Lee, Tsang-Wei Edward Lee, Isabel Leal, Yuheng Kuang, Dmitry Kalashnikov, Ryan Julian, Nikhil J. Joshi, Alex Irpan, Brian Ichter, Jasmine Hsu, Alexander Herzog, Karol Hausman, Keerthana Gopalakrishnan, Chuyuan Fu, Pete Florence, Chelsea Finn, Kumar Avinava Dubey, Danny Driess, Tianli Ding, Krzysztof Marcin Choromanski, Xi Chen, Yevgen Chebotar, Justice Carbajal, Noah Brown, An-thony Brohan, Montserrat Gonzalez Arenas, and Kehang Han. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In Proceedings of the 7th Con-ference on Robot Learning (CoRL) , pages 2165–2183, 2023. 335090

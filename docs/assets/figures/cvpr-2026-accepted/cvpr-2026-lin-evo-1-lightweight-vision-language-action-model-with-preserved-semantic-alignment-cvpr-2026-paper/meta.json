@@ -1,0 +1,158 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 3,
+      "index": 1,
+      "width": 10002,
+      "height": 4446
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 4,
+      "index": 2,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 4,
+      "index": 3,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 4,
+      "index": 4,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 4,
+      "index": 5,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 4,
+      "index": 6,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 4,
+      "index": 7,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 6,
+      "index": 8,
+      "width": 3618,
+      "height": 3096
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 6,
+      "index": 9,
+      "width": 3846,
+      "height": 1902
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 7,
+      "index": 10,
+      "width": 2856,
+      "height": 678
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-011.webp",
+      "caption": "",
+      "page": 8,
+      "index": 11,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-012.webp",
+      "caption": "",
+      "page": 8,
+      "index": 12,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-013.webp",
+      "caption": "",
+      "page": 8,
+      "index": 13,
+      "width": 448,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-014.webp",
+      "caption": "",
+      "page": 8,
+      "index": 14,
+      "width": 2142,
+      "height": 1686
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-015.webp",
+      "caption": "",
+      "page": 8,
+      "index": 15,
+      "width": 2142,
+      "height": 1686
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-016.webp",
+      "caption": "",
+      "page": 8,
+      "index": 16,
+      "width": 2142,
+      "height": 1602
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-017.webp",
+      "caption": "",
+      "page": 8,
+      "index": 17,
+      "width": 2136,
+      "height": 1506
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-018.webp",
+      "caption": "",
+      "page": 8,
+      "index": 18,
+      "width": 1746,
+      "height": 2508
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-lin-evo-1-lightweight-vision-language-action-model-with-preserved-semantic-alignment-cvpr-2026-paper/fig-019.webp",
+      "caption": "",
+      "page": 8,
+      "index": 19,
+      "width": 2526,
+      "height": 1860
+    }
+  ]
+}

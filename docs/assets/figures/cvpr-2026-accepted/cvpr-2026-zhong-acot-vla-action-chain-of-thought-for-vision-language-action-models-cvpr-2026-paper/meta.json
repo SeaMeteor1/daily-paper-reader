@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-002.webp",
+      "caption": "",
+      "page": 8,
+      "index": 2,
+      "width": 3300,
+      "height": 1800
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-003.webp",
+      "caption": "",
+      "page": 8,
+      "index": 3,
+      "width": 1371,
+      "height": 1068
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-004.webp",
+      "caption": "",
+      "page": 8,
+      "index": 4,
+      "width": 1378,
+      "height": 1091
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-005.webp",
+      "caption": "",
+      "page": 8,
+      "index": 5,
+      "width": 1340,
+      "height": 1072
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-006.webp",
+      "caption": "",
+      "page": 8,
+      "index": 6,
+      "width": 1408,
+      "height": 1105
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-007.webp",
+      "caption": "",
+      "page": 8,
+      "index": 7,
+      "width": 1378,
+      "height": 1107
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-008.webp",
+      "caption": "",
+      "page": 8,
+      "index": 8,
+      "width": 1343,
+      "height": 1090
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-009.webp",
+      "caption": "",
+      "page": 8,
+      "index": 9,
+      "width": 1367,
+      "height": 1084
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-010.webp",
+      "caption": "",
+      "page": 8,
+      "index": 10,
+      "width": 1383,
+      "height": 1108
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-011.webp",
+      "caption": "",
+      "page": 8,
+      "index": 11,
+      "width": 1348,
+      "height": 1114
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-012.webp",
+      "caption": "",
+      "page": 8,
+      "index": 12,
+      "width": 1376,
+      "height": 1119
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-013.webp",
+      "caption": "",
+      "page": 8,
+      "index": 13,
+      "width": 1288,
+      "height": 1110
+    },
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-zhong-acot-vla-action-chain-of-thought-for-vision-language-action-models-cvpr-2026-paper/fig-014.webp",
+      "caption": "",
+      "page": 8,
+      "index": 14,
+      "width": 1350,
+      "height": 1075
+    }
+  ]
+}

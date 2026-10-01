@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2026-accepted/cvpr-2026-nikolov-spear-1-scaling-beyond-robot-demonstrations-via-3d-understanding-cvpr-2026-paper/fig-001.webp",
+      "caption": "",
+      "page": 3,
+      "index": 1,
+      "width": 968,
+      "height": 613
+    }
+  ]
+}
