@@ -25,3 +25,51 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: topic
+      description: LLM，对抗攻击
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: large language model
+          keyword_cn: 大语言模型
+          query: large language models in natural language processing
+        - keyword: adversarial example
+          keyword_cn: 对抗样本
+          query: adversarial examples for large language models
+        - keyword: adversarial defense
+          keyword_cn: 对抗防御
+          query: defenses against adversarial attacks on large language models
+      intent_queries:
+        - query: How to defend large language models against adversarial attacks and prompt injection?
+          query_cn: 如何防御大语言模型免受对抗攻击和提示注入？
+          enabled: true
+          source: manual
+          note: ''
+        - query: Methods for generating adversarial examples to fool large language models
+          query_cn: 生成对抗样本以欺骗大语言模型的方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: Evaluating the robustness of large language models to adversarial prompts
+          query_cn: 评估大语言模型对抗提示的鲁棒性
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-10-01T08:11:49.280Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
