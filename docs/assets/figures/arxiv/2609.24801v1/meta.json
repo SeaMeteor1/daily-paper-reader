@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-001.webp",
+      "caption": "",
+      "page": 7,
+      "index": 1,
+      "width": 1077,
+      "height": 865
+    },
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-002.webp",
+      "caption": "",
+      "page": 9,
+      "index": 2,
+      "width": 1115,
+      "height": 545
+    },
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-003.webp",
+      "caption": "",
+      "page": 11,
+      "index": 3,
+      "width": 1041,
+      "height": 507
+    },
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-004.webp",
+      "caption": "",
+      "page": 15,
+      "index": 4,
+      "width": 653,
+      "height": 552
+    },
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-005.webp",
+      "caption": "",
+      "page": 15,
+      "index": 5,
+      "width": 677,
+      "height": 553
+    },
+    {
+      "url": "assets/figures/arxiv/2609.24801v1/fig-006.webp",
+      "caption": "",
+      "page": 16,
+      "index": 6,
+      "width": 690,
+      "height": 590
+    }
+  ]
+}
