@@ -1,0 +1,313 @@
+{
+  "date": "20261001",
+  "date_label": "",
+  "generated_at": "2026-10-01 23:13:40 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.34256v1",
+      "route": "202610/01/2609.34256v1-umr-universal-manipulation-representation",
+      "title": "UMR: Universal Manipulation Representation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向跨本体迁移的统一动作表征",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.34792v1",
+      "route": "202610/01/2609.34792v1-d2-vla-dual-memory-dual-frequency-vision-language-action-model-for-long-dynamic-manipulation",
+      "title": "D$^2$-VLA: Dual-Memory Dual-Frequency Vision-Language-Action Model For Long Dynamic Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向长时程操作的双记忆视觉-语言-动作模型",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.28256v1",
+      "route": "202610/01/2609.28256v1-membodied-recurrent-associative-memory-for-vision-language-action-models",
+      "title": "MemBodied: Recurrent Associative Memory for Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向视觉-语言-动作模型的循环联想记忆",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.28865v1",
+      "route": "202610/01/2609.28865v1-direction-scale-decomposition-in-action-representation-rethinking-what-to-tokenize-for-vision-language-action-models",
+      "title": "Direction-Scale Decomposition in Action Representation: Rethinking What to Tokenize for Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "VLA模型的动作表示",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.28955v1",
+      "route": "202610/01/2609.28955v1-actgaze-learning-action-grounded-gaze-through-counterfactual-visual-interventions-for-high-precision-manipulation",
+      "title": "ActGaze: Learning Action-Grounded Gaze through Counterfactual Visual Interventions for High-Precision Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "引导VLA策略注视任务相关区域以提升操作精度",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.28984v1",
+      "route": "202610/01/2609.28984v1-crosssafe-towards-cross-embodiment-latent-safety-filters",
+      "title": "CrossSafe: Towards Cross-Embodiment Latent Safety Filters",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "跨本体共享的VLA安全过滤器",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.29204v1",
+      "route": "202610/01/2609.29204v1-adahvla-adaptive-harnesses-for-long-horizon-vision-language-action-execution",
+      "title": "AdaHVLA: Adaptive Harnesses for Long-Horizon Vision-Language-Action Execution",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向长时程VLA执行的自适应架",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.29389v1",
+      "route": "202610/01/2609.29389v1-robo-harness-k1-harnessing-robot-use-agents-via-perception-augmentation",
+      "title": "Robo-Harness K1: Harnessing Robot-Use Agents via Perception Augmentation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "基于VLM的机器人使用智能体操作框架",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.30833v1",
+      "route": "202610/01/2609.30833v1-fast-plans-faithful-actions-closing-the-planning-execution-gap-in-hierarchical-vision-language-action-models",
+      "title": "Fast Plans, Faithful Actions: Closing the Planning-Execution Gap in Hierarchical Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "分层视觉-语言-动作规划",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.30868v1",
+      "route": "202610/01/2609.30868v1-vlarl-augmenting-vision-language-action-models-with-simulation-trained-latent-conditioned-residual-rl",
+      "title": "VLaRL: Augmenting Vision-Language-Action Models with Simulation-Trained Latent-Conditioned Residual RL",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向机器人的VLA残差强化学习",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.31207v1",
+      "route": "202610/01/2609.31207v1-enabling-a-unified-cross-domain-representation-for-two-finger-gripper-manipulation-via-interaction-centric-modeling",
+      "title": "Enabling a Unified Cross-Domain Representation for Two-Finger Gripper Manipulation via Interaction-Centric Modeling",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向夹爪操作的跨本体泛化表示",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.27378v1",
+      "route": "202610/01/2609.27378v1-psychoacoustically-aligned-latent-smoothing-for-adversarial-robustness-of-full-duplex-speech-to-speech-dialogue-models",
+      "title": "Psychoacoustically Aligned Latent Smoothing for Adversarial Robustness of Full-Duplex Speech-to-Speech Dialogue Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "对话智能体的对抗攻击与隐空间平滑防御",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.27450v1",
+      "route": "202610/01/2609.27450v1-bee-intervention-adaptive-real-world-reinforcement-learning-with-vision-language-action-models",
+      "title": "BEE: Intervention-Adaptive Real-World Reinforcement Learning with Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向机器人操作的冻结VLA模型真实世界强化学习",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.28429v1",
+      "route": "202610/01/2609.28429v1-watch-recall-act-always-on-robots-in-concurrent-embodied-streams",
+      "title": "Watch, Recall, Act: Always-On Robots in Concurrent Embodied Streams",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "基于pi-0.5骨干的流式视觉-语言-动作策略",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.29382v1",
+      "route": "202610/01/2609.29382v1-decoupled-early-exits-for-task-dependent-compute-allocation-in-flow-matching-vlas",
+      "title": "Decoupled Early Exits for Task-Dependent Compute Allocation in Flow-Matching VLAs",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向流匹配VLA机器人控制的算力分配",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.31112v1",
+      "route": "202610/01/2609.31112v1-dualmanip-agentic-dynamic-manipulation-via-dual-path-semantic-reasoning-and-geometric-adaptation",
+      "title": "DualManip: Agentic Dynamic Manipulation via Dual-Path Semantic Reasoning and Geometric Adaptation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于VLM的开放词汇机器人操作框架",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.31552v1",
+      "route": "202610/01/2609.31552v1-fragtoken-amplifying-llm-inference-costs-through-noncanonical-token-generation",
+      "title": "FragToken: Amplifying LLM Inference Costs through Noncanonical Token Generation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "通过非规范词元放大LLM推理成本的对抗攻击",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.33634v1",
+      "route": "202610/01/2609.33634v1-safety-reconstructed-generative-modeling-via-masked-diffusion-builds-strong-safety-guardrails",
+      "title": "Safety Reconstructed: Generative Modeling via Masked Diffusion Builds Strong Safety Guardrails",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "作为语言模型安全最后防线的护栏模型",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    },
+    {
+      "paper_id": "2609.34170v1",
+      "route": "202610/01/2609.34170v1-ravel-asynchronous-rolling-inference-for-flow-based-vision-language-action-models",
+      "title": "RAVEL: Asynchronous Rolling Inference for Flow-Based Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "VLA模型推理延迟；异步低延迟控制",
+      "first_seen_at": "2026-10-01 23:13:40 UTC",
+      "updated_at": "2026-10-01 23:13:40 UTC"
+    }
+  ]
+}

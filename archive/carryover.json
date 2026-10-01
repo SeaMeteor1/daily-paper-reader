@@ -1,10 +1,15 @@
 {
-  "generated_at": "2026-10-01T08:16:47.848954+00:00",
-  "updated_date": "20260902-20261001",
+  "generated_at": "2026-10-01T23:08:37.872932+00:00",
+  "updated_date": "20261001",
   "carryover_days": 9,
   "tag_states": {
     "topic": {
-      "updated_date": "20260902-20261001",
+      "updated_date": "20261001",
+      "carryover_days": 9,
+      "items": []
+    },
+    "VLA": {
+      "updated_date": "20261001",
       "carryover_days": 9,
       "items": []
     }

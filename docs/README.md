@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-02 ~ 2026-10-01</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-01</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 19 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-01 08:18:33 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-01 23:13:40 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>速读12篇AI安全论文，三篇以9.0分领跑，聚焦LLM越狱攻防与智能体安全。</p>
-<p>最值得看的是：SAFEGuard用有害语义与流畅度检测优化型越狱，ACEA搭建红蓝队正面对抗测试场，SoK则系统梳理智能体时代的越狱攻击、防御与落地考量。</p>
-<p>普通读者可从这三篇入手，先建立“攻击—防御—评测”全景，再按需追踪后续精读。</p>
+<p>2026-10-01日报：从19篇中精读7篇、速读12篇，VLA与机器人操作表征是今天主线。</p>
+<p>最值得看的是两篇9分工作——UMR通用操作表征、D²-VLA双记忆双频VLA长动态操作，速读中Fast Plans与VLaRL也聚焦规划-执行鸿沟和仿真残差RL。</p>
+<p>普通读者可先读UMR建立操作表征直觉，再追D²-VLA和VLaRL理解长时程操作与强化学习补强。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -80,12 +80,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">0 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="UMR: Universal Manipulation Representation">UMR: Universal Manipulation Representation</span></li><li><span class="dpr-home-dashboard-paper-title" title="D$^2$-VLA: Dual-Memory Dual-Frequency Vision-Language-Action Model For Long Dynamic Manipulation">D$^2$-VLA: Dual-Memory Dual-Frequency Vision-Language-Action Model For Long Dynamic Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="MemBodied: Recurrent Associative Memory for Vision-Language-Action Models">MemBodied: Recurrent Associative Memory for Vision-Language-Action Models</span></li></ul>
   </div>
-
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>7</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -96,9 +96,9 @@
     <strong class="dpr-home-dashboard-count">12 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SAFEGuard: Detect Optimization-Based Jailbreak Attacks Through Harmful Semantic Analysis and Fluency Measurement">SAFEGuard: Detect Optimization-Based Jailbreak Attacks Through Harmful Semantic Analysis and Fluency Measurement</span></li><li><span class="dpr-home-dashboard-paper-title" title="ACEA: An Adversarial Co-Evolution Arena for Head-to-Head Red-Team and Blue-Team LLM Testing">ACEA: An Adversarial Co-Evolution Arena for Head-to-Head Red-Team and Blue-Team LLM Testing</span></li><li><span class="dpr-home-dashboard-paper-title" title="SoK: Rethinking Jailbreaking in the Era of Agentic AI: Attacks, Defenses, and Practical Consideration">SoK: Rethinking Jailbreaking in the Era of Agentic AI: Attacks, Defenses, and Practical Consideration</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Robo-Harness K1: Harnessing Robot-Use Agents via Perception Augmentation">Robo-Harness K1: Harnessing Robot-Use Agents via Perception Augmentation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fast Plans, Faithful Actions: Closing the Planning-Execution Gap in Hierarchical Vision-Language-Action Models">Fast Plans, Faithful Actions: Closing the Planning-Execution Gap in Hierarchical Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="VLaRL: Augmenting Vision-Language-Action Models with Simulation-Trained Latent-Conditioned Residual RL">VLaRL: Augmenting Vision-Language-Action Models with Simulation-Trained Latent-Conditioned Residual RL</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">topic <strong>12</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>9</strong></span><span class="dpr-home-dashboard-tag">topic <strong>3</strong></span></div>
 </section>
 </div>
 
