@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-01</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-23 ~ 2026-10-02</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 19 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-01 23:13:40 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-02 17:15:28 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>2026-10-01日报：从19篇中精读7篇、速读12篇，VLA与机器人操作表征是今天主线。</p>
-<p>最值得看的是两篇9分工作——UMR通用操作表征、D²-VLA双记忆双频VLA长动态操作，速读中Fast Plans与VLaRL也聚焦规划-执行鸿沟和仿真残差RL。</p>
-<p>普通读者可先读UMR建立操作表征直觉，再追D²-VLA和VLaRL理解长时程操作与强化学习补强。</p>
+<p>2026-09-23至10-02共筛出17篇机器人学习论文，精读6篇、速读11篇。最值得关注的是多机器人非IID场景下的联邦子空间VLA策略蒸馏与通信丢失下的分层多智能体仓库协调，两篇均获9.0分。建议普通读者优先从这两篇精读入手，再顺带浏览视图增强与在线RL微调防崩溃的速读工作。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -80,12 +78,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">7 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="UMR: Universal Manipulation Representation">UMR: Universal Manipulation Representation</span></li><li><span class="dpr-home-dashboard-paper-title" title="D$^2$-VLA: Dual-Memory Dual-Frequency Vision-Language-Action Model For Long Dynamic Manipulation">D$^2$-VLA: Dual-Memory Dual-Frequency Vision-Language-Action Model For Long Dynamic Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="MemBodied: Recurrent Associative Memory for Vision-Language-Action Models">MemBodied: Recurrent Associative Memory for Vision-Language-Action Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation">Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Hierarchical Multi-agent Reinforcement Learning for Warehouse Robot Coordination under Communication Loss">Hierarchical Multi-agent Reinforcement Learning for Warehouse Robot Coordination under Communication Loss</span></li><li><span class="dpr-home-dashboard-paper-title" title="Cooperative Multi-Agent Vision-Language-Action Models via Reinforced Fine Tuning">Cooperative Multi-Agent Vision-Language-Action Models via Reinforced Fine Tuning</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>7</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>4</strong></span><span class="dpr-home-dashboard-tag">vla <strong>2</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -93,12 +91,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">12 篇</strong>
+    <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Robo-Harness K1: Harnessing Robot-Use Agents via Perception Augmentation">Robo-Harness K1: Harnessing Robot-Use Agents via Perception Augmentation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fast Plans, Faithful Actions: Closing the Planning-Execution Gap in Hierarchical Vision-Language-Action Models">Fast Plans, Faithful Actions: Closing the Planning-Execution Gap in Hierarchical Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="VLaRL: Augmenting Vision-Language-Action Models with Simulation-Trained Latent-Conditioned Residual RL">VLaRL: Augmenting Vision-Language-Action Models with Simulation-Trained Latent-Conditioned Residual RL</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="InfiNoVA: Infinite Novel View Augmentation for Viewpoint Invariant Robot Policies">InfiNoVA: Infinite Novel View Augmentation for Viewpoint Invariant Robot Policies</span></li><li><span class="dpr-home-dashboard-paper-title" title="Uncertainty-Gated Exploration Noise Suppresses Task Collapse in Online RL Fine-Tuning of a Flow-Matching Vision-Language-Action Policy">Uncertainty-Gated Exploration Noise Suppresses Task Collapse in Online RL Fine-Tuning of a Flow-Matching Vision-Language-Action Policy</span></li><li><span class="dpr-home-dashboard-paper-title" title="From Passive Execution to Active Exploration: Agentic Embodied Manipulation in Realistic Environments">From Passive Execution to Active Exploration: Agentic Embodied Manipulation in Realistic Environments</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>9</strong></span><span class="dpr-home-dashboard-tag">topic <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>9</strong></span><span class="dpr-home-dashboard-tag">vla <strong>2</strong></span></div>
 </section>
 </div>
 

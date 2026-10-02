@@ -1,0 +1,281 @@
+{
+  "date": "20260923-20261002",
+  "date_label": "2026-09-23 ~ 2026-10-02",
+  "generated_at": "2026-10-02 17:15:28 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.32239v1",
+      "route": "20260923-20261002/2609.32239v1-federated-subspace-guided-vision-language-action-policy-distillation-for-non-iid-multi-robot-manipulation",
+      "title": "Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向异构多机器人操作的联邦视觉-语言-动作策略蒸馏",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.33637v1",
+      "route": "20260923-20261002/2609.33637v1-hierarchical-multi-agent-reinforcement-learning-for-warehouse-robot-coordination-under-communication-loss",
+      "title": "Hierarchical Multi-agent Reinforcement Learning for Warehouse Robot Coordination under Communication Loss",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "多智能体强化学习实现机器人团队协调",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.36588v1",
+      "route": "20260923-20261002/2609.36588v1-cooperative-multi-agent-vision-language-action-models-via-reinforced-fine-tuning",
+      "title": "Cooperative Multi-Agent Vision-Language-Action Models via Reinforced Fine Tuning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "协作式多智能体视觉语言动作模型的强化微调",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2610.02161v1",
+      "route": "20260923-20261002/2610.02161v1-duomind-enabling-distributed-multi-robot-coordination-with-semantic-communication",
+      "title": "DuoMind: Enabling Distributed Multi-Robot Coordination with Semantic Communication",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "基于VLA与VLM智能体的分布式多机器人协调框架",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.27734v1",
+      "route": "20260923-20261002/2609.27734v1-infinova-infinite-novel-view-augmentation-for-viewpoint-invariant-robot-policies",
+      "title": "InfiNoVA: Infinite Novel View Augmentation for Viewpoint Invariant Robot Policies",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "视角不变的视觉语言动作机器人策略",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.28396v1",
+      "route": "20260923-20261002/2609.28396v1-tractable-reinforcement-learning-for-full-class-of-signal-temporal-logic-specifications-using-spatiotemporal-tube-reward",
+      "title": "Tractable Reinforcement Learning for Full Class of Signal Temporal Logic Specifications Using Spatiotemporal Tube Reward",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向未知动力学与信号时序逻辑规范的机器人控制强化学习",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.28660v1",
+      "route": "20260923-20261002/2609.28660v1-morphometric-imitation-from-morphology-and-contact-aware-hand-retargeting-to-sim-to-real-visuomotor-policy",
+      "title": "Morphometric Imitation: From Morphology and Contact Aware Hand Retargeting to Sim-to-Real Visuomotor Policy",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从人类手-物演示学习灵巧操作",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.28838v1",
+      "route": "20260923-20261002/2609.28838v1-uncertainty-gated-exploration-noise-suppresses-task-collapse-in-online-rl-fine-tuning-of-a-flow-matching-vision-language-action-policy",
+      "title": "Uncertainty-Gated Exploration Noise Suppresses Task Collapse in Online RL Fine-Tuning of a Flow-Matching Vision-Language-Action Policy",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "流匹配视觉-语言-动作策略的在线强化学习微调",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.29091v1",
+      "route": "20260923-20261002/2609.29091v1-from-passive-execution-to-active-exploration-agentic-embodied-manipulation-in-realistic-environments",
+      "title": "From Passive Execution to Active Exploration: Agentic Embodied Manipulation in Realistic Environments",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "具身操作中的视觉场景理解感知模块",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.29310v2",
+      "route": "20260923-20261002/2609.29310v2-egospeedup-transferring-human-manipulation-tempo-to-robot-policies",
+      "title": "EgoSpeedUp: Transferring Human Manipulation Tempo to Robot Policies",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "以人类操作演示作为机器人模仿学习的时间监督",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.27308v2",
+      "route": "20260923-20261002/2609.27308v2-embodiedswe-coding-agents-for-long-horizon-dexterous-robotics",
+      "title": "EmbodiedSWE: Coding Agents for Long Horizon Dexterous Robotics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向长时程灵巧机器人操作的编码智能体与跨本体迁移",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.27513v1",
+      "route": "20260923-20261002/2609.27513v1-behavior-aligned-action-tokenization-for-robot-policy-learning",
+      "title": "Behavior-Aligned Action Tokenization for Robot Policy Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向自回归机器人策略学习的动作分词架构",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.28807v1",
+      "route": "20260923-20261002/2609.28807v1-an-analysis-of-streaming-deep-reinforcement-learning-for-adaptive-continual-learning-in-robotics",
+      "title": "An Analysis of Streaming Deep Reinforcement Learning for Adaptive Continual Learning in Robotics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向机器人自适应控制的流式深度强化学习",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.29000v1",
+      "route": "20260923-20261002/2609.29000v1-learning-from-mixed-quality-deployment-experience-for-robot-manipulation",
+      "title": "Learning from Mixed-Quality Deployment Experience for Robot Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "利用混合质量部署数据的学习与离线强化学习",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.27312v1",
+      "route": "20260923-20261002/2609.27312v1-turning-safety-into-competence-minimally-exploitable-robot-policies-via-safety-filtered-reinforcement-learning",
+      "title": "Turning Safety into Competence: Minimally Exploitable Robot Policies via Safety-Filtered Reinforcement Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "将安全综合与竞争任务学习分离的两阶段强化学习框架",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.27340v1",
+      "route": "20260923-20261002/2609.27340v1-spatial-and-semantic-reasoning-for-llm-driven-robot-navigation-via-mcp",
+      "title": "Spatial and Semantic Reasoning for LLM-Driven Robot Navigation via MCP",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于LLM与MCP的机器人空间语义导航",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    },
+    {
+      "paper_id": "2609.31905v1",
+      "route": "20260923-20261002/2609.31905v1-end-to-end-qp-based-policies-a-unified-perspective-on-robust-control-and-robot-learning",
+      "title": "End-to-end QP-based policies: A unified perspective on robust control and robot learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "统一鲁棒控制与机器人学习的端到端二次规划策略框架",
+      "first_seen_at": "2026-10-02 17:15:28 UTC",
+      "updated_at": "2026-10-02 17:15:28 UTC"
+    }
+  ]
+}
