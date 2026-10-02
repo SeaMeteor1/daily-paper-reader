@@ -1,0 +1,345 @@
+{
+  "date": "20261002",
+  "date_label": "",
+  "generated_at": "2026-10-02 23:31:58 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.34256v1",
+      "route": "202610/02/2609.34256v1-umr-universal-manipulation-representation",
+      "title": "UMR: Universal Manipulation Representation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "实现跨机器人具身零样本迁移的统一动作表征",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.34467v1",
+      "route": "202610/02/2609.34467v1-alignment-guided-flow-transformer-for-efficient-vision-language-action-policy-learning",
+      "title": "Alignment-Guided Flow Transformer for Efficient Vision-Language-Action Policy Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "视觉-语言-动作策略学习框架",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.36121v1",
+      "route": "202610/02/2609.36121v1-render-before-reading-visual-rendering-as-a-prompt-injection-defense",
+      "title": "Render Before Reading: Visual Rendering as a Prompt Injection Defense",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过渲染实现免训练提示注入防御",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.38164v1",
+      "route": "202610/02/2609.38164v1-rho-a-foundation-for-efficiently-adaptable-vla-models",
+      "title": "Rho: A Foundation for Efficiently Adaptable VLA Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "可跨多种机器人本体高效适配的VLA基础模型",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.29850v1",
+      "route": "202610/02/2609.29850v1-beyondretarget-learning-executable-humanoid-motions-directly-from-monocular-video",
+      "title": "BeyondRetarget: Learning Executable Humanoid Motions Directly from Monocular Video",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从人类视频示范学习人形机器人动作",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.30023v1",
+      "route": "202610/02/2609.30023v1-res-hil-human-guided-residual-reinforcement-learning-for-sample-efficient-dexterous-manipulation",
+      "title": "Res-HIL: Human-Guided Residual Reinforcement Learning for Sample-Efficient Dexterous Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从演示细化模仿策略的人机协同残差强化学习",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.30965v2",
+      "route": "202610/02/2609.30965v2-fram-trajectory-guided-visual-feature-selection-for-compact-language-conditioned-robot-manipulation",
+      "title": "FRAM: Trajectory-Guided Visual Feature Selection for Compact Language-Conditioned Robot Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向机器人操作的紧凑语言条件VLA策略",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.31855v1",
+      "route": "202610/02/2609.31855v1-phirl-aligning-learned-rewards-with-task-progress-for-inverse-reinforcement-learning",
+      "title": "PHIRL: Aligning Learned Rewards with Task Progress for Inverse Reinforcement Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "结合人类演示与进度反馈的逆强化学习",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32069v1",
+      "route": "202610/02/2609.32069v1-find-something-you-cant-do-agentic-real-world-reinforcement-learning-for-self-improving-vla-models",
+      "title": "Find Something You Can't Do: Agentic Real-World Reinforcement Learning for Self-Improving VLA Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过智能体真实世界强化学习自我改进VLA机器人策略",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32239v1",
+      "route": "202610/02/2609.32239v1-federated-subspace-guided-vision-language-action-policy-distillation-for-non-iid-multi-robot-manipulation",
+      "title": "Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向异构多机器人操作的联邦视觉语言动作策略蒸馏",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32634v1",
+      "route": "202610/02/2609.32634v1-pf-rl-progress-field-reinforcement-learning-via-goal-conditioned-value-geometry-for-vision-language-action-models",
+      "title": "PF-RL: Progress Field Reinforcement Learning via Goal-Conditioned Value Geometry for Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "用强化学习改进视觉-语言-动作策略",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.33145v1",
+      "route": "202610/02/2609.33145v1-beyond-state-as-action-exploiting-command-state-discrepancy-for-robot-imitation-learning",
+      "title": "Beyond State-as-Action: Exploiting Command-State Discrepancy for Robot Imitation Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从演示构建机器人模仿学习动作目标",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.38239v1",
+      "route": "202610/02/2609.38239v1-inference-layer-security-defending-against-adversarial-inference-and-infrastructure-abuse",
+      "title": "Inference-Layer Security: Defending Against Adversarial Inference and Infrastructure Abuse",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "防御大模型服务对抗性推理攻击",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.29964v1",
+      "route": "202610/02/2609.29964v1-world-action-agent-harnessing-vlms-for-robot-manipulation-via-world-action-rehearsal",
+      "title": "World Action Agent: Harnessing VLMs for Robot Manipulation via World Action Rehearsal",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "基于VLM多智能体的机器人操作",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.31606v1",
+      "route": "202610/02/2609.31606v1-learning-robot-policies-from-sparse-success-signals-via-stl-guided-stein-variational-policy-gradient",
+      "title": "Learning Robot Policies from Sparse Success Signals via STL-Guided Stein Variational Policy Gradient",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "用于机器人控制任务的强化学习策略梯度",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32236v1",
+      "route": "202610/02/2609.32236v1-robofft-finetuning-generative-robot-policy-via-online-reinforcement-learning-with-forward-process",
+      "title": "RoboFFT: Finetuning generative robot policy via online reinforcement learning with forward process",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "用强化学习微调生成式机器人策略",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32745v1",
+      "route": "202610/02/2609.32745v1-morph-self-organising-multi-robot-task-allocation-via-neuroplasticity-inspired-adaptive-topology",
+      "title": "MORPH: Self-Organising Multi-Robot Task Allocation via Neuroplasticity-Inspired Adaptive Topology",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "多机器人任务分配与协调",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.30127v1",
+      "route": "202610/02/2609.30127v1-faster-visuomotor-policy-learning-on-action-manifolds-via-riemannian-meanflow",
+      "title": "Faster Visuomotor Policy Learning on Action Manifolds via Riemannian MeanFlow",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "在动作流形上更快的视觉运动策略学习",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.32354v1",
+      "route": "202610/02/2609.32354v1-proactive-motion-planning-for-human-robot-cooperation",
+      "title": "Proactive Motion Planning for Human-Robot Cooperation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向人机协作的人体运动预测与主动运动规划",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.33765v1",
+      "route": "202610/02/2609.33765v1-principal-steering-subspaces-for-online-adaptation-of-frozen-generative-robot-policies",
+      "title": "Principal Steering Subspaces for Online Adaptation of Frozen Generative Robot Policies",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向冻结机器人策略在线适应的潜空间强化学习",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    },
+    {
+      "paper_id": "2609.33982v1",
+      "route": "202610/02/2609.33982v1-test-time-spatial-reasoning-for-robot-manipulation-using-generative-real-to-sim",
+      "title": "Test-Time Spatial Reasoning for Robot Manipulation Using Generative Real-to-Sim",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "利用三维生成与视觉语言模型从RGB-D重建场景以支持机器人空间推理",
+      "first_seen_at": "2026-10-02 23:31:58 UTC",
+      "updated_at": "2026-10-02 23:31:58 UTC"
+    }
+  ]
+}
