@@ -48,7 +48,7 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-02</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-03</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
     <strong class="dpr-home-dashboard-count">共 21 篇</strong>
@@ -58,7 +58,7 @@
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>8</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>13</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-02 23:31:58 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-03 22:26:42 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,7 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读 8 篇、速读 13 篇共 21 篇，聚焦机器人操作与视觉-语言-动作策略。最值得看的是 UMR 通用操作表征和 Alignment-Guided Flow Transformer 的高效策略学习（均 9.0 分）。普通读者可先了解 VLA 策略如何兼顾效率与泛化，再关注特征选择与奖励对齐的实用进展。</p>
+<p>今日扫完 21 篇论文，精读 8 篇、速读 13 篇，重点锁定视觉-语言-动作模型与多轮攻击安全性。最值得看的是两篇 9 分精读：SLIP-VLA 用单步潜在想象改进 VLA 策略学习，以及多轮攻击中危害性的几何刻画；速读里 VLA 策略蒸馏、双臂协同操作与多视图 VLA 泛化也都在 8 分。普通读者可先从这两篇精读入手，再按兴趣追 VLA 安全与机器人操作方向。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -81,7 +81,7 @@
     <strong class="dpr-home-dashboard-count">8 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="UMR: Universal Manipulation Representation">UMR: Universal Manipulation Representation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Alignment-Guided Flow Transformer for Efficient Vision-Language-Action Policy Learning">Alignment-Guided Flow Transformer for Efficient Vision-Language-Action Policy Learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Render Before Reading: Visual Rendering as a Prompt Injection Defense">Render Before Reading: Visual Rendering as a Prompt Injection Defense</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models">SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="The Geometry of Harmfulness in Multi-Turn Attacks">The Geometry of Harmfulness in Multi-Turn Attacks</span></li><li><span class="dpr-home-dashboard-paper-title" title="Dream4ACT: A Shared Visual Action Interface for Multi-Embodiment Video-Action Modeling">Dream4ACT: A Shared Visual Action Interface for Multi-Embodiment Video-Action Modeling</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>3</strong></span><span class="dpr-home-dashboard-tag">vla <strong>3</strong></span><span class="dpr-home-dashboard-tag">topic <strong>2</strong></span></div>
 </section>
@@ -94,9 +94,9 @@
     <strong class="dpr-home-dashboard-count">13 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="FRAM: Trajectory-Guided Visual Feature Selection for Compact Language-Conditioned Robot Manipulation">FRAM: Trajectory-Guided Visual Feature Selection for Compact Language-Conditioned Robot Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="PHIRL: Aligning Learned Rewards with Task Progress for Inverse Reinforcement Learning">PHIRL: Aligning Learned Rewards with Task Progress for Inverse Reinforcement Learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation">Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation">Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="TAO-DA: Towards Autonomous Operation--A Dual-Arm Vision-Language-Action Model for Coordinated Manipulation">TAO-DA: Towards Autonomous Operation--A Dual-Arm Vision-Language-Action Model for Coordinated Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse">Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>9</strong></span><span class="dpr-home-dashboard-tag">vla <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>9</strong></span><span class="dpr-home-dashboard-tag">robotics-ai <strong>4</strong></span></div>
 </section>
 </div>
 

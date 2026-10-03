@@ -1,0 +1,399 @@
+Title: ReF-HIL: Shaping the Critic around Human Action Neighborhoods for Efficient Human-in-the-Loop Reinforcement Learning
+
+URL Source: https://arxiv.org/pdf/2609.37131v1
+
+Published Time: Wed, 30 Sep 2026 01:26:36 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# ReF-HIL: Shaping the Critic around Human Action Neighborhoods for Efficient Human-in-the-Loop Reinforcement Learning 
+
+Shaoyin Luo ∗, Song Wang ∗, Shibo Xia, Tianle Zhang, Zhaowei Liang, Guanghui Shen, Bin Wang, and Dan Wu †
+
+Abstract — Human-in-the-loop reinforcement learning (HIL-RL) offers a promising route to efficient training of robotic manipulation policies by combining autonomous learning with human demonstrations and online corrections. However, insuf-ficient use of successful human experience in value learning prolongs costly real-world training, while persistent imitation penalties can limit value-driven policy improvement. To address these limitations, we propose ReF-HIL, an efficient HIL-RL framework that uses human guidance to accelerate the learning process. Human-Reference-Guided Value Shaping learns an in-dependent value reference from successful human experience to guide online value learning, while incorporating local corrective feedback. A Human Action Fence defines a learned human-action neighborhood, allowing value-driven optimization for better performance without imitation penalties inside while constraining policy and value updates outside. Experiments on five diverse and challenging real-world manipulation tasks demonstrate improved overall learning efficiency and higher success rates compared with the evaluated baselines. Specif-ically, ReF-HIL reaches 90% autonomous success in only 18–63 minutes of active training and achieves final success rates of 91.7–100%. These results highlight the potential of human-guided reinforcement learning to acquire reliable ma-nipulation skills efficiently in the real world. Project website: https://anonymous.4open.science/w/ReF-HIL-7762/. 
+
+I. I NTRODUCTION 
+
+Reliable manipulation across diverse objects and operating conditions remains a central challenge in robotics. Learning-based approaches address this challenge by using data to capture complex physical interactions and learn manipulation policies [1], [2]. Reinforcement learning (RL), in particular, enables robots to improve their behavior by interacting with the environment and maximizing task rewards [3]. However, applying RL directly to physical robots involves costly trials, failure recovery, and environment resets, making efficient use of experience essential [4]. Human-in-the-loop reinforcement learning (HIL-RL) offers a practical way to improve learning efficiency: demonstrations provide initial experience, while online human corrections guide exploration toward success-ful behavior [5]. However, the efficiency of HIL-RL depends on how the learner uses human interventions to improve its policy. Exist-ing methods use interventions to shape value estimates and guide policy improvement. In value learning, intervention-
+
+This work was supported by the National Natural Science Foundation of China under Grant 52375019. 
+
+> ∗
+
+Shaoyin Luo and Song Wang contributed equally to this work. The authors are with the Department of Mechanical Engineering, Tsinghua University, Beijing 100084, China. 
+
+> †
+
+Corresponding author: Dan Wu ( wud@tsinghua.edu.cn ). ReF-HIL 
+
+> Push-T Cap unscrewing Plug insertion Gear assembly Cable routing
+> 91.7% 40.7 min 100% 18.2 min 100% 23.3 min 95% 62.3 min
+> Efficient real-world RL
+> 95% 25.9 min
+
+(a) Value guidance      
+
+> Before After Idealized value Value Reference Iaref Action aapre
+
+(b) Action fence Human-action region 
+
+> a1
+> a2
+> aref Value contours Policy updates
+
+Fig. 1. ReF-HIL across five diverse real-world robotic manipulation tasks. Task annotations show mean autonomous success rates from Table I and active training times to first reach 90% autonomous success. (a) Successful experience supplies reference I; intervention feedback lowers values of preceding autonomous actions. (b) Human actions define a region for policy optimization: outside updates point toward aref ; inside updates follow value gradients without imitation penalties. 
+
+based rewards and preference constraints discourage un-desirable behavior and align value estimates with human judgments [6]–[8]. Yet learning which behaviors lead to task completion requires information beyond local acceptance or rejection. If the learner does not fully exploit the value of demonstrated actions and their outcomes, it may therefore need more real-world interaction to learn effective behav-ior [9], [10]. For policy improvement, human actions serve as imitation targets, either directly or selectively, to help the policy learn feasible behavior more quickly. Since human actions may be suboptimal, persistent imitation penalties can discourage the policy from choosing better actions, potentially limiting value-driven improvement [11]–[13]. To address these limitations, we propose ReF-HIL (Fig. 1), a framework for HIL-RL that combines Human-Reference-Guided Value Shaping with a Human Action Fence. Suc-cessful human experience provides a useful starting point, even when the human actions are suboptimal. We therefore learn an independent value reference from this experience to help prevent the online critic from undervaluing reference actions. Meanwhile, intervention feedback guides the critic to rank preceding autonomous actions below reference actions. To improve performance within limited training time, the fence focuses value-driven policy optimization on an action neighborhood learned from human demonstrations and on-arXiv:2609.37131v1 [cs.RO] 29 Sep 2026 line interventions. It removes imitation penalties inside and constrains policy and value updates outside. The main contributions of this work are: 1) We propose ReF-HIL, an efficient human-in-the-loop reinforcement learning framework that accelerates value-driven policy improvement using potentially sub-optimal human guidance. 2) We introduce Human-Reference-Guided Value Shap-ing to accelerate value learning with an independent reference from successful human experience, and a Human Action Fence to enable value-driven policy improvement within a learned human-action neighbor-hood without imitation penalties. 3) We evaluate ReF-HIL on five diverse and challeng-ing real-world manipulation tasks, reaching 90% au-tonomous success in only 18–63 minutes of active training and achieving final success rates of 91.7– 100%. Comparisons show better overall learning ef-ficiency and higher success rates than the evaluated baselines, while ablations and focused analyses clarify the roles of both components. II. R ELATED WORK 
+
+A. Human-in-the-Loop Reinforcement Learning 
+
+Human-in-the-loop reinforcement learning uses human intervention to improve a robot’s policy during online train-ing. HIL-SERL [5] combines human demonstrations and online corrections with a sample-efficient off-policy RL algorithm [14], achieving high success rates across a range of real-world manipulation tasks. However, treating these corrections only as replay data does not explicitly use the judgment behind an intervention: the human wants the robot to change its current behavior [15]. Existing methods make further use of this feedback by penalizing behavior that leads to intervention [8] or assigning higher values to human actions than to the actions they replace [7], [16]. The same feedback is also used to directly encourage the policy to prefer human corrections [17] or select conservative actions to reduce intervention risk [18], improving learning efficiency and policy performance. While these methods improve learning through local intervention feedback, successful human experience offers additional value guidance that can further reduce exploration. Max-Q trains its critic on recorded returns, preserving guid-ance from achieved outcomes. However, success achieved through later human recovery can also raise the estimated values of preceding autonomous mistakes [10]. PACT uses successful demonstrations to identify such suboptimal seg-ments and lowers their value targets by comparing the online critic’s estimates for human and policy actions [9]. Yet human actions can remain undervalued even with relative ranking. ReF-HIL learns an independent reference from successful human experience to supervise online reference-action values. These values then anchor local corrections, preserving guidance from successful behavior while discour-aging autonomous mistakes. 
+
+B. Reinforcement Learning with Behavioral Priors 
+
+Behavioral priors and demonstrations accelerate RL by directing exploration toward useful actions [19], [20] and providing supervision for learning [11], [21], [22]. However, guidance that is useful early in learning can become restric-tive when further improvement requires departing from sub-optimal human actions. Value filtering, advantage weighting, and uncertainty-dependent tolerances address this tension by making imitation selective or adaptive [12], [13], [23], [24]. These mechanisms reduce reliance on human actions, but a persistent imitation penalty can still oppose beneficial devia-tions. This motivates using human guidance to direct learning without requiring the policy to reproduce a particular ac-tion. Corrective action sets broaden the choices admitted by human feedback [25], while imitation-policy candidates can guide RL execution and value backups without an imitation loss on the RL actor [26]. Human behavior can thus guide learning without serving as a persistent imitation target. Human experience can also guide where value-driven policy improvement takes place, concentrating learning near useful behavior. Such guidance can limit optimization of poorly supported actions whose values may be overes-timated [27]–[29]. SPOT provides this guidance through density regularization, but its preference for higher-density actions can also oppose beneficial changes within data sup-port [30]. EXPO applies value-driven adjustments to actions sampled from a base policy within a prescribed distance, using both the original and adjusted actions for execution and value backups [31]. However, the distance bound can still admit actions poorly supported by human experience. Our Human Action Fence learns an action neighborhood from human demonstrations and online interventions. It constrains policy and value updates outside this neighborhood while al-lowing value-driven optimization without imitation penalties inside, which preserves human guidance and leaves room for further policy improvement. III. P ROBLEM FORMULATION 
+
+We formulate real-world robotic manipulation as a rein-forcement learning problem described by an approximate Markov decision process M = ( S, A, P, r, γ ). Visual and proprioceptive observations constitute the state s ∈ S , while 
+
+A and P denote the robot’s action space and transition dynamics. With the task reward r assigning a positive value to successful completion and a step cost otherwise, the objective is to learn a deterministic policy πϕ that maximizes the expected discounted return under autonomous execution: 
+
+J(πϕ) = Eτ ∼πϕ
+
+" ∞X
+
+> t=0
+
+γtrt
+
+#
+
+, (1) where γ ∈ (0 , 1) is the discount factor and rewards are zero after successful task termination. During training, we start with initial demonstrations and continue with autonomous interaction supported by online human interventions, without assuming that human actions are optimal. When intervening, the human may provide a Human–robot interaction Robot control 
+
+> Switch
+
+## 𝑎 𝜋 
+
+> Transitions
+
+Interaction data   
+
+> Demos Autonomous Recovery Takeover Human Policy Pre-intervention Store transitions
+
+Replay buffer      
+
+> DOnline batches
+> D:D𝐻 =1 : 1 Data Data
+
+(a) Human-reference value shaping Reference learning (IQL) 
+
+Dsucc 𝜋 ref (𝑠 ) 𝑎 ref 
+
+DIQL 𝑄 𝐼 (𝑠, 𝑎 ref ) 𝐼 
+
+Online critic Prediction horizon ℎ 
+
+> (𝑠, 𝑎 )
+
+˜Q𝜃 [ ˜𝑄 1 · · · ˜𝑄 ℎ · · · ˜𝑄 𝐾 ]
+
+Value guidance ˜𝑄 (𝑠, 𝑎 ) = 𝐵 (𝑠 ) + Δ𝐴 (𝑠, 𝑎 )           
+
+> Before After
+> Guide 𝐵 Correct Δ𝐴 Unrecoverable
+> Dsucc Dpre penalty
+> Value  𝐼 𝐵 𝑎 ref
+> 𝐵
+> ˜𝑄 Δ𝐴 𝑎 ref 𝑎 pre Action category Action category
+> 𝐹 𝑄 𝐼 ˜𝑄
+> Value estimator
+
+(b) Human action fence Action modeling D𝐻 𝐻 (𝑠, 𝑎 ) 𝐻 (𝑠, 𝑎 ref )   
+
+> 𝜌𝐻 (𝑠, 𝑎 ref )
+> 𝑎 ref 𝑎
+
+Online actor Maximize value 𝑠 
+
+## 𝜋 𝜙 1    
+
+> 𝐾
+> ∑ℎmin 𝑗 𝑄 𝑗,ℎ
+
+## 𝑎 𝜋 𝑄 
+
+Fenced value Ω𝐻 (𝑠 ) : 𝐻 (𝑠, 𝑎 ) ≥ 𝜌𝐻 (𝑠, 𝑎 ref )                        
+
+> Inside Value ascent Outside Toward 𝑎 ref
+> 𝑎 ref
+> Ω𝐻 (𝑠 )
+> 𝑄 𝑎 ref
+> Ω𝐻 (𝑠 )
+> 𝑄 𝑎 𝜋
+> 𝑎 𝜋
+> 𝑄 ℎ=𝐵 ℎ+Δ𝐴 ℎ𝑄 ℎ=𝐵 ℎ−𝑐 −  𝑎 −𝑎 ref 2
+
+˜𝑄 Fig. 2. Overview of ReF-HIL. Human and autonomous interaction supplies the training data. (a) Evaluating the reference action aref with the IQL critics provides I, which guides the online baseline B. Intervention feedback corrects ∆A; human-marked unrecoverable states provide target F for both QI      
+
+> and eQ. (b) Human actions train a potentially multimodal score H, whose relative threshold defines ΩH(s). Updates outside this region point toward aref ,while updates inside follow value gradients. The actor maximizes the horizon average of the twin-critic minimum. Open and filled circles in (a) denote values before and after guidance.
+
+brief correction before returning control to the policy or continue until task completion. The resulting experience therefore contains both human and autonomous actions; each transition (st, a t, r t, s t+1 ) is recorded with an indicator 
+
+mt ∈ { 0, 1} to distinguish human control ( mt = 1 ) from autonomous control ( mt = 0 ). To improve the sample efficiency of value learning, we adopt a vector of fixed-horizon action values [32], using the same experience to supervise return estimates over multiple prediction horizons. For a fixed deterministic policy π, this value vector is defined by 
+
+Qπh (s, a ) = Eπ
+
+"h−1X
+
+> k=0
+
+γkrt+k st = s, a t = a
+
+#
+
+,
+
+Qπ (s, a ) =  Qπ 
+
+> 1
+
+(s, a ), . . . , Q πK (s, a )⊤,
+
+(2) where h counts transitions from the current state-action pair up to a maximum horizon K, with the reward and discount factor shared across all components. Learning targets for these horizon-specific values follow from the Bellman recursion, with Qπ 
+
+> 0
+
+(s, a ) = 0 :
+
+Qπh (s, a ) = Er + γ(1 − d)Qπh−1(s′, π (s′)) s, a  , (3) where d indicates successful task termination. Episode step limits are treated as truncations. The recursion builds longer-horizon targets from shorter-horizon estimates, with the one-step value grounded in the immediate reward. Both the human value reference and shaped online critics Qθ (s, a ) ∈
+
+RK use this representation. IV. M ETHOD 
+
+A. Overview 
+
+ReF-HIL (Fig. 2) aims to improve the efficiency of HIL-RL by using successful human experience to guide online value learning and human actions to focus policy improve-ment. To this end, an independent implicit Q-learning (IQL) branch [28] supplies a reference policy πref and action-value estimates I(s) for shaping the online critic Qθ . The Human Action Fence then uses a learned score H(s, a ) to define the action neighborhood ΩH (s) within which the actor πϕ
+
+searches for higher-value actions. During interaction, a human may provide recovery , a brief correction before returning control to πϕ, or takeover , con-tinued human control to success. Both yield pre-intervention autonomous pairs (s, a pre ) for Dpre , allowing local action values to be corrected relative to the reference. Takeovers additionally contribute successful human suffixes to Dsucc 
+
+alongside successful demonstrations. To correct value over-estimation at unrecoverable states, whole rollouts ending at human-marked unrecoverable states enter Dfail , and the marked states directly supervise both value learners. IQL value learning uses DIQL = Dsucc ∪ D fail , while only Dsucc 
+
+is used to train πref and penalize online reference-action values that fall below the IQL estimates. Human-controlled transitions from demonstrations and both intervention types populate DH , whose state–action pairs train H, retaining neighborhood guidance from brief corrections as well as successful completions. All executed transitions enter replay 
+
+D. Following RLPD’s sampling strategy [14], we update the online actor–critic with minibatches drawn equally from 
+
+D and the human transition buffer DH , maintaining human guidance as autonomous experience accumulates. 
+
+B. Human-Reference-Guided Value Shaping 
+
+To accelerate online value learning, we design an indepen-dent value reference based on IQL [28]. IQL learns action-value vectors QIj from DIQL using state-value backups, al-lowing successful human experience to provide value super-vision for the online critic. Here j ∈ { 1, 2} indexes the twin critics. K-dimensional value vectors are written in bold, with minima taken elementwise. Advantage-weighted imitation on 
+
+Dsucc yields the reference policy πref . We evaluate its action 
+
+aref (s) = πref (s) to obtain I(s) = min j=1 ,2 QIj (s, a ref (s)) .To retain this guidance while allowing improvement from online experience, we separate the value of the reference action from the relative advantage of other actions. For online critic j with parameters θj , Bj (s) represents the learnable values of the reference action. We parameterize relative action advantages by centering Aj (s, a ) at aref (s),yielding the value before applying the action fence: 
+
+∆Aj (s, a ) = Aj (s, a ) − Aj (s, a ref (s)) ,
+
+eQθj (s, a ) = Bj (s) + ∆ Aj (s, a ). (4) Thus, eQθj (s, a ref (s)) = Bj (s). We use separate parameter sets for B and A. On states from Dsucc , we train this baseline against the IQL reference through a one-sided loss: 
+
+Lfloor = Es∼D succ 
+
+ 12K
+
+> 2
+
+X
+
+> j=1
+
+[sg( I(s)) − Bj (s)] +
+
+> 22
+
+ , (5) where [x]+ = max( x, 0) acts elementwise on vectors and sg 
+
+denotes stop-gradient. Only estimates below the reference incur a penalty, leaving room for higher values supported by online experience. Human interventions provide complementary feedback for correcting the values of preceding autonomous actions [9]. We use this feedback to reduce their average advantage relative to the reference, with a margin c > 0 equal to the step cost. For recorded pairs (s, a pre ) ∼ D pre , the basic ranking loss is 
+
+Lcorr = EDpre 
+
+ 12
+
+> 2
+
+X
+
+> j=1
+
+
+
+c + 1
+
+K 1⊤∆Aj (s, a pre )
+
+
+
+> +
+
+ . (6) Here 1 ∈ RK is the all-ones vector. With aref fixed in this loss, the correction adjusts ∆A while preserving the reference baseline B.Explicit annotations of unrecoverable states provide direct supervision for this baseline. Assuming no subsequent suc-cess and a cost c per step, we model the h-step return as 
+
+Fh = −c
+
+> h−1
+
+X
+
+> k=0
+
+γk, F0 = 0 . (7) We fit the IQL values and eQθj at these states to F =(F1, . . . , F K )⊤ using squared-error losses. This directly cal-ibrates the reference baseline, mitigating overestimation that relative action correction alone cannot resolve. 
+
+C. Human Action Fence 
+
+We design the Human Action Fence to improve learning efficiency by concentrating policy optimization within alearned neighborhood of human actions. Using (s, a H ) from 
+
+DH , we regress a nonnegative score H(s, a ) to Gaussian kernel targets for sampled query actions a,
+
+κσ (a, a H ) = (2 πσ 2)−da/2 exp 
+
+
+
+− ∥a − aH ∥22
+
+2σ2
+
+
+
+, (8) where da is the action dimension and σ sets the bandwidth in normalized action coordinates; each kernel has unit integral over Rda . For 0 < ρ ≤ 1, we define 
+
+ΩH (s) = {a ∈ A : H(s, a ) ≥ ρH (s, a ref (s)) } . (9) The relative threshold ensures that the reference action remains inside the neighborhood. Within this neighborhood, we retain the learned relative advantage ∆Aj (s, a ). Outside it, we replace this advantage with a distance penalty relative to the same reference-action baseline: 
+
+Qθj (s, a ) = 
+
+( eQθj (s, a ) a ∈ ΩH (s),
+
+Bj (s) −  c + ∥a − aref (s)∥22
+
+1 a / ∈ ΩH (s).
+
+(10) Values assigned outside ΩH (s) are componentwise below 
+
+Bj (s), ensuring that these actions cannot outrank the refer-ence through value extrapolation. We optimize the policy with the value objective 
+
+LQπ = −Es
+
+ 1
+
+K 1⊤ min  
+
+> j=1 ,2
+
+Qθj (s, π ϕ(s)) 
+
+
+
+. (11) Within ΩH (s), learned value gradients can favor actions that differ from the reference. Outside ΩH (s), the quadratic term provides an action gradient toward the reference. This sup-ports local improvement without an action-matching penalty inside the neighborhood. To train the online critic, we construct TD targets by comparing policy and reference actions at the next state, following IBRL [26]. Using target critics with parameters ¯θj ,we define the continuation values Ch and target components 
+
+yh as 
+
+Ch(s′) = max   
+
+> a′∈{ πϕ(s′),a ref (s′)}
+
+min  
+
+> j=1 ,2
+
+Q¯θj ,h (s′, a ′),yh = r + γ(1 − d)Ch−1(s′), C0 = 0 .
+
+(12) For explicitly unrecoverable next states, Fh−1 replaces 
+
+Ch−1(s′). We fit eQθj to the target vector y on transitions accepted by the fence, retaining transitions into annotated unrecoverable states even when their actions are rejected. Besides, actions rejected by the fence receive an auxiliary ranking penalty on their relative advantages. These updates propagate higher estimated returns and annotated failure costs to preceding actions. V. E XPERIMENTS 
+
+A. Experimental Setup 1) Implementation Details: We conduct experiments on a UR5e robotic arm equipped with a Robotiq Hand-E gripper. RGB images from two wrist-mounted Intel RealSense D405 cameras and one global D405 camera are encoded by a frozen ImageNet-pretrained ResNet-18. The visual features (a) Push-T XYZ 
+
+(b) Cap unscrewing XYZ + Rz + G 
+
+(d) Plug insertion XYZ + G 
+
+(c) Gear assembly XYZ + Rz 
+
+(e) Dual-branch cable routing XYZ + G Fig. 3. Real-world manipulation tasks. In-image labels indicate controlled action dimensions: XY Z denotes Cartesian translation, Rz rotation about the end-effector z-axis, and G gripper actuation. Arrows illustrate task motions or indicate manipulation locations. 0.0 0.5 1.0 Autonomous success rate Push-T 0.0 0.5 1.0 Cap unscrewing 0.0 0.5 1.0 Plug insertion 0.0 0.5 1.0 Gear assembly 0.0 0.5 1.0 Dual-branch cable routing 0.0 0.5 1.0 Intervention rate 0.0 0.5 1.0 0.0 0.5 1.0 0.0 0.5 1.0 0.0 0.5 1.0 0 5 10 15 20 25 80 120 150 Mean episode length (steps) 0 5 10 15 60 120 200 0 10 20 30 40 60 120 200 0 10 20 30 50 100 150 0 20 40 60 100 150 200 Time (min) Ours HG-DAgger HIL-SERL SiLRI  
+
+> Fig. 4. Online learning performance of ReF-HIL (Ours), HG-DAgger, HIL-SERL, and SiLRI. Columns correspond to the five manipulation tasks; rows show autonomous success rate, intervention rate, and mean episode length. Curves show 20-episode moving averages against accumulated active training time.
+
+are combined with end-effector velocities, forces and torques, gripper opening, and gravity direction in the end-effector frame to form the policy input. The policy generates Carte-sian motion commands at 10 Hz, which are executed through an admittance controller. To support online learning, we use an asynchronous actor–learner architecture, with the actor running on an AMD Radeon RX 9070 XT (16G) and the learner on an NVIDIA GeForce RTX 5090 (32G). For each task, training begins with 20 successful human demonstration episodes and continues through autonomous interaction with human corrections provided through aSpaceMouse. Each episode starts from an end-effector po-sition randomly sampled within task-specific bounds. Pre-intervention correction uses up to 10 consecutive autonomous state-action pairs immediately preceding each human inter-vention. The relative threshold of the Human Action Fence is set to ρ = 0 .9. Experimental settings and hyperparameters are detailed in the supplementary video. 
+
+2) Task Definitions: We evaluate ReF-HIL on five diverse and challenging real-world manipulation tasks (Fig. 3), span-ning contact-constrained motion, precision assembly, and long-horizon manipulation of deformable objects.  
+
+> •
+
+Push-T: Pushing a T-shaped block into its target pose.  
+
+> •
+
+Cap unscrewing: Grasping and unscrewing a bottle cap through thread-constrained motion until it is detached.  
+
+> •
+
+Gear assembly: Installing a grasped gear by inserting its shaft into a hole and meshing it with the adjacent gear.  
+
+> •
+
+Plug insertion: Picking up a plug from the table and inserting it into a power-strip socket.  
+
+> •
+
+Dual-branch cable routing: Grasping and routing two deformable cable branches into their designated slots in a fixed order. 
+
+3) Baselines: To assess how effectively ReF-HIL uses human guidance, we compare it with the following methods on the five tasks described above: TABLE I PERFORMANCE ACROSS THE FIVE MANIPULATION TASKS                                                                   
+
+> Method Push-T Cap unscrewing Gear assembly Plug insertion Dual-branch cable routing SR (%) ↑Length ↓SR (%) ↑Length ↓SR (%) ↑Length ↓SR (%) ↑Length ↓SR (%) ↑Length ↓
+> HG-DAgger [33] 86 .7±2.966 .6±1.876 .7±2.9109 .8±7.438 .3±2.9118 .4±1.55.0±0.0195 .2±0.05.0±0.0193 .4±0.0
+> HIL-SERL [5] 16 .7±2.9134 .1±2.81.7±2.9198 .5±2.76.7±2.9143 .9±2.30.0±0.0200 .0±0.00.0±0.0200 .0±0.0
+> SiLRI [24] 55 .0±5.0100 .3±2.836 .7±5.8138 .5±9.910 .0±0.0141 .5±0.00.0±0.0200 .0±0.00.0±0.0200 .0±0.0
+> ReF-HIL (Ours) 100 .0±0.069 .3±2.9100 .0±0.0 42 .4±1.4 95 .0±5.0 40 .1±5.6 91 .7±2.9 64 .4±5.0 95 .0±5.0 78 .3±7.0
+> All results are obtained from separate evaluations of final policies without human intervention. SR: autonomous success rate. Length (steps): batch mean of actual step counts for autonomous successes and task horizons for other episodes (150 for Push-T and Gear assembly; 200 for the other tasks). Values are mean ±sample SD across batches, not independent training runs. 025 50 75 100 Autonomous success rate (%) 00Push-T Cap unscrewing Gear assembly Plug insertion Dual-branch cable routing 025 50 75 100 Normalized episode length (%)
+> ReF-HIL w/o value shaping w/o action fence w/o both
+> Fig. 5. Ablation results across five manipulation tasks, obtained from separate evaluations of final policies without human intervention. Bars show autonomous success rate (top) and episode length normalized by the task horizon (bottom), using the Length definition in Table I. Error bars denote sample standard deviations across batches.
+> •
+
+HG-DAgger [33] learns a policy by imitating demonstra-tions and aggregated human corrections.  
+
+> •
+
+HIL-SERL [5] combines demonstrations and online inter-ventions in replay buffers for efficient off-policy RL.  
+
+> •
+
+SiLRI [24] adjusts imitation constraints according to inter-vention uncertainty, with state-wise Lagrange multipliers balancing human guidance and policy improvement. We use the publicly available implementations of all three baselines, adapted to our robotic platform. For each task, all methods use the same 20 demonstrations, observation and action spaces, initial-state randomization, and evaluation protocol. They also use the same pretraining budget and online update schedule, with effective update rates limited by computational throughput. 
+
+4) Evaluation Metrics: We evaluate online learning in terms of autonomous success, human intervention, and ex-ecution efficiency. Autonomous success rate measures the fraction of episodes in which the task is successfully com-pleted without human intervention. Intervention rate is the mean per-episode fraction of human-controlled steps. Mean episode length is computed using the actual step count for successful episodes without human intervention and the maximum allowed step count for all other episodes. In Fig. 4, these metrics are plotted as 20-episode moving averages against accumulated active training time, which excludes pretraining. Table I and Fig. 5 report results from three batches of 20 episodes each. 
+
+B. Comparative Experiments 
+
+We compare ReF-HIL with three baselines on five real-world manipulation tasks, with results summarized in Fig. 4 and Table I. Overall, ReF-HIL achieves higher autonomous success rates with less reliance on human intervention than the baselines. On Push-T, it reaches 100% autonomous success after approximately 25 minutes of active training. Although HG-DAgger also learns quickly, ReF-HIL achieves a higher success rate (100% versus 86.7%) with a slightly higher penalized episode length (69.3 versus 66.6 steps). This slight increase reflects additional corrective pushes that adjust the block’s pose and help improve policy robustness. On cap un-screwing, ReF-HIL reaches 100% autonomous success after approximately 18 minutes of active training. Compared with HG-DAgger, the best-performing baseline on this task, it achieves both a higher success rate (100% versus 76.7%) and a lower penalized episode length (42.4 versus 109.8 steps). Here, successful completion requires following a thread-constrained path until the cap detaches. By learning from successful human trajectories, ReF-HIL’s independent IQL reference provides value guidance for intermediate actions along this path before the online policy can reliably complete the task. On gear assembly, ReF-HIL achieves a 95.0% success rate, compared with 38.3% for HG-DAgger, the strongest baseline on this task, while reducing the penalized episode length from 118.4 to 40.1 steps. The performance gap widens on plug insertion, where ReF-HIL achieves 91.7% success while all baselines remain at 5% or below. It reaches 90% autonomous success after approximately 41 minutes of active training, with interven-tion subsequently falling to zero. Plug insertion requires sequential grasping and contact-rich insertion. Sparse success feedback complicates credit assignment across these stages, while imitation-based methods may reproduce suboptimal human corrections that hinder reliable completion. Finally, dual-branch cable routing tests long-horizon ma-nipulation, requiring a single policy to complete two suc-cessive grasp-and-route stages. Errors can accumulate across stages, while success feedback is available only after both branches are seated. Despite these challenges, ReF-HIL reaches 90% autonomous success after approximately 62 minutes of active training and achieves a success rate of 95.0%, compared with at most 5% for the baselines. 
+
+C. Ablation Studies 
+
+We compare ReF-HIL with three ablations in Fig. 5: w/o value shaping , w/o action fence , and w/o both , which remove human-reference value shaping, the Human Action Fence, and both modules, respectively. All variants retain the IQL reference policy and use its actions as candidates in TD backups. Retaining either component improves success rates over 
+
+w/o both on all five tasks. Removing value shaping reduces success on every task, with the largest decrease on long-horizon cable routing, from 95.0% to 46.7%, accompanied by an increase in normalized episode length from 39.1% to 74.7%. Action constraints alone therefore do not recover the completion reliability achieved with value shaping. The action fence further improves success on Push-T, cap unscrewing, plug insertion, and dual-branch cable routing, with the largest gain on cable routing (18.3 percentage points). On Push-T, the full method achieves higher success than either single-component variant despite a slightly longer normalized episode length. On gear assembly, however, removing the fence increases success from 95.0% to 100% and reduces normalized episode length from 26.7% to 13.5%. For tasks requiring only local adjustments, a human-action constraint may offer limited exploration benefits while still restricting policy improvement, particularly when human cor-rections are inconsistent. The fence’s contribution is therefore task dependent. 
+
+D. Mechanism Analysis 1) Value Learning: To examine how value shaping sup-ports long-horizon learning, we evaluate saved critic check-points on identical state–action pairs from an autonomous cable-routing trajectory selected from late training. This trajectory completes the task in 57 steps, compared with 61 steps for the shortest of the 20 initial demonstrations. Fig. 6 compares the action-value estimates of ReF-HIL and w/o value shaping at different training stages with the trajectory’s recorded discounted return-to-go. At approximately 5 minutes, the critic without value shaping assigns reasonable values near task completion but substantially underestimates earlier state–action pairs. ReF-HIL alleviates this underestimation, achieving a mean abso-lute deviation from the recorded return of 0.136, compared with 0.648 for the ablation. Although ReF-HIL initially over-estimates parts of the trajectory, these deviations diminish during subsequent online learning, and its estimates closely -1 015 min 15 min -1 0125 min 35 min 1 30 57 -1 0145 min 1 30 57 55 min Action value / return Episode timestep ReF-HIL w/o value shaping Return-to-go              
+
+> Fig. 6. Raw twin-min critic estimates and recorded discounted return-to-go along the same selected 57-step autonomous cable-routing trajectory. Both critics use the remaining episode-budget horizon. Panels show approximate time after pretraining; the orange, blue, and grey curves denote ReF-HIL, w/o value shaping, and recorded return, respectively. 025 50 70 050 100 Intervention rate (%) 025 50 70 Autonomous success rate (%) Training time (min) ReF-HIL w/ in-fence imitation Human proxy (IQL)
+> Fig. 7. Effect of in-fence imitation on dual-branch cable routing. Both online variants retain the Human Action Fence; the blue dashed variant adds an L2imitation penalty toward the reference action inside the neighborhood. Orange and blue curves show 20-episode moving averages from one training run per variant, with a common cutoff of approximately 70 minutes. Green markers show 20-trial checkpoint evaluations of the IQL reference policy from a separate run. Training time excludes pretraining.
+
+track the recorded return at 45–55 minutes. In contrast, underestimation persists over much of the earlier trajectory without value shaping. This pattern is consistent with human-derived value references providing early guidance for states far from task completion, followed by refinement through online experience. 
+
+2) Policy Improvement: We investigate how continuous imitation within the Human Action Fence affects policy improvement on dual-branch cable routing. The comparison variant retains the fence and adds an L2 penalty toward the reference action inside the learned neighborhood, with a 1:1 weighting between the RL and imitation losses. We also evaluate the IQL reference policy learned from human data, using 20 trials at each checkpoint. Fig. 7 shows similar early reductions in intervention for the two online variants, followed by a divergence in autonomous performance. By approximately 70 minutes, ReF-HIL achieves 90% autonomous success with zero in-tervention, whereas the in-fence imitation variant reaches 45% success and retains an intervention rate of 11.3%. The independently evaluated IQL reference policy achieves 65% success at its final checkpoint. Inside the fence, the L2 imitation penalty still assigns a cost to deviating from the reference action, even when such a deviation increases the estimated return. The actor therefore trades off value improvement against reference proximity despite remaining within the permitted neighborhood. The observed divergence is consistent with this constraint limiting later policy refinement. ReF-HIL separates these roles: the human-action neighborhood constrains exploration, while value estimates guide optimization within it, leaving room to improve upon the learned reference. VI. C ONCLUSION 
+
+We presented ReF-HIL, an efficient human-in-the-loop re-inforcement learning framework. Human-Reference-Guided Value Shaping provides an independent value reference for online learning, while the Human Action Fence focuses policy optimization within a learned human-action neighbor-hood without imposing imitation penalties inside it. Across five diverse and challenging real-world manipulation tasks, ReF-HIL demonstrates improved overall learning efficiency and higher autonomous success rates than the evaluated baselines. It reaches 90% autonomous success in 18–63 minutes of active training and achieves final success rates of 91.7–100%. These findings support using human experience to accelerate value learning while preserving value-driven policy improvement within a learned action neighborhood. The effectiveness of the Human Action Fence varies across tasks, suggesting the need for more adaptive constraints. Future work will investigate fences that account for the reliability of human guidance and online learning progress. We will also explore adapting ReF-HIL for efficient post-training of vision-language-action (VLA) models using real-world interaction and human feedback. REFERENCES [1] B. Ai, et al. , “A review of learning-based dynamics models for robotic manipulation,” Sci. Robot. , vol. 10, no. 106, 2025, art. no. eadt1497. [2] C. Chi, et al. , “Diffusion policy: Visuomotor policy learning via action diffusion,” Int. J. Robot. Res. , vol. 44, no. 10–11, pp. 1684–1704, 2025. [3] S. Wang, B. Wang, G. Shen, and D. Wu, “Visual-privileged co-learning for industrial board-to-board connectors force-guided assembly task,” 
+
+IEEE Robot. Autom. Lett. , vol. 10, no. 10, pp. 10 154–10 161, 2025. [4] C. Tang, B. Abbatematteo, J. Hu, R. Chandra, R. Mart´ ın-Mart´ ın, and P. Stone, “Deep reinforcement learning for robotics: A survey of real-world successes,” Annu. Rev. Control Robot. Auton. Syst. , vol. 8, pp. 153–188, 2025. [5] J. Luo, C. Xu, J. Wu, and S. Levine, “Precise and dexterous robotic manipulation via human-in-the-loop reinforcement learning,” 
+
+Sci. Robot. , vol. 10, no. 105, 2025, art. no. eads5033. [6] Q. Li, Z. Peng, and B. Zhou, “Efficient learning of safe driving policy via Human-AI copilot optimization,” in International Conference on Learning Representations , 2022. [7] Z. Peng, W. Mo, C. Duan, Q. Li, and B. Zhou, “Learning from active human involvement through proxy value propagation,” in Advances in Neural Information Processing Systems , vol. 36, 2023, pp. 77 969– 77 992. [8] J. Luo, P. Dong, Y. Zhai, Y. Ma, and S. Levine, “RLIF: Interactive imi-tation learning as reinforcement learning,” in International Conference on Learning Representations , 2024. [9] Z. Liu, et al. , “Preference-calibrated human-in-the-loop reinforcement learning for robotic manipulation,” 2026, arXiv:2606.03949. [10] Z. Wang and Y. Wang, “Max-Q selective imitation for human-in-the-loop online robot learning,” 2026, arXiv:2608.15088. [11] J. Wu, Z. Huang, W. Huang, and C. Lv, “Prioritized experience-based reinforcement learning with human guidance for autonomous driving,” 
+
+IEEE Trans. Neural Netw. Learn. Syst. , vol. 35, no. 1, pp. 855–869, 2024. [12] J. Wu, Y. Zhou, H. Yang, Z. Huang, and C. Lv, “Human-guided reinforcement learning with sim-to-real transfer for autonomous nav-igation,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 45, no. 12, pp. 14 745–14 759, 2023. [13] A. Nair, B. McGrew, M. Andrychowicz, W. Zaremba, and P. Abbeel, “Overcoming exploration in reinforcement learning with demonstra-tions,” in Proceedings of the IEEE International Conference on Robotics and Automation , 2018, pp. 6292–6299. [14] P. J. Ball, L. Smith, I. Kostrikov, and S. Levine, “Efficient online reinforcement learning with offline data,” in Proceedings of the International Conference on Machine Learning , ser. Proceedings of Machine Learning Research, vol. 202, 2023, pp. 1577–1594. [15] J. Spencer, et al. , “Learning from interventions: Human-robot in-teraction as both explicit and implicit feedback,” in Proceedings of Robotics: Science and Systems , 2020. [16] Z. Jiang, et al. , “Reinforcement learning from imperfect corrective actions and proxy rewards,” in International Conference on Learning Representations , 2025. [17] Y. Mo, J. Li, Q. Wu, Y. Kang, and R. Xu, “OHP-RL: Online human preference as guidance in reinforcement learning for robot manipulation,” 2026, arXiv:2605.15971. [18] X. Zhang, et al. , “GAINS: Leveraging inconsistent human intervention signals in reinforcement learning,” 2026, arXiv:2608.15707. [19] D. Tirumala, et al. , “Behavior priors for efficient reinforcement learning,” J. Mach. Learn. Res. , vol. 23, no. 221, pp. 1–68, 2022. [20] A. Singh, H. Liu, G. Zhou, A. Yu, N. Rhinehart, and S. Levine, “Parrot: Data-driven behavioral priors for reinforcement learning,” in 
+
+International Conference on Learning Representations , 2021. [21] T. Hester, et al. , “Deep Q-learning from demonstrations,” in Proceed-ings of the AAAI Conference on Artificial Intelligence , vol. 32, no. 1, 2018. [22] A. Rajeswaran, et al. , “Learning complex dexterous manipulation with deep reinforcement learning and demonstrations,” in Proceedings of Robotics: Science and Systems , 2018. [23] A. Nair, A. Gupta, M. Dalal, and S. Levine, “AWAC: Acceler-ating online reinforcement learning with offline datasets,” 2020, arXiv:2006.09359. [24] Y. Zhao, et al. , “Real-world reinforcement learning from suboptimal interventions,” 2025, arXiv:2512.24288. [25] Z. Li, R. P´ erez-Dattari, R. Babuska, C. Della Santina, and J. Kober, “From action labels to sets: Rethinking action supervision for imitation learning from corrective feedback,” 2026, arXiv:2502.07645v3. [26] H. Hu, S. Mirchandani, and D. Sadigh, “Imitation bootstrapped rein-forcement learning,” in Proceedings of Robotics: Science and Systems ,2024. [27] A. Kumar, A. Zhou, G. Tucker, and S. Levine, “Conservative Q-learning for offline reinforcement learning,” in Advances in Neural Information Processing Systems , vol. 33, 2020. [28] I. Kostrikov, A. Nair, and S. Levine, “Offline reinforcement learning with implicit Q-learning,” in International Conference on Learning Representations , 2022. [29] M. Nakamoto, et al. , “Cal-QL: Calibrated offline RL pre-training for efficient online fine-tuning,” in Advances in Neural Information Processing Systems , vol. 36, 2023, pp. 62 244–62 269. [30] J. Wu, H. Wu, Z. Qiu, J. Wang, and M. Long, “Supported policy optimization for offline reinforcement learning,” in Advances in Neural Information Processing Systems , vol. 35, 2022, pp. 31 278–31 291. [31] P. Dong, Q. Li, D. Sadigh, and C. Finn, “EXPO: Stable reinforcement learning with expressive policies,” in International Conference on Learning Representations , 2026. [32] K. De Asis, A. Chan, S. Pitis, R. S. Sutton, and D. Graves, “Fixed-horizon temporal difference methods for stable reinforcement learn-ing,” in Proceedings of the AAAI Conference on Artificial Intelligence ,vol. 34, no. 4, 2020, pp. 3741–3748. [33] M. Kelly, C. Sidrane, K. Driggs-Campbell, and M. J. Kochenderfer, “HG-DAgger: Interactive imitation learning with human experts,” in 
+
+Proceedings of the IEEE International Conference on Robotics and Automation , 2019, pp. 8077–8083.

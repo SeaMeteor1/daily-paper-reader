@@ -1,0 +1,345 @@
+{
+  "date": "20261003",
+  "date_label": "",
+  "generated_at": "2026-10-03 22:26:42 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.33575v1",
+      "route": "202610/03/2609.33575v1-slip-vla-single-step-latent-imagination-for-policy-learning-in-vision-language-action-models",
+      "title": "SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向机器人操作的视觉-语言-动作模型策略学习",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.38389v1",
+      "route": "202610/03/2609.38389v1-the-geometry-of-harmfulness-in-multi-turn-attacks",
+      "title": "The Geometry of Harmfulness in Multi-Turn Attacks",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "多轮LLM攻击下危害表征的几何与时序动态",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.40153v1",
+      "route": "202610/03/2609.40153v1-dream4act-a-shared-visual-action-interface-for-multi-embodiment-video-action-modeling",
+      "title": "Dream4ACT: A Shared Visual Action Interface for Multi-Embodiment Video-Action Modeling",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "统一多本体视频-动作建模的共享视觉动作接口",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.32155v1",
+      "route": "202610/03/2609.32155v1-recastvla-from-past-interaction-to-future-control-with-adaptive-policy-states",
+      "title": "RecastVLA: From Past Interaction to Future Control with Adaptive Policy States",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "带自适应策略状态的流匹配视觉-语言-动作策略",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.32239v1",
+      "route": "202610/03/2609.32239v1-federated-subspace-guided-vision-language-action-policy-distillation-for-non-iid-multi-robot-manipulation",
+      "title": "Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向异构多机器人操作的联邦VLA策略蒸馏",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.33197v1",
+      "route": "202610/03/2609.33197v1-tao-da-towards-autonomous-operation--a-dual-arm-vision-language-action-model-for-coordinated-manipulation",
+      "title": "TAO-DA: Towards Autonomous Operation--A Dual-Arm Vision-Language-Action Model for Coordinated Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向协调操作的双臂视觉-语言-动作模型",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.33707v1",
+      "route": "202610/03/2609.33707v1-does-adversarial-training-improve-generalization-in-multi-view-vlas-revealing-and-mitigating-view-collapse",
+      "title": "Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向机器人控制的视觉-语言-动作模型",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34061v1",
+      "route": "202610/03/2609.34061v1-quantile-head-for-vision-language-action-models",
+      "title": "Quantile Head for Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向视觉-语言-动作模型的分位数动作头设计",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34220v2",
+      "route": "202610/03/2609.34220v2-mmhri-towards-privacy-preserving-human-robot-interaction-with-millimeter-wave-radar",
+      "title": "mmHRI: Towards Privacy-Preserving Human-Robot Interaction with Millimeter-Wave Radar",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "隐私保护的人机交互",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34384v1",
+      "route": "202610/03/2609.34384v1-roboirgbench-benchmarking-implicit-referential-grounding-in-vision-language-action-models",
+      "title": "RoboIRGBench: Benchmarking Implicit Referential Grounding in Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "评测视觉-语言-动作模型隐式指代接地的基准",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.35375v1",
+      "route": "202610/03/2609.35375v1-from-pixel-to-poses-object-centric-tool-manipulation-learning-from-human-demonstrations",
+      "title": "From Pixel to Poses: Object-centric Tool Manipulation Learning from Human Demonstrations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从人类演示中学习工具操作",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.37131v1",
+      "route": "202610/03/2609.37131v1-ref-hil-shaping-the-critic-around-human-action-neighborhoods-for-efficient-human-in-the-loop-reinforcement-learning",
+      "title": "ReF-HIL: Shaping the Critic around Human Action Neighborhoods for Efficient Human-in-the-Loop Reinforcement Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向机器人操作的人在回路强化学习",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.38357v1",
+      "route": "202610/03/2609.38357v1-evaluating-language-model-safety-across-long-adversarial-conversations",
+      "title": "Evaluating Language Model Safety Across Long Adversarial Conversations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "topic"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "评估语言模型在持续对抗多轮提示下的安全性",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34010v1",
+      "route": "202610/03/2609.34010v1-zerobot-learning-from-scratch-in-minutes-with-generative-real2sim",
+      "title": "ZeroBot: Learning from Scratch in Minutes with Generative Real2Sim",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向机器人操作的大规模并行强化学习从零学习",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34319v1",
+      "route": "202610/03/2609.34319v1-text-vision-synergistic-token-caching-a-training-free-framework-for-efficient-vision-language-action-inference",
+      "title": "Text-Vision Synergistic Token Caching: A Training-Free Framework for Efficient Vision-Language-Action Inference",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向高效VLA推理的免训练token缓存",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.35003v1",
+      "route": "202610/03/2609.35003v1-learning-to-act-under-visual-interruptions-with-vision-language-action-models",
+      "title": "Learning to Act under Visual Interruptions with Vision-Language-Action Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "在操作中相机中断下评测视觉语言动作模型",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.35469v1",
+      "route": "202610/03/2609.35469v1-rethinking-causal-action-tokenization-with-conditional-annealing-in-flow-matching",
+      "title": "Rethinking Causal Action Tokenization with Conditional Annealing in Flow Matching",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向自回归VLA模型的因果动作分词",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.30715v1",
+      "route": "202610/03/2609.30715v1-robomonitor-label-efficient-runtime-monitoring-of-robot-task-execution-via-predictive-representation-learning",
+      "title": "RoboMonitor: Label-Efficient Runtime Monitoring of Robot Task Execution via Predictive Representation Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "vla"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "跨两种机器人本体的视觉语言执行监控器",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.32935v1",
+      "route": "202610/03/2609.32935v1-communication-aware-heterogeneous-graph-learning-for-decentralized-multi-human-multi-robot-task-allocation",
+      "title": "Communication-Aware Heterogeneous Graph Learning for Decentralized Multi-Human Multi-Robot Task Allocation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向多人类多机器人任务分配的异构图学习",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34270v1",
+      "route": "202610/03/2609.34270v1-bayesian-active-learning-for-intent-disambiguation-in-interactive-robot-planning",
+      "title": "Bayesian Active Learning for Intent Disambiguation in Interactive Robot Planning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向交互式机器人规划的LLM澄清与意图消歧",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    },
+    {
+      "paper_id": "2609.34484v1",
+      "route": "202610/03/2609.34484v1-ars-agentic-reward-system-for-robot-learning",
+      "title": "ARS: Agentic Reward System for Robot Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "用视觉语言模型进行机器人进度奖励建模的智能体系统",
+      "first_seen_at": "2026-10-03 22:26:42 UTC",
+      "updated_at": "2026-10-03 22:26:42 UTC"
+    }
+  ]
+}
