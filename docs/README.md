@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-03</span>
+      <span class="dpr-home-dashboard-kicker">2026-10-04</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 21 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 5 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>8</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>13</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>0</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-10-03 22:26:42 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-10-04 22:23:43 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,7 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日扫完 21 篇论文，精读 8 篇、速读 13 篇，重点锁定视觉-语言-动作模型与多轮攻击安全性。最值得看的是两篇 9 分精读：SLIP-VLA 用单步潜在想象改进 VLA 策略学习，以及多轮攻击中危害性的几何刻画；速读里 VLA 策略蒸馏、双臂协同操作与多视图 VLA 泛化也都在 8 分。普通读者可先从这两篇精读入手，再按兴趣追 VLA 安全与机器人操作方向。</p>
+<p>今日精读5篇，其中《EgoHumanoid-V2》与《Feature-Aware Token Attack》双双拿到8.0分，聚焦人形机器人全身协调技能迁移与大视觉语言模型的隐蔽失效攻击。最值得看的是两条线：一是人类动作向人形机器人的全身协调技能迁移，用于移动操作；二是压缩触发的LVLM隐蔽失效及其特征感知Token攻击。普通读者可优先关注人形机器人技能迁移的落地进展，同时留意多模态模型在压缩部署下的安全风险。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -78,12 +78,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">8 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models">SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="The Geometry of Harmfulness in Multi-Turn Attacks">The Geometry of Harmfulness in Multi-Turn Attacks</span></li><li><span class="dpr-home-dashboard-paper-title" title="Dream4ACT: A Shared Visual Action Interface for Multi-Embodiment Video-Action Modeling">Dream4ACT: A Shared Visual Action Interface for Multi-Embodiment Video-Action Modeling</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="EgoHumanoid-V2: Human-to-Humanoid Transfer of Coordinated Whole-Body Skills for Loco-Manipulation">EgoHumanoid-V2: Human-to-Humanoid Transfer of Coordinated Whole-Body Skills for Loco-Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Feature-Aware Token Attack for Compression-Triggered Stealthy Failures in Large Vision-Language Models">Feature-Aware Token Attack for Compression-Triggered Stealthy Failures in Large Vision-Language Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?">Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>3</strong></span><span class="dpr-home-dashboard-tag">vla <strong>3</strong></span><span class="dpr-home-dashboard-tag">topic <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>3</strong></span><span class="dpr-home-dashboard-tag">topic <strong>2</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -91,12 +91,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">13 篇</strong>
+    <strong class="dpr-home-dashboard-count">0 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation">Federated Subspace Guided Vision-Language-Action Policy Distillation for Non-IID Multi-Robot Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="TAO-DA: Towards Autonomous Operation--A Dual-Arm Vision-Language-Action Model for Coordinated Manipulation">TAO-DA: Towards Autonomous Operation--A Dual-Arm Vision-Language-Action Model for Coordinated Manipulation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse">Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse</span></li></ul>
+<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">vla <strong>9</strong></span><span class="dpr-home-dashboard-tag">robotics-ai <strong>4</strong></span></div>
+
 </section>
 </div>
 

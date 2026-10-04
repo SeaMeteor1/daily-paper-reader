@@ -1,0 +1,230 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-10-04T22:21:19.766550+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 0,
+    "deep_divecandidates": 5,
+    "deep_cap": 5,
+    "deep_selected": 5,
+    "quick_candidates": 0,
+    "quick_skim_target": 10,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2609.37181v1",
+      "source": "arxiv",
+      "title": "EgoHumanoid-V2: Human-to-Humanoid Transfer of Coordinated Whole-Body Skills for Loco-Manipulation",
+      "abstract": "Human demonstrations capture diverse scenes and rich whole-body skills without requiring robot teleoperation. Prior work on egocentric transfer has emphasized scene generalization in loco-manipulation under decoupled control, leaving direct transfer of coordinated whole-body skills less explored. We present EgoHumanoid-V2, the first egocentric human-to-humanoid skill transfer framework for coordinated whole-body loco-manipulation. At its core, coarse-to-fine action alignment combines kinematic reference correction with dynamics-aware refinement. It improves end-effector pose accuracy while preserving whole-body coordination. We also use robot-arm rendering and training-time image augmentation to reduce the visual embodiment gap and improve viewpoint robustness. On four real-world tasks, vision-language-action (VLA) policies trained on aligned human data show zero-shot skill transfer without target-task robot demonstrations. Task scores are comparable to those of policies trained on teleoperation data at a lower collection cost. These results support human data as direct skill supervision.",
+      "authors": [
+        "Jin Chen",
+        "Yiming Jiang",
+        "Chongyang Xu",
+        "Modi Shi",
+        "Shijia Peng",
+        "Li Chen",
+        "Tianyu Li",
+        "Mu Xu",
+        "Yilun Chen",
+        "Steven Hoi",
+        "Hongyang Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-09-29T10:05:10+00:00",
+      "link": "https://arxiv.org/pdf/2609.37181v1",
+      "tags": [
+        "keyword:VLA",
+        "keyword:robotics-ai",
+        "query:VLA",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "human-to-humanoid transfer of whole-body skills from human demonstrations",
+      "llm_evidence_cn": "从人类演示到人形机器人的全身技能迁移",
+      "llm_evidence": "从人类演示到人形机器人的全身技能迁移",
+      "canonical_evidence": "从人类演示到人形机器人的全身技能迁移",
+      "llm_tldr_en": "EgoHumanoid-V2 transfers coordinated whole-body loco-manipulation skills from egocentric human demonstrations via coarse-to-fine action alignment and dynamics-aware refinement.",
+      "llm_tldr_cn": "人类演示能提供多样场景与丰富全身技能而无需遥操作，但以往的自中心迁移工作多关注解耦控制下的场景泛化，对协调全身技能的直接迁移探索不足。本文提出EgoHumanoid-V2，首个面向协调全身移动操作的自中心人到人形机器人技能迁移框架。其核心是粗到细的动作对齐，结合运动学参考校正与动力学感知细化，在保持全身协调的同时提升末端位姿精度，并利用渲染与图像增强缩小视觉具身差距。该工作推动了人形机器人全身技能的高效迁移。",
+      "llm_tldr": "人类演示能提供多样场景与丰富全身技能而无需遥操作，但以往的自中心迁移工作多关注解耦控制下的场景泛化，对协调全身技能的直接迁移探索不足。本文提出EgoHumanoid-V2，首个面向协调全身移动操作的自中心人到人形机器人技能迁移框架。其核心是粗到细的动作对齐，结合运动学参考校正与动力学感知细化，在保持全身协调的同时提升末端位姿精度，并利用渲染与图像增强缩小视觉具身差距。该工作推动了人形机器人全身技能的高效迁移。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-17",
+      "selection_source": "carryover_cache",
+      "paper_id": "2609.37181v1"
+    },
+    {
+      "id": "2609.39134v1",
+      "source": "arxiv",
+      "title": "Feature-Aware Token Attack for Compression-Triggered Stealthy Failures in Large Vision-Language Models",
+      "abstract": "Visual-token compression improves the efficiency of large vision-language models, but can expose failures that full-token evaluation misses. We study adversarial images that preserve full-token correctness yet induce errors after compression, even when both inference paths succeed on the clean image. Creating such failures is challenging because perturbing token importance can also damage the visual content needed for full-token inference. We propose Feature-Aware Token Attack (FATA), which couples attention suppression with cosine-based feature preservation on a fixed set of salient clean-image tokens. In the primary LLaVA-1.5-7B setting, FATA uses only vision-encoder gradients, without access to the deployed compressor, token budget, or downstream task. Across four visually dependent task subsets and four compressors under a controlled reconstruction protocol, FATA achieves SR = 96.3% full-token accuracy retention and CBR = 22.1% conditional blinding, compared with 89.8% and 15.7% for CAA. Ablations support the role of both objectives in balancing compressed-path failure against full-token preservation. FATA also has the lowest measured detection rate among four attacks across three evaluated detectors at a 5% false-positive rate. These findings motivate assessing adversarial robustness jointly across full-token and compressed inference.",
+      "authors": [
+        "Shilinlu Yan",
+        "Bowen Chen",
+        "Yuechen Zhang",
+        "Zhenhong Zhou",
+        "Li Sun",
+        "Sen Su"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-09-30T07:04:15+00:00",
+      "link": "https://arxiv.org/pdf/2609.39134v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "keyword:topic",
+        "query:topic"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "adversarial images that fool large vision-language models after token compression",
+      "llm_evidence_cn": "构造对抗图像使视觉语言模型压缩后出错",
+      "llm_evidence": "构造对抗图像使视觉语言模型压缩后出错",
+      "canonical_evidence": "构造对抗图像使视觉语言模型压缩后出错",
+      "llm_tldr_en": "FATA crafts adversarial images that keep full-token correctness but fail after visual-token compression in large vision-language models, using vision-encoder gradients only.",
+      "llm_tldr_cn": "视觉令牌压缩虽提升大型视觉语言模型效率，却可能暴露全令牌评估无法发现的失效。论文提出特征感知令牌攻击FATA，通过耦合注意力抑制与余弦特征保持，在固定显著令牌上构造对抗图像。在LLaVA-1.5-7B中仅用视觉编码器梯度即可生成保持全令牌正确、经压缩后出错的样本。该工作揭示了压缩推理路径的安全盲区，为视觉语言模型鲁棒性评估提供新视角。",
+      "llm_tldr": "视觉令牌压缩虽提升大型视觉语言模型效率，却可能暴露全令牌评估无法发现的失效。论文提出特征感知令牌攻击FATA，通过耦合注意力抑制与余弦特征保持，在固定显著令牌上构造对抗图像。在LLaVA-1.5-7B中仅用视觉编码器梯度即可生成保持全令牌正确、经压缩后出错的样本。该工作揭示了压缩推理路径的安全盲区，为视觉语言模型鲁棒性评估提供新视角。",
+      "llm_tags": [
+        "query:topic"
+      ],
+      "matched_query_tag": "query:topic",
+      "matched_query_text": "Methods for generating adversarial examples to fool large language models",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2609.39134v1"
+    },
+    {
+      "id": "2609.40341v1",
+      "source": "arxiv",
+      "title": "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?",
+      "abstract": "Egocentric human data provides a scalable source of experience for robot learning, but varies substantially in human-robot alignment, behavioral coverage, and available supervision. Existing work shows favorable scaling with increasing human data, but it remains unclear which data properties drive downstream robot gains and how to use such data throughout the training pipeline. We present a systematic study of egocentric human data with different alignment and supervision under a unified world-action model framework. With the model backbone fixed, we disentangle the effects of human-robot alignment, data duration and task diversity, action supervision, and data usage strategies. We find that aligned human demonstrations substantially improve out-of-distribution generalization and reduce target-task robot data requirements; data duration and task diversity affect downstream capabilities differently; and video-only supervision remains effective without action labels, providing a strong foundation for subsequent video-action training. We validate these findings through closed-loop policy evaluation on both real robots and RoboDojo. Rather than treating data duration as the sole scaling axis, Ego4WAM shows how alignment, task diversity, available supervision, and usage strategy jointly shape the value of egocentric human data for robot learning.",
+      "authors": [
+        "Zhihao Sun",
+        "Liu Liu",
+        "Xinjiang Wang",
+        "Haoyi Jiang",
+        "Wei Feng",
+        "Huiqiang Zhang",
+        "Xiaosong Jia",
+        "Zhizhong Su",
+        "Zuxuan Wu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-09-30T17:58:35+00:00",
+      "link": "https://arxiv.org/pdf/2609.40341v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "scaling egocentric human data for robot learning from demonstrations",
+      "llm_evidence_cn": "扩展自我中心人类数据用于机器人学习",
+      "llm_evidence": "扩展自我中心人类数据用于机器人学习",
+      "canonical_evidence": "扩展自我中心人类数据用于机器人学习",
+      "llm_tldr_en": "Ego4WAM systematically studies how egocentric human data properties such as human-robot alignment, task diversity, and supervision affect robot learning under a unified world-action model, finding that aligned human demonstrations substantially improve outcomes.",
+      "llm_tldr_cn": "自我中心人类数据可扩展机器人学习经验，但其人机对齐、行为覆盖与监督方式差异很大，哪些属性真正带来收益尚不清楚。本文在统一的世界-动作模型框架下系统解耦人机对齐、数据时长与任务多样性、动作监督及使用策略的影响。结果发现对齐良好的人类演示能显著提升下游机器人性能，为数据采集与训练流程设计提供了实证指导。",
+      "llm_tldr": "自我中心人类数据可扩展机器人学习经验，但其人机对齐、行为覆盖与监督方式差异很大，哪些属性真正带来收益尚不清楚。本文在统一的世界-动作模型框架下系统解耦人机对齐、数据时长与任务多样性、动作监督及使用策略的影响。结果发现对齐良好的人类演示能显著提升下游机器人性能，为数据采集与训练流程设计提供了实证指导。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2609.40341v1"
+    },
+    {
+      "id": "2610.00839v1",
+      "source": "arxiv",
+      "title": "Do Defenses Against LLM Extraction Work Across Attacks? A Lifecycle Benchmark of Black-Box Model Extraction",
+      "abstract": "Large language models (LLMs) deployed through text-only APIs face model extraction risks, as adversaries can collect their responses to train surrogates that reproduce their capabilities. While prior work has developed diverse attacks and defenses, evaluations remain fragmented across access assumptions, model configurations, query budgets, and security objectives, limiting comparability across methods. To address this gap, we introduce a unified benchmark covering six extraction attacks, ten defenses, and two adaptive attacks that paraphrase or back-translate protected responses before surrogate training. The benchmark controls model configurations, query data, budgets, and held-out evaluation conditions within each comparison while preserving attack-specific querying and training procedures. We measure surrogate capability, fidelity to the victim, output quality using Rep-4, and query-budget sensitivity; defenses use their own security metrics paired with surrogate performance. For the adaptive attacks, we jointly measure provenance-detector scores and the capability and fidelity of surrogates trained on rewritten responses. The benchmark thus provides a reproducible basis for comparing extraction methods and their interactions with defenses under text-only access. Code and artifacts are available at https://github.com/sliu11-byte/MEA-Bench.",
+      "authors": [
+        "Shuze Liu",
+        "Kaixiang Zhao",
+        "Runyang Xu",
+        "Jingzhi Chen",
+        "Nathan Wu",
+        "Yu Wang",
+        "Yushun Dong"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-09-30T23:51:54+00:00",
+      "link": "https://arxiv.org/pdf/2610.00839v1",
+      "tags": [
+        "keyword:topic",
+        "query:topic"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "unified benchmark of LLM extraction attacks and defenses",
+      "llm_evidence_cn": "大模型抽取攻击与防御的统一基准",
+      "llm_evidence": "大模型抽取攻击与防御的统一基准",
+      "canonical_evidence": "大模型抽取攻击与防御的统一基准",
+      "llm_tldr_en": "LLMs exposed via text APIs face model extraction risks. This paper introduces a unified lifecycle benchmark covering six extraction attacks, ten defenses, and two adaptive attacks, standardizing access assumptions, query budgets and evaluation to enable comparable defense evaluation.",
+      "llm_tldr_cn": "通过文本API部署的大语言模型面临模型抽取风险，攻击者可收集响应训练复现其能力的替代模型。已有攻击与防御评估在访问假设、模型配置、查询预算和安全目标上割裂，难以比较。本文提出统一基准，覆盖六种抽取攻击、十种防御及两种改写或回译受保护响应的自适应攻击，并统一控制配置与评估条件。该基准为LLM抽取攻防提供了可比较的生命周期评估框架。",
+      "llm_tldr": "通过文本API部署的大语言模型面临模型抽取风险，攻击者可收集响应训练复现其能力的替代模型。已有攻击与防御评估在访问假设、模型配置、查询预算和安全目标上割裂，难以比较。本文提出统一基准，覆盖六种抽取攻击、十种防御及两种改写或回译受保护响应的自适应攻击，并统一控制配置与评估条件。该基准为LLM抽取攻防提供了可比较的生命周期评估框架。",
+      "llm_tags": [
+        "query:topic"
+      ],
+      "matched_query_tag": "query:topic",
+      "matched_query_text": "defenses against adversarial attacks on large language models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2610.00839v1"
+    },
+    {
+      "id": "2610.00705v1",
+      "source": "arxiv",
+      "title": "Meta-Multi-Agent Reinforcement Learning for Fast Adaptation of Interactive Policies with Applications to Autonomous Driving",
+      "abstract": "This paper develops a meta-multi-agent reinforcement learning (meta-MARL) framework to enable fast adaptation of interactive policies in a multi-agent system (MAS). Meta-reinforcement learning (meta-RL) enables agents to rapidly adapt to new tasks/environments using a bi-level optimization mechanism. However, existing meta-RL generally focuses on single-agent systems. Extending these frameworks and algorithms to multi-agent systems poses additional challenges, as tasks are characterized by not only the environment but also agents' strategic interactions. To address these challenges, we model multi-agent reinforcement learning (MARL) problems as Markov games (MGs) and develop a meta-MARL framework for rapid interactive policy adaptation across a distribution of MGs. A new concept, called meta-NE, is defined to describe the desired solution concept in a meta-MARL problem. Sufficient conditions for the equivalence between a meta-NE and a stationary point of the gradient-play-based meta-MARL algorithm are established. Our evaluation on autonomous-driving tasks demonstrates that the proposed meta-MARL method achieves faster adaptation than pretrained MARL baselines, validating the effectiveness of our framework.",
+      "authors": [
+        "Huiwen Yan",
+        "Kyriakos G. Vamvoudakis",
+        "Mushuang Liu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.MA",
+        "eess.SY"
+      ],
+      "published": "2026-09-30T20:52:19+00:00",
+      "link": "https://arxiv.org/pdf/2610.00705v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "meta multi-agent reinforcement learning for fast adaptation of interactive policies",
+      "llm_evidence_cn": "面向交互策略快速适应的元多智能体强化学习",
+      "llm_evidence": "面向交互策略快速适应的元多智能体强化学习",
+      "canonical_evidence": "面向交互策略快速适应的元多智能体强化学习",
+      "llm_tldr_en": "Existing meta-reinforcement learning focuses on single agents, while multi-agent tasks involve strategic interactions. This paper models multi-agent RL as Markov games and develops a meta-MARL framework enabling rapid adaptation of interactive policies, demonstrated on autonomous driving.",
+      "llm_tldr_cn": "论文针对现有元强化学习主要面向单智能体、而多智能体任务还需应对智能体间策略交互、难以快速适应新环境的问题，将多智能体强化学习建模为马尔可夫博弈，并提出元多智能体强化学习框架。该方法通过双层优化使交互策略能在新任务与环境中快速适应。在自动驾驶场景上的实验验证了框架的有效性。工作将元学习扩展到多智能体协作与交互决策，为多机器人系统快速适应提供了方法参考。",
+      "llm_tldr": "论文针对现有元强化学习主要面向单智能体、而多智能体任务还需应对智能体间策略交互、难以快速适应新环境的问题，将多智能体强化学习建模为马尔可夫博弈，并提出元多智能体强化学习框架。该方法通过双层优化使交互策略能在新任务与环境中快速适应。在自动驾驶场景上的实验验证了框架的有效性。工作将元学习扩展到多智能体协作与交互决策，为多机器人系统快速适应提供了方法参考。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "carryover_cache",
+      "paper_id": "2610.00705v1"
+    }
+  ],
+  "quick_skim": []
+}
