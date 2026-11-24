@@ -1,0 +1,345 @@
+{
+  "date": "20261115-20261124",
+  "date_label": "2026-11-15 ~ 2026-11-24",
+  "generated_at": "2026-11-24 18:17:48 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2611.19616v1",
+      "route": "20261115-20261124/2611.19616v1-towards-probabilistically-safe-reinforcement-learning-theory-and-deployment-on-humanoid-and-aerial-robots",
+      "title": "Towards Probabilistically Safe Reinforcement Learning: Theory and Deployment on Humanoid and Aerial Robots",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向人形与空中机器人的安全强化学习控制",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.20427v1",
+      "route": "20261115-20261124/2611.20427v1-fuzzy-explainable-continual-hierarchical-reinforcement-learning-for-robotic-navigation",
+      "title": "Fuzzy Explainable Continual Hierarchical Reinforcement Learning for Robotic Navigation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向持续机器人导航的分层强化学习",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.20558v1",
+      "route": "20261115-20261124/2611.20558v1-vision-language-grounded-semantic-navigation-for-autonomous-mobile-robots",
+      "title": "Vision-Language Grounded Semantic Navigation for Autonomous Mobile Robots",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "用Grounding DINO进行开放词汇目标检测的机器人视觉导航",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.22275v2",
+      "route": "20261115-20261124/2611.22275v2-heave-ho-decentralized-long-horizon-multi-humanoid-collaboration",
+      "title": "Heave-Ho: Decentralized Long-Horizon Multi-Humanoid Collaboration",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "去中心化多 humanoid 协作与协调框架",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.27327v1",
+      "route": "20261115-20261124/2611.27327v1-embodied-interaction-policy-a-unified-model-for-full-duplex-human-robot-interaction",
+      "title": "Embodied Interaction Policy: A Unified Model for Full-Duplex Human-Robot Interaction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "统一的全双工人机社交交互策略",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.29501v1",
+      "route": "20261115-20261124/2611.29501v1-mawam-joint-imagination-for-collaborative-robot-manipulation-with-a-multi-agent-world-action-model",
+      "title": "MAWAM: Joint Imagination for Collaborative Robot Manipulation with a Multi-Agent World Action Model",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向多机器人协同操作的多智能体世界动作模型",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.29610v1",
+      "route": "20261115-20261124/2611.29610v1-dr-grasp-rl-diverse-and-robust-dexterous-grasping-via-reinforcement-learning",
+      "title": "Dr. Grasp-RL: Diverse and Robust Dexterous Grasping via Reinforcement Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "强化学习用于灵巧机器人抓取控制",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.30310v1",
+      "route": "20261115-20261124/2611.30310v1-seeing-together-acting-apart-shared-environmental-understanding-for-multi-robot-navigation",
+      "title": "Seeing Together, Acting Apart: Shared Environmental Understanding for Multi-Robot Navigation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "多机器人共享环境理解与协作",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.30477v1",
+      "route": "20261115-20261124/2611.30477v1-ovogo-offline-value-guided-on-policy-generative-optimization-for-flow-based-vision-language-action-models",
+      "title": "OVOGO: Offline Value-Guided On-Policy Generative Optimization for Flow-Based Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向流式视觉语言动作策略的离线强化学习",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.30495v1",
+      "route": "20261115-20261124/2611.30495v1-dexduet-learning-contact-preserving-bimanual-dexterity-from-human-demonstrations",
+      "title": "DexDuet: Learning Contact-Preserving Bimanual Dexterity from Human Demonstrations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "从单次人类演示学习双手灵巧操作",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.20100v1",
+      "route": "20261115-20261124/2611.20100v1-egoswarm-learning-decentralized-robot-swarm-intelligence-from-human-swarm-demonstrations",
+      "title": "EgoSwarm: Learning Decentralized Robot Swarm Intelligence from Human Swarm Demonstrations",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从人类示范学习去中心化多机器人群体协同",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.21059v1",
+      "route": "20261115-20261124/2611.21059v1-multi-condor-learning-multistable-motion-primitives-from-demonstration",
+      "title": "Multi-CONDOR: Learning Multistable Motion Primitives from Demonstration",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过模仿从演示学习运动基元",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.21198v1",
+      "route": "20261115-20261124/2611.21198v1-cooperative-mobile-manipulation-using-learned-dynamical-systems",
+      "title": "Cooperative Mobile Manipulation using Learned Dynamical Systems",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "多机器人协同的自适应学习动力学系统",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.21908v1",
+      "route": "20261115-20261124/2611.21908v1-from-human-videos-to-bimanual-dexterous-manipulation-data-confidence-guided-rl-refinement-of-video-priors",
+      "title": "From Human Videos to Bimanual Dexterous Manipulation Data: Confidence-Guided RL Refinement of Video Priors",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "利用强化学习从人类视频示范学习机器人操作",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.20137v1",
+      "route": "20261115-20261124/2611.20137v1-cleanly-dino-efficiently-learning-visual-task-spaces-for-robotics",
+      "title": "Cleanly-DINO: Efficiently Learning Visual Task Spaces for Robotics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "从示教中学习面向机器人操作感知的视觉任务空间",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.22077v1",
+      "route": "20261115-20261124/2611.22077v1-relap-latent-action-pretraining-through-recurrent-video-prediction-in-jepa-space",
+      "title": "ReLAP: Latent Action Pretraining through Recurrent Video Prediction in JEPA Space",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向机器人行为学习的潜在动作预训练",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.22388v1",
+      "route": "20261115-20261124/2611.22388v1-hidden-variables-behind-real-robot-data-quality-lessons-from-hundreds-of-thousands-of-hours",
+      "title": "Hidden Variables Behind Real-Robot Data Quality: Lessons from Hundreds of Thousands of Hours",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "遥操作与本体设计影响真实机器人演示数据质量",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.22797v1",
+      "route": "20261115-20261124/2611.22797v1-zero-shot-compositional-generalization-for-embodied-manipulation",
+      "title": "Zero-Shot Compositional Generalization for Embodied Manipulation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "跨本体机器人演示数据的零样本组合泛化",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.19952v1",
+      "route": "20261115-20261124/2611.19952v1-craft-a-robot-agent-harness-with-scope-aware-adaptation",
+      "title": "CRAFT: A Robot-Agent Harness with Scope-Aware Adaptation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "机器人从人类纠正反馈中学习局部放置要求",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.22174v1",
+      "route": "20261115-20261124/2611.22174v1-reconfiguring-procedural-knowledge-for-compositional-robot-skill-adaptation",
+      "title": "Reconfiguring Procedural Knowledge for Compositional Robot Skill Adaptation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "重构程序性知识实现机器人技能适配",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    },
+    {
+      "paper_id": "2611.24100v1",
+      "route": "20261115-20261124/2611.24100v1-lost-between-mind-model-collaboration-and-motion-understanding-and-measuring-cross-model-action-misalignment-in-commercial-robots",
+      "title": "Lost Between Mind, Model Collaboration, and Motion: Understanding and Measuring Cross-Model Action Misalignment in Commercial Robots",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "robotics-ai"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "用户意图与机器人动作间的跨模型错位",
+      "first_seen_at": "2026-11-24 18:17:48 UTC",
+      "updated_at": "2026-11-24 18:17:48 UTC"
+    }
+  ]
+}

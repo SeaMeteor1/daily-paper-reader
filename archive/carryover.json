@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T17:42:26.422283+00:00",
-  "updated_date": "20261008-20261106",
+  "generated_at": "2026-11-24T18:11:22.234571+00:00",
+  "updated_date": "20261115-20261124",
   "carryover_days": 9,
   "tag_states": {
     "topic": {
@@ -99,9 +99,831 @@
       "items": []
     },
     "robotics-ai": {
-      "updated_date": "20261008-20261106",
+      "updated_date": "20261115-20261124",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2611.24226v1",
+          "source": "arxiv",
+          "title": "Neural Network-Based In-Contact Task Segmentation of Demonstrated Robot Motions via Hand Guiding",
+          "abstract": "Intuitive robot programming approaches, such as Programming by Demonstration, enable non-experts to teach robots tasks through hand-guided demonstrations. However, for in-contact tasks requiring force control for parts of the motion, automated segmentation of motion types is crucial for improving usability. Considering the related work, this work proposes a neural network-based segmentation method categorizing motion into three fundamental types using input data of cartesian twists and wrenches at the end effector. We collect demonstration data using a 7-axis robot with a wrist-mounted force torque sensor and generate ground truth labeling by hand. While still in development, our research direction aims to enable non-experts to program in-contact tasks more intuitively.",
+          "authors": [
+            "Johannes Hartwig",
+            "Marcello Kögler",
+            "Dominik Henrich"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-18 11:01:17+00:00",
+          "link": "https://arxiv.org/pdf/2611.24226v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "learning robot tasks from hand-guided human demonstrations",
+          "llm_evidence_cn": "通过手把手示教让机器人学习任务",
+          "llm_evidence": "通过手把手示教让机器人学习任务",
+          "canonical_evidence": "通过手把手示教让机器人学习任务",
+          "llm_tldr_en": "Proposes a neural network that segments demonstrated robot motions into three types using end-effector twists and wrenches, aiding Programming by Demonstration for in-contact force-controlled tasks.",
+          "llm_tldr_cn": "针对编程示教中接触类任务需力控制、运动分段困难的问题，本文提出基于神经网络的运动分段方法，利用末端笛卡尔速度旋量与力旋量将示教运动分为三类。作者用七轴机器人加腕部力扭矩传感器采集示教数据并人工标注真值进行验证。该方法有望降低非专家示教难度，提升机器人编程的易用性。",
+          "llm_tldr": "针对编程示教中接触类任务需力控制、运动分段困难的问题，本文提出基于神经网络的运动分段方法，利用末端笛卡尔速度旋量与力旋量将示教运动分为三类。作者用七轴机器人加腕部力扭矩传感器采集示教数据并人工标注真值进行验证。该方法有望降低非专家示教难度，提升机器人编程的易用性。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.24226v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.30667v1",
+          "source": "arxiv",
+          "title": "LLM-Guided Compositional Continual Learning for Robot Manipulation with Gated Low-Rank Experts",
+          "abstract": "General-purpose manipulation robots must acquire new skills over time without forgetting prior ones or retraining from scratch. We present a continual learning framework that represents each skill as a dedicated expert sub- network in a Progressive Neural Network (PNN). New tasks reuse prior knowledge through low-rank adaptation (LoRA) modules on lateral connections controlled by learnable per-parent gates, enabling explicit attenuation of individual transfer paths while reducing the parameter cost of dense PNN laterals. For long-horizon deployment, a frozen local large language model decomposes natural-language instructions into sub-tasks, routes them to suitable experts, and requests a new expert only when the library is insufficient. Using a shared task-space action interface, we evaluate the framework on twelve MetaWorld tasks and in a Sawyer-to-Panda-to-UR5e cross-embodiment transfer experiment, showing improved task success relative to learning from scratch when demonstrations are limited. Real-robot manipulation experiments further demonstrate that the proposed framework supports compositional execution and expert orchestration.",
+          "authors": [
+            "Nilay Kushawaha",
+            "Abdalla Swikir",
+            "Fares Abu-Dakka"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-23 13:25:03+00:00",
+          "link": "https://arxiv.org/pdf/2611.30667v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "continual learning framework with LLM-guided gated low-rank experts for robot manipulation",
+          "llm_evidence_cn": "面向机器人操作的LLM引导门控低秩专家持续学习框架",
+          "llm_evidence": "面向机器人操作的LLM引导门控低秩专家持续学习框架",
+          "canonical_evidence": "面向机器人操作的LLM引导门控低秩专家持续学习框架",
+          "llm_tldr_en": "Proposes a continual learning framework representing skills as progressive network experts with gated LoRA lateral connections, using a frozen LLM to decompose and route instructions.",
+          "llm_tldr_cn": "通用操作机器人需持续学习新技能且不遗忘旧技能、无需从头重训。本文提出持续学习框架，将每项技能表示为渐进神经网络中的专家子网，通过门控低秩适配模块在侧向连接上复用旧知识并降低参数开销。部署时用冻结的本地大语言模型将自然语言指令分解为子任务并路由到合适专家，库不足时请求新专家。该方法在长程任务中实现技能扩展与知识保留。",
+          "llm_tldr": "通用操作机器人需持续学习新技能且不遗忘旧技能、无需从头重训。本文提出持续学习框架，将每项技能表示为渐进神经网络中的专家子网，通过门控低秩适配模块在侧向连接上复用旧知识并降低参数开销。部署时用冻结的本地大语言模型将自然语言指令分解为子任务并路由到合适专家，库不足时请求新专家。该方法在长程任务中实现技能扩展与知识保留。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "deep learning architectures for robotics applications",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.30667v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.24273v1",
+          "source": "arxiv",
+          "title": "Old Experience, New Lessons: Relabeling Autonomous Robot Rollouts in Interactive Imitation Learning",
+          "abstract": "Interactive imitation learning enables robots to learn from human interventions during deployment. These interactions naturally produce sparse human corrections and abundant autonomous robot experience without human action labels. Yet existing methods either leave this experience unused for action supervision or imitate historical robot actions, which can reinforce suboptimal behavior. To address this limitation, we propose Set-valued Relabeling of Autonomous experience (SeRA), a framework that learns from autonomous robot experience through set-valued supervision of policy relabels. Later policy checkpoints relabel this experience, and agreement across checkpoints filters the relabels. Since agreement does not guarantee correctness, SeRA constructs desired action sets around accepted relabels. Following Set-Supervised Diffusion Policy (SDP), it trains an action-chunking diffusion policy to increase the probability of actions within these sets. A step-masked denoising loss combines accepted relabels with available human corrections in partially supervised chunks. Experiments across five simulated manipulation tasks in online and offline settings show that SeRA improves policy performance over SDP and outperforms baselines that imitate historical robot actions or exact relabels. On a real-robot tomato-picking task, SeRA achieves 80% success, compared with 40% for SDP, using the same human feedback and training budget. These results demonstrate that relabeled autonomous robot experience can complement human corrections to improve policy performance.",
+          "authors": [
+            "Zhaoting Li",
+            "Cosimo Della Santina",
+            "Jens Kober"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-18 11:51:08+00:00",
+          "link": "https://arxiv.org/pdf/2611.24273v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "interactive imitation learning from human interventions and demonstrations",
+          "llm_evidence_cn": "从人类干预与示教中进行交互式模仿学习",
+          "llm_evidence": "从人类干预与示教中进行交互式模仿学习",
+          "canonical_evidence": "从人类干预与示教中进行交互式模仿学习",
+          "llm_tldr_en": "Proposes SeRA, a framework that relabels autonomous robot rollouts with set-valued supervision filtered by checkpoint agreement to learn from interactive human interventions.",
+          "llm_tldr_cn": "交互式模仿学习让机器人从部署中的人类干预学习，但现有方法要么浪费大量无标签的自主经验，要么模仿历史动作而强化次优行为。本文提出SeRA框架，通过集合值监督对自主经验进行策略重标注，由后续策略检查点重标注经验并用检查点间一致性过滤。该方法充分利用自主经验提升策略，为从人类示教与干预中高效学习提供新途径。",
+          "llm_tldr": "交互式模仿学习让机器人从部署中的人类干预学习，但现有方法要么浪费大量无标签的自主经验，要么模仿历史动作而强化次优行为。本文提出SeRA框架，通过集合值监督对自主经验进行策略重标注，由后续策略检查点重标注经验并用检查点间一致性过滤。该方法充分利用自主经验提升策略，为从人类示教与干预中高效学习提供新途径。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.24273v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.25667v1",
+          "source": "arxiv",
+          "title": "CauSyncVLA: Causal Latent World Modeling for Asynchronous Robot Control",
+          "abstract": "Vision-Language-Action (VLA) policies must react while visual inference is still running. Overlapping computation and execution reduces waiting, yet leaves perceptual memory stale and successive action chunks disconnected. We present CauSyncVLA, an asynchronous dual-system controller that aligns perceptual-memory prediction and trajectory correction with actual robot execution. Rather than forecasting pixels or physical states, a Causal Latent World Model predicts current perceptual memory from delayed visual anchors and executed state-action history, supervised through action-sensitive distillation to retain the frozen expert's control response. Conditioned on this updated memory, Predictive Flow Warm-Starting (PFWS) aligns the unexecuted action horizon for single-step flow correction without extra training. On LIBERO-10, CauSyncVLA reaches 93.8% success at 5.04$\\times$ inference throughput, improving closed-loop robustness and robot motion smoothness.",
+          "authors": [
+            "Xu Pan",
+            "Chubin Zhang",
+            "Xingrui Yu",
+            "Runmin Lan",
+            "Zihao Wang",
+            "Wenkai Guo",
+            "Bofang Jia",
+            "Bo An",
+            "Ziwei Wang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV"
+          ],
+          "published": "2026-11-19 07:45:18+00:00",
+          "link": "https://arxiv.org/pdf/2611.25667v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "asynchronous vision-language-action controller with causal latent world model",
+          "llm_evidence_cn": "结合因果潜在世界模型的异步视觉语言动作控制",
+          "llm_evidence": "结合因果潜在世界模型的异步视觉语言动作控制",
+          "canonical_evidence": "结合因果潜在世界模型的异步视觉语言动作控制",
+          "llm_tldr_en": "Presents CauSyncVLA, an asynchronous dual-system VLA controller using a causal latent world model to predict perceptual memory and correct trajectories during delayed visual inference.",
+          "llm_tldr_cn": "视觉语言动作策略需在视觉推理尚未完成时即作出反应，但并行计算会导致感知记忆陈旧、动作块不连贯。本文提出CauSyncVLA异步双系统控制器，用因果潜在世界模型从延迟视觉锚点与已执行状态动作历史预测当前感知记忆，并通过动作敏感蒸馏保持冻结专家的控制响应。结合预测流热启动对齐未执行动作段，提升了异步机器人控制的连贯性与响应性。",
+          "llm_tldr": "视觉语言动作策略需在视觉推理尚未完成时即作出反应，但并行计算会导致感知记忆陈旧、动作块不连贯。本文提出CauSyncVLA异步双系统控制器，用因果潜在世界模型从延迟视觉锚点与已执行状态动作历史预测当前感知记忆，并通过动作敏感蒸馏保持冻结专家的控制响应。结合预测流热启动对齐未执行动作段，提升了异步机器人控制的连贯性与响应性。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "deep learning architectures for robotics applications",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.25667v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.30813v1",
+          "source": "arxiv",
+          "title": "HIVE-Bench: Evaluating Patch-Level Visual Representations for Egocentric Robot Manipulation",
+          "abstract": "Pretrained vision is a common start for robot learning, but most comparisons still score one pooled vector from a third-person image. Bimanual policies instead read dense patch tokens from cameras on the robot. We introduce HIVE-Bench: one shared flow-matching policy reads 20 encoders from seven families on 24 egocentric bimanual tasks, across adaptation, task sharing, and sweeps of data, model size, and layer. Keeping the patches matters. Averaging each view to one token removes most of the success, adaptation helps every pair we test, and one shared policy keeps most of the success of separate policies at a fraction of the updates. The same tokens are then scored with statistics, state and object readouts, published vision scores, and an inverse-dynamics readout. That readout of the commanded motion is one of the strongest measurements available before a policy is trained. Recognition, depth, and correspondence do not transfer reliably. Fine-tuning can improve the action readout even when other measurements move the other way, and no statistic is stable enough to replace a rollout before any deployment.",
+          "authors": [
+            "Qiwei Liang",
+            "Zhengtu Liang",
+            "Minghao Lai",
+            "Yikeng Chen",
+            "Yiming Wang",
+            "Boyang Cai",
+            "Yuetong Fang",
+            "Taowen Wang",
+            "Baiqiao Yin",
+            "Tianxing Chen",
+            "Yue Chen",
+            "Jiaming Liang",
+            "Guangyu Chen",
+            "Shaolong Zhu",
+            "Daolin Ma",
+            "Renjing Xu"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV"
+          ],
+          "published": "2026-11-23 15:06:14+00:00",
+          "link": "https://arxiv.org/pdf/2611.30813v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "evaluating patch-level visual representations for egocentric robot manipulation perception",
+          "llm_evidence_cn": "评估用于自我中心机器人操作感知的图块级视觉表征",
+          "llm_evidence": "评估用于自我中心机器人操作感知的图块级视觉表征",
+          "canonical_evidence": "评估用于自我中心机器人操作感知的图块级视觉表征",
+          "llm_tldr_en": "HIVE-Bench compares 20 pretrained vision encoders on dense patch tokens for 24 egocentric bimanual tasks, showing that keeping patch tokens instead of pooled vectors is critical for manipulation success.",
+          "llm_tldr_cn": "现有机器人视觉表征比较多依赖第三人称图像的单一池化向量，忽视了双臂策略读取机器人相机密集图块的实际需求。作者提出HIVE-Bench，用同一流匹配策略在24个自我中心双臂任务上评测来自七个家族的20个编码器。结果显示保留图块至关重要，将每视图平均为单token会损失大部分成功率，而单一共享策略以少量更新即可接近独立策略表现。",
+          "llm_tldr": "现有机器人视觉表征比较多依赖第三人称图像的单一池化向量，忽视了双臂策略读取机器人相机密集图块的实际需求。作者提出HIVE-Bench，用同一流匹配策略在24个自我中心双臂任务上评测来自七个家族的20个编码器。结果显示保留图块至关重要，将每视图平均为单token会损失大部分成功率，而单一共享策略以少量更新即可接近独立策略表现。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "computer vision techniques for robot perception and scene understanding",
+          "matched_requirement_id": "req-1",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.30813v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.31079v1",
+          "source": "arxiv",
+          "title": "Wrist-Camera Video Diffusion as Generalizable Robot Policies",
+          "abstract": "A generalist manipulation policy should perform new tasks, operate in unfamiliar scenes, and transfer skills across robot embodiments. We present Wrist Video Policy (WVP), a closed-loop manipulation framework that learns how manipulation unfolds through video prediction and recovers executable motion through geometric estimation. Our key idea is to represent robot motion through wrist-camera trajectories, which determine the corresponding end-effector poses through a fixed hand-eye transformation. We pair a video generator that predicts future wrist views with a pose estimator adapted from a pretrained 3D model to recover the corresponding camera trajectories. Model stitching maps the generator's predicted latents directly into the estimator's intermediate feature space, bypassing RGB decoding. This decomposition allows task knowledge to expand through broad human and robot video data while reusing geometric motion estimation across tasks and embodiments. The resulting pose estimator transfers across Franka Panda, PiPER-X, and Galaxea R1 Pro without further fine-tuning. Across tabletop and laundry-room settings, WVP generalizes to tasks ranging from precise grasping and inserting to handling deformable objects, achieving a success rate of over 50% in zero-shot out-of-distribution evaluations. Our project page is at https://wrist-video-policy.github.io.",
+          "authors": [
+            "Jingyuan Liu",
+            "Yongwei Chen",
+            "Yishan Yang",
+            "Zexin He",
+            "Xingang Pan",
+            "Zhi Hou"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV"
+          ],
+          "published": "2026-11-23 17:29:17+00:00",
+          "link": "https://arxiv.org/pdf/2611.31079v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "wrist-camera video prediction and geometric pose estimation for robot manipulation policies",
+          "llm_evidence_cn": "面向机器人操作策略的腕部相机视频预测与几何位姿估计",
+          "llm_evidence": "面向机器人操作策略的腕部相机视频预测与几何位姿估计",
+          "canonical_evidence": "面向机器人操作策略的腕部相机视频预测与几何位姿估计",
+          "llm_tldr_en": "Wrist Video Policy predicts future wrist-camera views via video diffusion and recovers end-effector motion through geometric estimation, yielding a generalizable closed-loop manipulation policy across tasks and embodiments.",
+          "llm_tldr_cn": "通用操作策略需在新任务、陌生场景与不同本体间泛化，但直接从图像映射动作较为困难。作者提出腕部视频策略，用视频生成器预测未来腕部视角，再由适配的3D位姿估计器恢复相机轨迹并换算为末端执行器动作。该方法以闭环方式将视频预测与几何估计结合，为跨任务、跨本体的通用机器人操作提供了新范式。",
+          "llm_tldr": "通用操作策略需在新任务、陌生场景与不同本体间泛化，但直接从图像映射动作较为困难。作者提出腕部视频策略，用视频生成器预测未来腕部视角，再由适配的3D位姿估计器恢复相机轨迹并换算为末端执行器动作。该方法以闭环方式将视频预测与几何估计结合，为跨任务、跨本体的通用机器人操作提供了新范式。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "computer vision techniques for robot perception and scene understanding",
+          "matched_requirement_id": "req-1",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.31079v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.29338v1",
+          "source": "arxiv",
+          "title": "A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation",
+          "abstract": "Recently, GPT-6 Astra demonstrates strong generalization in robot control, yet limited disclosure of its training leaves open how such capabilities can be reproduced. We introduce nanoAstra, an approach to training vision-language models (VLMs) for generalizable manipulation that combines semantic action modeling with capability-preserving supervised fine-tuning (CP-SFT). nanoAstra represents robot behavior as semantic steps composed of reusable, parameterized action primitives, guided by explicit progress descriptions. Meanwhile, CP-SFT uses an explicit robot-specific system prompt to constrain manipulation outputs to a structured action space, aiming to focus adaptation on robot-specific contexts and promote specialization while minimizing interference with broader pretrained capabilities. With this formulation, we train nanoAstra on more than 5,000 hours of robot data together with general VQA data. On RoboTwin 2.0's randomized benchmark, nanoAstra-9B achieves a 17.8% zero-shot success rate, substantially outperforming advanced VLA and WAM baselines as well as similarly sized VLMs. With inference faster than the corresponding motion execution on a single H20 GPU, our model supports action-chunk-like streaming execution that overlaps inference with motion, reducing the robot's idle time from 35.0% to 6.9%.",
+          "authors": [
+            "Meng-Hao Guo",
+            "Yi Zhang",
+            "Zhe-Han Mo",
+            "Han-Zheng Wang",
+            "Jia-Jun Wang",
+            "Xin-Sheng Chen",
+            "Jiaxi Song",
+            "Yi-Xuan Deng",
+            "Jia-Ning Li",
+            "Xuanyu Chu",
+            "Hengrui Zhang",
+            "Huan-ang Gao",
+            "Yongming Rao",
+            "Shi-Min Hu"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-22 09:15:32+00:00",
+          "link": "https://arxiv.org/pdf/2611.29338v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "training vision-language models as foundation models for robotic manipulation",
+          "llm_evidence_cn": "训练视觉-语言模型作为机器人操作基础模型",
+          "llm_evidence": "训练视觉-语言模型作为机器人操作基础模型",
+          "canonical_evidence": "训练视觉-语言模型作为机器人操作基础模型",
+          "llm_tldr_en": "nanoAstra trains vision-language models for generalizable manipulation by combining semantic action modeling with capability-preserving supervised fine-tuning, aiming to reproduce strong robot control generalization.",
+          "llm_tldr_cn": "GPT-6 Astra等模型在机器人控制上展现强泛化，但其训练细节未公开，难以复现。作者提出nanoAstra，将机器人行为表示为可复用参数化动作原语组成的语义步骤，并结合能力保持监督微调，用机器人专用系统提示约束输出到结构化动作空间。该工作为训练面向通用操作的视觉-语言基础模型提供了可复现的架构与方法思路。",
+          "llm_tldr": "GPT-6 Astra等模型在机器人控制上展现强泛化，但其训练细节未公开，难以复现。作者提出nanoAstra，将机器人行为表示为可复用参数化动作原语组成的语义步骤，并结合能力保持监督微调，用机器人专用系统提示约束输出到结构化动作空间。该工作为训练面向通用操作的视觉-语言基础模型提供了可复现的架构与方法思路。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "deep learning architectures for robotics applications",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.29338v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.28752v1",
+          "source": "arxiv",
+          "title": "VTLA-RL: Learning Visuotactile Policies for Load-Adaptive Grasping",
+          "abstract": "Vision-language-action foundation models learn general manipulation priors, but object mass and local slip are difficult to infer from vision alone. Changing loads require contact-driven grasp adjustments that demonstrations collected under fixed conditions may not adequately cover. We present VTLA-RL to study visuotactile grasping policies and their reinforcement learning (RL) post-training under varying loads. Our main approach shares a visual encoder between tactile-image histories and RGB inputs to jointly generate and execute motion and bilateral force targets in a unified action space. Mixed real and simulated demonstrations first establish motion and contact priors. Two-stage multi-task RL then uses only simulated interaction to optimize the policy through task-success returns without continued real-demonstration supervision, and the trained policy deploys directly to real robots. We compare tactile representations and RL post-training routes in simulation and separately evaluate load variation and placement perturbations on hardware. The full method achieves higher grasping success than the supervised initialization, while RL post-training gains differ across approaches, providing empirical evidence for choosing representations and training approaches for this task.",
+          "authors": [
+            "Qiwei Wu",
+            "Qixuan Li",
+            "Xin Xiang",
+            "Xiangyu Chen",
+            "Xiang Xiao",
+            "Daochen Shi",
+            "Ruihua Zhang",
+            "Renjing Xu"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-21 11:54:27+00:00",
+          "link": "https://arxiv.org/pdf/2611.28752v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "reinforcement learning post-training of visuotactile grasping policies for robot control",
+          "llm_evidence_cn": "面向机器人控制的视觉-触觉抓取策略强化学习后训练",
+          "llm_evidence": "面向机器人控制的视觉-触觉抓取策略强化学习后训练",
+          "canonical_evidence": "面向机器人控制的视觉-触觉抓取策略强化学习后训练",
+          "llm_tldr_en": "VTLA-RL learns load-adaptive visuotactile grasping policies, sharing a visual encoder between tactile and RGB inputs and applying two-stage multi-task RL post-training to handle varying loads and slip.",
+          "llm_tldr_cn": "视觉-语言-动作模型难以从视觉推断物体质量与局部滑移，固定条件下的示教也不足以覆盖变载荷抓取。作者提出VTLA-RL，在触觉图像历史与RGB间共享视觉编码器，统一输出运动与双侧力目标，并采用两阶段多任务强化学习后训练。该方法借助仿真交互优化策略，实现面向变载荷的自适应抓取控制。",
+          "llm_tldr": "视觉-语言-动作模型难以从视觉推断物体质量与局部滑移，固定条件下的示教也不足以覆盖变载荷抓取。作者提出VTLA-RL，在触觉图像历史与RGB间共享视觉编码器，统一输出运动与双侧力目标，并采用两阶段多任务强化学习后训练。该方法借助仿真交互优化策略，实现面向变载荷的自适应抓取控制。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.28752v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.26054v1",
+          "source": "arxiv",
+          "title": "Reference-Free Humanoid Skateboarding via Termination-Shaped Reinforcement Learning",
+          "abstract": "Humanoid locomotion research has advanced rapidly on walking and running, but \\emph {object-mediated} locomotion, in which a robot must coordinate its body with a passive external object, remains difficult. One challenging task is skateboarding, which requires simultaneous interaction with the ground and a passive but movable platform to achieve forward motion. Current methods for tackling skateboarding with humanoid robots either require human demonstrations or utilise analytic steering models that require system identification. In this paper, we introduce a deep reinforcement learning framework that does not rely on prior data such as demonstrations and enables robots such as the K1 humanoid to learn to skateboard using model-free learning. The method combines task rewards with exploit-blocking terminations. We introduce a number of constraints restricting behaviours such as losing the planted board foot, standing with both feet on the board, excessive twisting, separation from the board, and unstable board motion. Their changing prevalence during training produces an implicit progression from stance control towards sustained robot--board locomotion.",
+          "authors": [
+            "Ganeshvar Soenessardien",
+            "Michael Przystupa",
+            "Kevin Sebastian Luck"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.LG"
+          ],
+          "published": "2026-11-19 12:59:43+00:00",
+          "link": "https://arxiv.org/pdf/2611.26054v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "deep reinforcement learning for humanoid object-mediated locomotion control",
+          "llm_evidence_cn": "面向人形机器人物体介导运动控制的深度强化学习",
+          "llm_evidence": "面向人形机器人物体介导运动控制的深度强化学习",
+          "canonical_evidence": "面向人形机器人物体介导运动控制的深度强化学习",
+          "llm_tldr_en": "A termination-shaped deep reinforcement learning framework lets a K1 humanoid learn to skateboard without demonstrations or system identification, tackling object-mediated locomotion via model-free learning.",
+          "llm_tldr_cn": "人形机器人在行走奔跑上进展迅速，但需与被动外部物体协同的物体介导运动仍很困难，滑板即是一例。现有方法依赖人类示教或需系统辨识的解析转向模型。作者提出终止整形的深度强化学习框架，无需先验数据即可让K1人形机器人通过无模型学习掌握滑板。该工作拓展了强化学习在复杂物体介导运动控制中的应用边界。",
+          "llm_tldr": "人形机器人在行走奔跑上进展迅速，但需与被动外部物体协同的物体介导运动仍很困难，滑板即是一例。现有方法依赖人类示教或需系统辨识的解析转向模型。作者提出终止整形的深度强化学习框架，无需先验数据即可让K1人形机器人通过无模型学习掌握滑板。该工作拓展了强化学习在复杂物体介导运动控制中的应用边界。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.26054v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.24360v1",
+          "source": "arxiv",
+          "title": "Towards Pose-Robust Few-Shot Vision-Language-Action Models",
+          "abstract": "Fine-tuning a vision-language-action (VLA) model on a few dozen demonstrations is the standard way to put a manipulation policy on a robot, yet the resulting policy silently assumes that the camera and the robot base stay exactly where they were during data collection: a bumped tripod or a base re-docked a few centimetres away makes it reach for the wrong place. We show that both failures are one phenomenon, a change of the camera-to-base extrinsic that the policy has memorised, and that the robot carries everything needed to undo it. We introduce WACO, a world-anchored canonicalization framework for VLA models: the arm, placed by forward kinematics at the measured joint angles, serves as a metric calibration target, and the static scene serves as the world anchor that tells a moved camera from a moved robot. From a single RGB-D frame, WACO estimates both shifts without ground-truth extrinsics or extra data, canonicalises the image to the calibration viewpoint and the state, action and start pose to the calibration base frame, and fine-tunes the unmodified policy under the artefacts of its own estimator. We also introduce LIBERO-PoseShift, the first benchmark for RGB VLAs with graded camera, base and compound shifts. Across LIBERO-PoseShift, the LIBERO-Plus camera track and four real-world tasks on a UR5e robot, WACO consistently outperforms the standard few-shot recipe and prior viewpoint-robust methods, raising shifted success by 13.2 points in simulation and by 36.7 points on the real robot, recovering 90% of the simulation gap to a ground-truth oracle and 87% of the real-robot gap, and establishing a new state of the art among methods that use no perturbed training data, with no test-time calibration. Project page: https://peacelwh.github.io/WACO/.",
+          "authors": [
+            "Wenhao Li",
+            "Zhongyi Han",
+            "Yuhao Wei",
+            "Liang Han",
+            "Yilong Yin",
+            "Liqiang Nie"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI",
+            "cs.CV"
+          ],
+          "published": "2026-11-18 12:54:16+00:00",
+          "link": "https://arxiv.org/pdf/2611.24360v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "pose-robust few-shot vision-language-action policy learned from demonstrations",
+          "llm_evidence_cn": "从少量演示学习的姿态鲁棒视觉语言动作策略",
+          "llm_evidence": "从少量演示学习的姿态鲁棒视觉语言动作策略",
+          "canonical_evidence": "从少量演示学习的姿态鲁棒视觉语言动作策略",
+          "llm_tldr_en": "WACO makes few-shot vision-language-action policies robust to camera-to-base extrinsic changes by using the arm as a metric calibration target and the static scene as a world anchor for canonicalization.",
+          "llm_tldr_cn": "用少量演示微调的视觉语言动作模型会默认相机与机器人基座位置不变，三脚架被碰或基座重新对接便导致抓取错误。本文指出这是相机到基座外参变化这一共同现象，提出WACO世界锚定规范化框架，用正运动学下机械臂作为度量标定目标、静态场景作为世界锚点进行校正。方法使策略对姿态扰动更鲁棒，提升了少样本部署的可靠性。",
+          "llm_tldr": "用少量演示微调的视觉语言动作模型会默认相机与机器人基座位置不变，三脚架被碰或基座重新对接便导致抓取错误。本文指出这是相机到基座外参变化这一共同现象，提出WACO世界锚定规范化框架，用正运动学下机械臂作为度量标定目标、静态场景作为世界锚点进行校正。方法使策略对姿态扰动更鲁棒，提升了少样本部署的可靠性。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.24360v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.26090v1",
+          "source": "arxiv",
+          "title": "Dynamic Human-Robot Role Allocation through Entropy-Based Monitoring and LLM Reasoning",
+          "abstract": "Role allocation strategies in human-robot collaboration typically assign tasks to both the human and the robot, limiting the user's ability to take initiative. Furthermore, allocation decisions may conflict with the user's intentions, and the rationale behind such allocations may remain unclear, potentially reducing both acceptance and collaboration fluency. The novelty of the proposed framework is that the human is left free to contribute to the task, while the robot is dynamically allocated activities through a cost-driven Behavior Tree architecture according to user-expressed preferences and behavior. Explicit preferences are extracted from natural language instructions using a large language model, whereas human activity is monitored online through a Shannon entropy-based analysis of hand-object interactions. Furthermore, the framework can recognize anomalies in human execution and autonomously trigger corrective robot actions. The approach was validated through a pilot study and a multi-subject experiment involving 14 participants. Results demonstrate the potential of such an allocation strategy for enabling intuitive and engaging collaboration without increasing the perceived workload.",
+          "authors": [
+            "Elena Merlo",
+            "Marta Lagomarsino",
+            "Hamidreza Raei",
+            "Arash Ajoudani"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-19 13:28:44+00:00",
+          "link": "https://arxiv.org/pdf/2611.26090v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Human-robot collaboration role allocation and interaction fluency",
+          "llm_evidence_cn": "人机协作中的角色分配与交互流畅性问题",
+          "llm_evidence": "人机协作中的角色分配与交互流畅性问题",
+          "canonical_evidence": "人机协作中的角色分配与交互流畅性问题",
+          "llm_tldr_en": "This paper proposes a framework for dynamic human-robot role allocation using entropy-based monitoring and LLM reasoning, improving collaboration fluency and aligning robot actions with user intentions.",
+          "llm_tldr_cn": "针对人机协作中角色分配限制用户主动性、易与用户意图冲突且缺乏可解释性的问题，本文提出基于熵监控与大语言模型推理的动态角色分配框架。方法让人类自由参与任务，机器人依据用户偏好与行为通过代价驱动的行为树动态分配活动，并用大模型从自然语言指令中提取偏好。实验表明该框架提升了协作流畅性与用户接受度，为自然人机交互提供了可解释的协调机制。",
+          "llm_tldr": "针对人机协作中角色分配限制用户主动性、易与用户意图冲突且缺乏可解释性的问题，本文提出基于熵监控与大语言模型推理的动态角色分配框架。方法让人类自由参与任务，机器人依据用户偏好与行为通过代价驱动的行为树动态分配活动，并用大模型从自然语言指令中提取偏好。实验表明该框架提升了协作流畅性与用户接受度，为自然人机交互提供了可解释的协调机制。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "What are the challenges in human robot interaction?",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.26090v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.25462v1",
+          "source": "arxiv",
+          "title": "Demonstration-Free Skill Composition for Navigation and Manipulation",
+          "abstract": "Hierarchical reinforcement learning enables sequential tasks to be represented as compositions of separately trained skills. This paper evaluates demonstration-free hierarchical pipelines for MiniGrid navigation and robotic manipulation, comparing their training requirements and task performance with flat reinforcement learning baselines. The evaluation concerns complete pipelines with task-specific observation, reward and control structures. In navigation, two parameterised skills are reused across unseen FourRooms layouts under manually specified high-level plans. In manipulation, reaching, grasp alignment and lifting are trained separately, with downstream skills initialised from states collected during predecessor rollouts. Across unseen navigation layouts, the hierarchical pipeline substantially outperforms the evaluated flat DQN baselines while requiring fewer training interactions. In manipulation, the hierarchical chain requires fewer training steps than flat SAC and exhibits lower observed variation across seeds. The frozen Pick and Lift skills are further reused for stacking by training an additional Place skill.",
+          "authors": [
+            "Madeleine Nouri",
+            "Gelareh Mohammadi",
+            "Francisco Cruz"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI"
+          ],
+          "published": "2026-11-19 03:47:02+00:00",
+          "link": "https://arxiv.org/pdf/2611.25462v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Hierarchical reinforcement learning skill composition for robotic manipulation and navigation",
+          "llm_evidence_cn": "面向机器人操作与导航的层次强化学习技能组合",
+          "llm_evidence": "面向机器人操作与导航的层次强化学习技能组合",
+          "canonical_evidence": "面向机器人操作与导航的层次强化学习技能组合",
+          "llm_tldr_en": "This paper evaluates demonstration-free hierarchical reinforcement learning pipelines that compose separately trained skills for MiniGrid navigation and robotic manipulation, comparing them with flat RL baselines.",
+          "llm_tldr_cn": "针对复杂序列任务中强化学习训练困难的问题，本文评估无需演示的层次强化学习流水线，将导航与操作任务分解为可复用技能。方法在导航中复用两个参数化技能于未见布局，在操作中分别训练到达、抓取对齐与抬升并以前序 rollout 状态初始化后续技能。实验与扁平强化学习基线对比，分析了训练需求与任务表现差异，为技能组合式机器人控制提供了经验参考。",
+          "llm_tldr": "针对复杂序列任务中强化学习训练困难的问题，本文评估无需演示的层次强化学习流水线，将导航与操作任务分解为可复用技能。方法在导航中复用两个参数化技能于未见布局，在操作中分别训练到达、抓取对齐与抬升并以前序 rollout 状态初始化后续技能。实验与扁平强化学习基线对比，分析了训练需求与任务表现差异，为技能组合式机器人控制提供了经验参考。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.25462v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.24138v2",
+          "source": "arxiv",
+          "title": "Ego2X: Contact-aware Transfer from Egocentric Human Data to Any Robot",
+          "abstract": "Embodied models depend on real interaction data, yet collecting it on physical robots is slow and labor-intensive. Recent ego-to-robot pipelines retarget first-person view human videos to robot data via transferring hand and arm motion. They judge fidelity mainly by visual appearance. However, trajectories often fail in terms of physics: fingers hover beside objects, and grippers close on empty space. We argue that how the object moves and the contacts that drive the motion count. Thus, we present Ego2X, an object-centric framework that converts monocular egocentric video into physically executable robot data across dexterous hands and parallel grippers. Ego2X centers on CORE (Contact-centric Object-interaction REpresentation), which records each contact on the object by its surface anchor, as well as relative force, grasp mode, and interaction state. Throughout the pipeline, CORE corrects hand-object drift via object-relative constraints, steers inverse kinematics toward contacts the robot must realize, and preserves held objects during arm erasure and robot compositing. On HOT3D, contact-driven correction reduces in-contact hand depth error by 33.7%, while on EgoDex, contact-driven retargeting realizes 62.9% of annotated contacts, surpassing the official HuRo pipeline (27.9%). In RoboTwin 2.0, post-training X-VLA on Ego2X episodes alone, without simulator demonstrations, raises task success rate from 40.5% zero-shot to 67.0% across 200 paired scenes. We will publicly release our conversion pipeline and CORE-annotated dataset for dexterous hands and parallel grippers.",
+          "authors": [
+            "Xinke Lyu",
+            "Bowen Yang",
+            "Zhicheng Wang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV"
+          ],
+          "published": "2026-11-18 09:48:30+00:00",
+          "link": "https://arxiv.org/pdf/2611.24138v2",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Converting egocentric human demonstration videos into executable robot data",
+          "llm_evidence_cn": "将第一人称人类演示视频转换为可执行的机器人数据",
+          "llm_evidence": "将第一人称人类演示视频转换为可执行的机器人数据",
+          "canonical_evidence": "将第一人称人类演示视频转换为可执行的机器人数据",
+          "llm_tldr_en": "Ego2X is an object-centric framework that converts monocular egocentric human videos into physically executable robot data using a contact-centric object-interaction representation.",
+          "llm_tldr_cn": "针对现有第一人称人类视频转机器人数据方法仅以视觉外观衡量保真度、轨迹物理不可执行的问题，本文提出以物体为中心的Ego2X框架。方法通过接触中心的对象交互表示CORE记录接触并生成可跨灵巧手与平行夹爪执行的数据。实验表明该框架能生成物理一致的机器人轨迹，避免手指悬空或夹爪空抓，为从人类演示高效获取机器人数据提供了新途径。",
+          "llm_tldr": "针对现有第一人称人类视频转机器人数据方法仅以视觉外观衡量保真度、轨迹物理不可执行的问题，本文提出以物体为中心的Ego2X框架。方法通过接触中心的对象交互表示CORE记录接触并生成可跨灵巧手与平行夹爪执行的数据。实验表明该框架能生成物理一致的机器人轨迹，避免手指悬空或夹爪空抓，为从人类演示高效获取机器人数据提供了新途径。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.24138v2",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.27689v2",
+          "source": "arxiv",
+          "title": "Embodied-Harness: Towards Recursive Self-Improvement for Robotic Manipulation",
+          "abstract": "Vision-language model (VLM)-based agents offer a promising approach to robotic manipulation, yet remain limited by inadequate memory organization, uncertain failure attribution, and limited reuse of execution experience. We propose Embodied-Harness, a dual-agent framework that improves manipulation by refining the execution harness without updating model parameters. The Actor interacts with the environment through a robot-control interface, while the Reflector converts execution evidence into reusable operational guidance. Hierarchical Memory Architecture maintains short-term execution context and long-term experiential knowledge to support execution and reflection. Evidence-based Experience Reflection grounds failure diagnosis in observed interactions, while Recursive Harness Self-Improvement refines operational guidance across successive attempts. Experiments on RoboTwin 2.0, RoboSPA, and RMBench demonstrate the effectiveness of Embodied-Harness in generalization under environmental variations, spatial reasoning, long-horizon planning, and memory-dependent manipulation. Our method achieves success rates of 82.4%, 76.7%, and 94.4% on the three benchmarks, respectively. Real-world evaluation further yields an average success rate of 96.7% across three manipulation tasks. These results highlight the potential of Embodied-Harness to improve robotic manipulation through experience-driven harness self-improvement.",
+          "authors": [
+            "Zhenxuan Fan",
+            "Zhuoya Wang",
+            "Yuqian Yuan",
+            "Wenqiao Zhang",
+            "Juncheng Li",
+            "Jun Xiao",
+            "Siliang Tang",
+            "Yueting Zhuang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI",
+            "cs.CV",
+            "cs.MA"
+          ],
+          "published": "2026-11-20 14:55:07+00:00",
+          "link": "https://arxiv.org/pdf/2611.27689v2",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Dual-agent VLM framework for recursive self-improvement in robotic manipulation",
+          "llm_evidence_cn": "面向机器人操作递归自改进的双智能体VLM框架",
+          "llm_evidence": "面向机器人操作递归自改进的双智能体VLM框架",
+          "canonical_evidence": "面向机器人操作递归自改进的双智能体VLM框架",
+          "llm_tldr_en": "Embodied-Harness is a dual-agent framework that improves VLM-based robotic manipulation by refining an execution harness with hierarchical memory and evidence-based reflection, without updating model parameters.",
+          "llm_tldr_cn": "针对基于视觉语言模型的机器人操作智能体在记忆组织、失败归因与经验复用方面的不足，本文提出Embodied-Harness双智能体框架。方法由执行者通过机器人控制接口与环境交互，反思者将执行证据转化为可复用操作指导，并借助分层记忆维持短期上下文与长期经验。实验表明该框架在无需更新模型参数的情况下提升了操作性能与失败诊断能力，为具身智能体的持续改进提供了新范式。",
+          "llm_tldr": "针对基于视觉语言模型的机器人操作智能体在记忆组织、失败归因与经验复用方面的不足，本文提出Embodied-Harness双智能体框架。方法由执行者通过机器人控制接口与环境交互，反思者将执行证据转化为可复用操作指导，并借助分层记忆维持短期上下文与长期经验。实验表明该框架在无需更新模型参数的情况下提升了操作性能与失败诊断能力，为具身智能体的持续改进提供了新范式。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "deep learning architectures for robotics applications",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.27689v2",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.28732v1",
+          "source": "arxiv",
+          "title": "Entangle: Scaling Human-Video In-Context World-Action Models across Unseen Tasks and Contexts",
+          "abstract": "In-context learning (ICL) enables foundation models to perform unseen tasks from context without parameter updates. In robotic manipulation, a human video provides the context that specifies how a task should be performed. However, scaling human-video ICL on world-action models (WAMs) faces two challenges: task-level human-robot pairs are not temporally aligned with robot actions, and standard action losses allow policies to rely on initial-scene or task-identity shortcuts rather than tracking the context. We present Entangle, an in-context world-action model that maps a single human video and current robot observations to future visual states and executable actions. To scale temporally aligned training data, we convert recorded robot videos into matched human contexts via video-to-video generation, supplemented by real paired recordings. For model training, we combine variable-length video windows with an intra-task contrastive objective that distinguishes the paired action trajectory from other executions of the same task, preventing task-identity shortcuts. Without task-specific fine-tuning, Entangle improves steadily as aligned training data scales, reaching an average score of 83.5/100 across six unseen tasks on an Astribot S1 robot, and achieves a 69.5% average success rate on seven unseen RoboTwin tasks, outperforming Zero-WAM by 22.6 percentage points. Under Context-OOD, although trained only on scene-aligned pairs, Entangle transfers context-specified behaviors across rearranged layouts and substituted tools.",
+          "authors": [
+            "Chendong Xiang",
+            "Chengwen Zhang",
+            "Ruowen Zhao",
+            "Zeyuan Wang",
+            "Shuhe Huang",
+            "Rongxu Cui",
+            "Min Zhao",
+            "Fan Bao",
+            "Hengkai Tan",
+            "Jun Zhu"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI"
+          ],
+          "published": "2026-11-21 10:58:36+00:00",
+          "link": "https://arxiv.org/pdf/2611.28732v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Learning robot manipulation tasks from a single human video via in-context world-action model",
+          "llm_evidence_cn": "通过上下文世界-动作模型从单个人类视频学习机器人操作任务",
+          "llm_evidence": "通过上下文世界-动作模型从单个人类视频学习机器人操作任务",
+          "canonical_evidence": "通过上下文世界-动作模型从单个人类视频学习机器人操作任务",
+          "llm_tldr_en": "Entangle is an in-context world-action model that maps a single human video and robot observations to future visual states and executable actions, scaling human-video learning for manipulation.",
+          "llm_tldr_cn": "针对利用人类视频进行上下文学习时人机时序不对齐、动作损失易依赖捷径的问题，本文提出上下文世界-动作模型Entangle。方法将单个人类视频与当前机器人观测映射为未来视觉状态和可执行动作，并通过构造时序对齐数据扩展训练。实验表明该模型能在未见任务与情境中依据人类视频完成操作，为从人类演示中高效学习机器人策略提供了新思路。",
+          "llm_tldr": "针对利用人类视频进行上下文学习时人机时序不对齐、动作损失易依赖捷径的问题，本文提出上下文世界-动作模型Entangle。方法将单个人类视频与当前机器人观测映射为未来视觉状态和可执行动作，并通过构造时序对齐数据扩展训练。实验表明该模型能在未见任务与情境中依据人类视频完成操作，为从人类演示中高效学习机器人策略提供了新思路。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.28732v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.27129v1",
+          "source": "arxiv",
+          "title": "Opto-Electronic Hybrid Reinforcement Learning Based on MZI for Robotic Manipulator Control",
+          "abstract": "Precise motion control for autonomous robots is a core technical enabler for the large-scale deployment of embodied intelligence. In particular, basic manipulation tasks, such as point-to-point reaching and target grasping with robotic manipulators, impose stringent requirements on control accuracy, real-time response, and energy efficiency for edge deployment. As a prevailing end-to-end control paradigm, reinforcement learning (RL) has demonstrated remarkable capabilities in autonomous learning and generalization for decision-making in continuous action spaces. Nevertheless, constrained by electronic computing architectures, it generally suffers from substantial computing overhead, high inference latency and limited energy efficiency, making low-power edge deployment challenging. Optical computing, benefiting from its high-speed parallelism, offers a promising route to break energy-efficiency bottlenecks; however, research on the integration of optical computing and RL remains at an early stage. In this work, we propose a Mach-Zehnder Interferometer (MZI)-based opto-electronic hybrid RL architecture. We adopted two algorithm structures: Deep Deterministic Policy Gradient combined with Hindsight Experience Replay (DDPG-HER) and Twin Delayed Deep Deterministic Policy Gradient combined with HER (TD3-HER). We implemented the key layer linear computation of the spiking neural network (SNN) Actor on an optical MZI chip for the reaching task of a Franka Emika Panda robotic manipulator. The architecture is evaluated in the PyBullet simulation environment. Experimental results demonstrate that the proposed architecture achieves an energy efficiency of 1.39 TOPS/W and an inference latency of 120ps while maintaining control accuracy, which provide a feasible pathway toward energy-efficient and precise control for robots.",
+          "authors": [
+            "Mengting Yu",
+            "Shuiying Xiang",
+            "Changjian Xie",
+            "Yonghang Chen",
+            "Haowen Zhao",
+            "Xingxing Guo",
+            "Zhijian Hao",
+            "Yahui Zhang",
+            "Yanan Han",
+            "Yue Hao"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-20 04:59:35+00:00",
+          "link": "https://arxiv.org/pdf/2611.27129v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "reinforcement learning for precise robotic manipulator control",
+          "llm_evidence_cn": "面向机械臂精确控制的强化学习方法",
+          "llm_evidence": "面向机械臂精确控制的强化学习方法",
+          "canonical_evidence": "面向机械臂精确控制的强化学习方法",
+          "llm_tldr_en": "RL for manipulator control is accurate but costly on electronic hardware. The paper proposes an opto-electronic hybrid RL architecture based on MZI photonic devices, reducing latency and energy use while retaining reaching and grasping accuracy.",
+          "llm_tldr_cn": "机械臂的点对点到达与抓取任务对控制精度、实时性和能效要求很高，而基于电子计算的强化学习存在算力开销大、推理延迟高的问题。作者提出基于马赫-曾德尔干涉仪的 opto-electronic 混合强化学习架构，将部分计算迁移到光电子硬件以加速决策。实验表明该方案在保持控制精度的同时降低了延迟与能耗，为边缘部署的机器人强化学习控制提供了新思路。",
+          "llm_tldr": "机械臂的点对点到达与抓取任务对控制精度、实时性和能效要求很高，而基于电子计算的强化学习存在算力开销大、推理延迟高的问题。作者提出基于马赫-曾德尔干涉仪的 opto-electronic 混合强化学习架构，将部分计算迁移到光电子硬件以加速决策。实验表明该方案在保持控制精度的同时降低了延迟与能耗，为边缘部署的机器人强化学习控制提供了新思路。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.27129v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.27181v1",
+          "source": "arxiv",
+          "title": "HumanoidPose: Monocular 3D Pose Estimation for Humanoid Robots",
+          "abstract": "As humanoid robots increasingly enter real-world environments, recovering their 3D whole-body pose from monocular imagery is becoming increasingly important for external state perception, motion analysis, and robot learning. However, Humanoid Robot Pose Estimation (HRPE) lies at the intersection of conventional Robot Pose Estimation (RPE) and Human Pose Estimation (HPE), while not being fully addressed by either paradigm: RPE primarily focuses on non-humanoid robots, particularly fixed-base manipulators, whereas HPE is built upon human-specific skeletal topologies, body models, and motion priors. Despite recent progress in humanoid 2D keypoint detection and HPE adaptation, humanoid-native 3D pose recovery remains insufficiently studied, and a dedicated benchmark with suitable training data and evaluation protocols is still lacking. To address this gap, we introduce Humanoids, a benchmark for monocular 3D humanoid robot pose estimation, and propose HumanoidPose, a framework for this task. Humanoids provides synthetic 3D supervision across diverse humanoid embodiments, manually annotated real-world 2D data, and real-world RGB sequences paired with robot states for 3D evaluation on a physical Roban humanoid. HumanoidPose combines human-inspired visual perception with robot articulation modeling and explicit kinematic grounding. Experiments on Humanoids and the DHRP-H1 benchmark demonstrate strong performance in articulation recovery and 3D pose estimation, including zero-shot transfer to real-world 2D and 3D evaluation. Ablation studies further show the contribution of robot-native articulation modeling and explicit kinematic grounding. The dataset and code will be publicly released to support future research in the community.",
+          "authors": [
+            "Jinlin Gan",
+            "Mingzhe Li",
+            "Junsheng Zhang",
+            "Zhibo Zhou",
+            "Jiahan Geng",
+            "Yuhua Luo",
+            "Changwang Zhang",
+            "Chenglu Wen",
+            "Lan Xu",
+            "Siqi Shen",
+            "Cheng Wang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.CV"
+          ],
+          "published": "2026-11-20 06:11:14+00:00",
+          "link": "https://arxiv.org/pdf/2611.27181v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "monocular 3D whole-body pose estimation for humanoid robot perception",
+          "llm_evidence_cn": "面向humanoid机器人感知的单目三维全身姿态估计",
+          "llm_evidence": "面向humanoid机器人感知的单目三维全身姿态估计",
+          "canonical_evidence": "面向humanoid机器人感知的单目三维全身姿态估计",
+          "llm_tldr_en": "Humanoid 3D pose estimation falls between robot pose estimation and human pose estimation but is poorly served by both. HumanoidPose addresses humanoid-native monocular whole-body 3D pose recovery with a dedicated benchmark, supporting external state perception and robot learning.",
+          "llm_tldr_cn": "随着 humanoid 机器人进入真实环境，从单目图像恢复其三维全身姿态对外部状态感知和机器人学习至关重要。但该问题介于传统机器人位姿估计与人体姿态估计之间，两者均未充分覆盖。作者提出 HumanoidPose，针对 humanoid 骨架拓扑构建专用方法并建立基准，验证了单目三维全身姿态恢复的有效性，为 humanoid 机器人感知研究奠定基础。",
+          "llm_tldr": "随着 humanoid 机器人进入真实环境，从单目图像恢复其三维全身姿态对外部状态感知和机器人学习至关重要。但该问题介于传统机器人位姿估计与人体姿态估计之间，两者均未充分覆盖。作者提出 HumanoidPose，针对 humanoid 骨架拓扑构建专用方法并建立基准，验证了单目三维全身姿态恢复的有效性，为 humanoid 机器人感知研究奠定基础。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "computer vision techniques for robot perception and scene understanding",
+          "matched_requirement_id": "req-1",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.27181v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.30516v1",
+          "source": "arxiv",
+          "title": "JEPA-ICL: Progress-Aligned Latent Plans for In-Context Robotic Manipulation",
+          "abstract": "Demonstrations show how a task can be completed, but differences in embodiment, appearance, and execution speed make it difficult to identify the guidance relevant to the robot's current progress. We introduce JEPA-ICL, a vision-language-action framework that couples predictive planning with demonstration learning. The policy learns to plan by predicting ordered future states in JEPA feature space up to subtask completion, capturing what remains to be accomplished. These plans guide action generation and locate relevant stages in demonstrations, whose JEPA-supervised content features provide progress-aligned context. Learning from this context, in turn, updates the shared policy that produces the plans and actions. This coupling connects anticipating the robot's own execution with reusing demonstrated experience. On the Imitator Game, JEPA-ICL achieves 80.0% seen-task success under C15 pretraining, outperforming Zero-WAM by 12.0 percentage points. Without contextual demonstrations, JEPA-ICL outperforms the VLA-JEPA variant without human-video pretraining, improving success rates from 96.1% to 97.6% on LIBERO and from 62.9% to 73.2% on LIBERO-Plus. With demonstration-based training and contextual guidance at inference, LIBERO-Plus success further increases from 73.2% to 75.2%.",
+          "authors": [
+            "Tingjun Dai",
+            "Jianxiang He",
+            "Mingfei Han",
+            "Qihao Yu",
+            "Longtao Jiang",
+            "Changlin Li",
+            "Minghao Jin",
+            "Zhihui Li",
+            "Xiaojun Chang"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO",
+            "cs.AI"
+          ],
+          "published": "2026-11-23 11:32:22+00:00",
+          "link": "https://arxiv.org/pdf/2611.30516v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "vision-language-action framework learning from demonstrations",
+          "llm_evidence_cn": "从演示中学习的视觉语言动作框架",
+          "llm_evidence": "从演示中学习的视觉语言动作框架",
+          "canonical_evidence": "从演示中学习的视觉语言动作框架",
+          "llm_tldr_en": "Demonstrations are hard to exploit when embodiment and speed differ. JEPA-ICL couples predictive planning with demonstration learning by predicting ordered future states in JEPA feature space, aligning relevant demonstration stages to the robot's current progress.",
+          "llm_tldr_cn": "机器人从演示中学习时，因本体、外观与执行速度差异，难以识别与当前进度相关的指导信息。作者提出JEPA-ICL视觉语言动作框架，在JEPA特征空间预测有序未来状态以规划，并据此在演示中定位进度对齐的内容作为上下文。该方法将预测性规划与演示学习耦合，指导动作生成并持续更新共享策略。这为机器人利用演示进行操控学习提供了进度对齐的新途径。",
+          "llm_tldr": "机器人从演示中学习时，因本体、外观与执行速度差异，难以识别与当前进度相关的指导信息。作者提出JEPA-ICL视觉语言动作框架，在JEPA特征空间预测有序未来状态以规划，并据此在演示中定位进度对齐的内容作为上下文。该方法将预测性规划与演示学习耦合，指导动作生成并持续更新共享策略。这为机器人利用演示进行操控学习提供了进度对齐的新途径。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.30516v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2611.24585v1",
+          "source": "arxiv",
+          "title": "SHAPE: Discrete Supervision and Parallel Continuous Streams for Learning Dexterous Manipulation from Egocentric Human Data",
+          "abstract": "Egocentric human recordings are far cheaper than dexterous robot demonstrations, promising stronger pretraining and direct skill learning without task-specific robot data. Yet humans and robots differ in morphology and kinematics, so human recordings lack the joint positions and actuator commands that supervise robot policies, providing only retargeted end-effector (EEF) actions. This raises two questions: how human data should supervise the policy, and how a dexterous robot should read out actions at deployment. We address both in SHAPE (Supervision from Human Action tokens with Parallel Executable streams), a vision-language-action (VLA) model whose backbone predicts discrete action tokens of EEF chunks as an auxiliary task, while a shared flow-matching expert outputs two executable streams, EEF and joint. On a bimanual robot with 22-DoF hands, a matched study shows that discrete supervision helps learn from human data, driving backbone gradients and shaping action-informative representations across domains. Under standard control pipelines at deployment, direct joint readout excels at fine-grained control with robot demonstrations, scoring 0.80 across six tasks against 0.63 for π0.5, whereas IK-based EEF readout excels at human-to-robot transfer. Pretrained with human data and discrete tokens, SHAPE learns new tasks from human demonstrations without task-specific robot data.",
+          "authors": [
+            "Yaping Li",
+            "Zhihong Liu",
+            "Jiacheng Li",
+            "Yi Yang",
+            "Wenchao Yue",
+            "Mingzhe Ye",
+            "Xiangcheng Liu",
+            "Yiyang Chen",
+            "Haotian He",
+            "Qi Zhang",
+            "Haonan Wang",
+            "Dahua Lin",
+            "Zhijie Deng"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-11-18 15:14:26+00:00",
+          "link": "https://arxiv.org/pdf/2611.24585v1",
+          "tags": [
+            "keyword:robotics-ai",
+            "query:robotics-ai"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "learning dexterous manipulation from egocentric human demonstrations",
+          "llm_evidence_cn": "从人类第一视角数据学习灵巧操作",
+          "llm_evidence": "从人类第一视角数据学习灵巧操作",
+          "canonical_evidence": "从人类第一视角数据学习灵巧操作",
+          "llm_tldr_en": "Human egocentric recordings are cheap but lack joint and actuator supervision. SHAPE is a vision-language-action model that predicts discrete end-effector action tokens with parallel executable streams to learn dexterous manipulation from human data.",
+          "llm_tldr_cn": "人类第一视角录制数据成本低，但因人与机器人形态差异，缺乏可直接监督机器人策略的关节与执行器指令。作者提出SHAPE视觉语言动作模型，主干预测末端执行器的离散动作token，并采用并行可执行流在部署时读出灵巧动作。该方法解决了人类数据如何监督策略与机器人如何输出动作两个问题，为无专用机器人数据的灵巧操作学习提供了新方案。",
+          "llm_tldr": "人类第一视角录制数据成本低，但因人与机器人形态差异，缺乏可直接监督机器人策略的关节与执行器指令。作者提出SHAPE视觉语言动作模型，主干预测末端执行器的离散动作token，并采用并行可执行流在部署时读出灵巧动作。该方法解决了人类数据如何监督策略与机器人如何输出动作两个问题，为无专用机器人数据的灵巧操作学习提供了新方案。",
+          "llm_tags": [
+            "query:robotics-ai"
+          ],
+          "matched_query_tag": "query:robotics-ai",
+          "matched_query_text": "How do robots learn from human demonstrations?",
+          "matched_requirement_id": "req-6",
+          "selection_source": "carryover_cache",
+          "paper_id": "2611.24585v1",
+          "carry_days": 1
+        }
+      ]
     }
   }
 }

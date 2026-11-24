@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-10-08 ~ 2026-11-06</span>
+      <span class="dpr-home-dashboard-kicker">2026-11-15 ~ 2026-11-24</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 0 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 21 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>0</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>10</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-11-06 17:42:27 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-11-24 18:17:48 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,7 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日无新推荐，系统未产出可展示论文。</p>
+<p>2026-11-15至11-24共筛出21篇机器人学习论文，精读10篇、速读11篇，重点聚焦安全强化学习与可解释持续分层导航。最值得看的是两篇9.0分精读：概率安全强化学习在类人与空中机器人上的理论与部署，以及模糊可解释持续分层强化学习用于机器人导航。普通读者可先读这两篇精读，再浏览EgoSwarm等8.0分速读，把握群体智能与多稳运动基元方向。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -78,12 +78,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">0 篇</strong>
+    <strong class="dpr-home-dashboard-count">10 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Towards Probabilistically Safe Reinforcement Learning: Theory and Deployment on Humanoid and Aerial Robots">Towards Probabilistically Safe Reinforcement Learning: Theory and Deployment on Humanoid and Aerial Robots</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fuzzy Explainable Continual Hierarchical Reinforcement Learning for Robotic Navigation">Fuzzy Explainable Continual Hierarchical Reinforcement Learning for Robotic Navigation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Vision-Language Grounded Semantic Navigation for Autonomous Mobile Robots">Vision-Language Grounded Semantic Navigation for Autonomous Mobile Robots</span></li></ul>
   </div>
-
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>10</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -91,12 +91,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">0 篇</strong>
+    <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="EgoSwarm: Learning Decentralized Robot Swarm Intelligence from Human Swarm Demonstrations">EgoSwarm: Learning Decentralized Robot Swarm Intelligence from Human Swarm Demonstrations</span></li><li><span class="dpr-home-dashboard-paper-title" title="Multi-CONDOR: Learning Multistable Motion Primitives from Demonstration">Multi-CONDOR: Learning Multistable Motion Primitives from Demonstration</span></li><li><span class="dpr-home-dashboard-paper-title" title="Cooperative Mobile Manipulation using Learned Dynamical Systems">Cooperative Mobile Manipulation using Learned Dynamical Systems</span></li></ul>
   </div>
-
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">robotics-ai <strong>11</strong></span></div>
 </section>
 </div>
 

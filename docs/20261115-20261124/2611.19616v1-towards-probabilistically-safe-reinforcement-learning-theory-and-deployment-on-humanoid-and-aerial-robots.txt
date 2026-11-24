@@ -1,0 +1,2519 @@
+Proceedings of Machine Learning Research vol vvv:1–30, 2027
+Towards Probabilistically Safe Reinforcement Learning:
+Theory and Deployment on Humanoid and Aerial Robots
+Pol Mestres
+mestres@caltech.edu
+Varun Gabbita
+vgabbita@caltech.edu
+Jason H.K. Siu
+jasonsiu@caltech.edu
+Sergio A. Esteban
+sesteban@caltech.edu
+Hampus Serneke
+hserneke@caltech.edu
+Joel W. Burdick
+jburdick@caltech.edu
+Aaron D. Ames
+ames@caltech.edu
+Department of Mechanical and Civil Engineering, Caltech, Pasadena, CA, USA
+Abstract
+Reinforcement learning (RL) enables robots to acquire complex skills, but standard RL
+formulations do not guarantee that learned policies satisfy safety constraints, which limits
+their use in safety-critical settings. Existing safe RL methods with provable guarantees
+typically support only restricted classes of constraints and require unbiased estimators of
+the objective and constraint functions, which prevents their direct integration with state-
+of-the-art algorithms such as proximal policy optimization (PPO). In this paper, we extend
+the recently introduced robust safe gradient flow-based reinforcement learning (RSGF-RL)
+framework to overcome these limitations. Our formulation accommodates a general class
+of trajectory-level safety constraints, including chance constraints such as collision avoid-
+ance with a prescribed probability, and our analysis allows for biased value and gradient
+estimators. We show that, with high probability, the constraint violation throughout train-
+ing is bounded by the estimator bias plus a term that vanishes as the number of rollouts
+grows, and decays to this level if the initial policy is unsafe. We also establish the con-
+vergence properties of the iterates to approximate KKT points of the original safe RL
+problem. Finally, we show that RSGF-RL implemented with PPO-style estimates enables
+zero-shot sim-to-real deployment of whole-body control policies on a Unitree G1 humanoid
+and collision-free waypoint navigation on a Crazyflie drone.
+Keywords: Safe reinforcement learning, model-free reinforcement learning, humanoid
+robots.
+1. Introduction
+Reinforcement learning (RL) has emerged as a powerful tool for enabling robots to acquire
+a wide range of complex skills (Hwangbo et al., 2019; OpenAI et al., 2020; Kaufmann et al.,
+2023).
+However, standard RL algorithms primarily optimize task performance, without
+guaranteeing that the learned policies satisfy safety constraints, either during training or
+after deployment. This lack of formal safety guarantees remains a major obstacle to the
+adoption of RL in safety-critical applications.
+Motivated by this challenge, a growing body of work on safe RL seeks to optimize
+policy performance subject to prescribed safety specifications (Brunkel et al., 2022; Gar-
+cia and Fernandez, 2015; Gu et al., 2024). A common approach formulates safe RL as a
+© 2027 P. Mestres, V. Gabbita, J.H. Siu, S.A. Esteban, H. Serneke, J.W. Burdick & A.D. Ames.
+arXiv:2611.19616v1  [cs.RO]  14 Nov 2026
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+constrained policy optimization problem, where the constraint requires the expected cumu-
+lative value of a safety-related cost to remain below a prescribed threshold (Achiam et al.,
+2017; Chow et al., 2017; Paternain et al., 2019). Several algorithms have been proposed
+to solve such problems, including primal-dual methods (Paternain et al., 2023; Ding et al.,
+2020), constrained policy optimization (CPO) (Achiam et al., 2017), projection-based con-
+strained policy optimization (PCPO) (Yang et al., 2020), and state augmentation (Sootla
+et al., 2022). Despite their empirical success, these methods generally do not guarantee
+constraint satisfaction throughout the learning process, and their convergence guarantees
+rely on restrictive assumptions.
+An alternative approach enforces safety at the level of individual control actions, typi-
+cally by combining an unconstrained RL policy with a safety filter based on control barrier
+functions (CBFs) (Bejarano et al., 2025; Alshiekh et al., 2018; Cheng et al., 2019; Yang
+et al., 2026; Hsu et al., 2024). While such methods can provide guarantees on the safety of
+the resulting closed-loop system, they do not directly address the problem of optimizing a
+policy subject to safety constraints.
+In this paper, we adopt the constrained policy optimization perspective, building on
+the recently introduced robust safe gradient flow-based reinforcement learning (RSGF-RL)
+framework (Mestres et al., 2025b,a). RSGF-RL provides convergence guarantees to critical
+points of the constrained RL problem while maintaining constraint satisfaction through-
+out the learning process with high probability.
+However, several limitations restrict its
+integration with state-of-the-art RL algorithms and modern robotic systems:
+1. Limited class of safety constraints. The existing framework considers constraints
+that require that the expected value of cumulative safety costs remains below a given
+threshold. However, many safety specifications arising in robotics are naturally ex-
+pressed as probabilistic constraints, such as requiring that the probability of colliding
+with an obstacle during an episode remains below a prescribed threshold, which are
+not equivalent to the expected cumulative cost formulations.
+2. Restrictive assumptions.
+The theoretical guarantees of RSGF-RL as provided
+in (Mestres et al., 2025b,a) require unbiased estimators of the objective and constraint
+functions and their gradients. In contrast, modern RL algorithms such as Proximal
+Policy Optimization (PPO) (Schulman et al., 2017), Soft Actor-Critic (SAC) (Haarnoja
+et al., 2024), and DreamerV3 (Hafner et al., 2025) employ estimation procedures that
+can introduce bias. This limits the integration of RSGF-RL with state-of-the-art pol-
+icy optimization methods. Additionally, the conditions under which (Mestres et al.,
+2025a) establishes convergence of RSGF-RL (such as the requirement that the esti-
+mated RSGF-RL update law converges to the true one with probability one) are quite
+restrictive.
+3. Lack of hardware validation. Previous evaluations of RSGF-RL have been limited
+to relatively simple simulation environments, leaving open whether its theoretical
+guarantees can be combined with the computational demands and practical challenges
+of RL policies for real robotic systems.
+2
+
+
+Towards Probabilistically Safe Reinforcement Learning
+In this paper, we develop an extension of RSGF-RL that addresses these shortcomings,
+and show that the resulting algorithm can be used to train RL policies for a variety of
+different tasks, with zero-shot sim-to-real transfer. Our contributions are as follows.
+1. First, we extend RSGF-RL to a general class of trajectory-level constraints, which in-
+cludes cumulative cost and probabilistic constraints. Similarly to the Policy Gradient
+Theorem (Sutton and Barto, 2018, Chapter 13), we show that gradient estimates for
+this class of constraints follow from the classical likelihood-ratio method in (Glynn,
+1990);
+2. Second, we show that, with high probability, the constraint violation of the RSGF-RL
+iterates is bounded by the estimator bias plus a sampling-error term that vanishes as
+the number of rollouts N used for value and gradient estimation grows. If the initial
+policy is safe, this bound holds throughout training; if it is unsafe, the violation decays
+to this level. We also show that, almost surely, the RSGF-RL iterates have a limit
+point that is an approximate KKT point of the constrained RL problem, with the
+approximation level again given by the estimator bias plus a term that vanishes as
+N →∞.
+3. Third, we show that RSGF-RL implemented with (biased) PPO gradient estimates
+enables zero-shot sim-to-real deployment of whole-body motor skills on a Unitree G1
+humanoid robot and collision-free waypoint navigation on a Crazyflie drone. Some
+assumptions of our theoretical results are not met in the practical implementation
+of RSGF-RL used in these experiments. We discuss this theory-to-practice gap in
+Section 4.3.
+2. Background
+2.1. Safe Reinforcement Learning
+Consider a Markov Decision Process (S, A, P) with unknown transition function P. Let
+T ∈N be a finite time horizon, and let g0, g1 : ST+2 × AT+1 →R be real-valued functions.
+We also consider a distribution η over initial states and a parametric class of policies indexed
+by θ ∈Rd, with πθ denoting the policy associated with parameter θ. Let s = [s0, . . . , sT+1]
+and a = [a0, . . . , aT ]. We consider the constrained RL problem
+min
+θ∈Rd
+V0(θ) = E[g0(s, a)]
+s.t.
+V1(θ) = E[g1(s, a)] ≤0.
+(1)
+The expectations in (1) are taken with respect to the probability measure over trajectories
+induced by the initial-state distribution η, the policy πθ, and the transition function P.
+Unless stated otherwise, all expectations are taken with respect to this measure.
+The function g0 encodes the objective to be minimized over the horizon T, whereas g1
+encodes a safety constraint over the same horizon. For simplicity, we consider (1) with a
+single safety constraint and same time horizon for both the objective and constraint, but
+the results developed in the paper extend naturally to multiple constraints and different
+time horizons.
+We next present different instances of (1) that illustrate the generality of this formulation
+and connect it with safe RL problems previously studied in the literature.
+3
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Example 1 (Cumulative constraints): Let γ ∈(0, 1] be a discount factor, R0 : S ×A×S →
+R a reward function, and R1 : S × A × S →R a cost function.
+Consider gj(s, a) =
+(−1)j+1 PT
+t=0 γtRj(st, at, st+1). Then (1) becomes the standard constrained RL formulation
+considered, e.g., in (Altman, 1999; Achiam et al., 2017; Chow et al., 2017; Paternain et al.,
+2019; Mestres et al., 2025b). The objective is to maximize the expected discounted cumulative
+reward while constraining the expected discounted cumulative cost.
+•
+Example 2 (Probabilistic constraints): Let ¯C ⊂S be a safe set and let δ ∈(0, 1). Taking
+g0 as in Example 1 and defining g1(s, a) = −I
+ TT
+t=0{st ∈¯C}
+
++ 1 −δ, where I(A) denotes
+the indicator function of an event A, problem (1) becomes
+max
+θ∈Rd E
+h
+T
+X
+t=0
+γtR0(st, at, st+1)
+i
+,
+s.t.
+P
+ T\
+t=0
+{st ∈¯C}
+
+≥1 −δ.
+(2)
+This formulation requires the state trajectory to remain in the safe set ¯C over the entire
+horizon with probability at least 1 −δ, and is considered, for example, in (Chen et al.,
+2024; Paternain et al., 2023). As shown in Appendix A, an appropriate choice of R1 in
+Example 1 can also imply the probabilistic constraint in (2), but the two formulations are
+not equivalent.
+•
+Beyond examples 1-2, problem (1) also covers the percentile risk constraints considered
+in (Chow et al., 2017; Ying et al., 2021) and the conditional chance constraints in (Shen
+et al., 2024). Hence, (1) captures several common notions of safety in RL.
+2.2. Robust Safe Gradient Flow
+We next introduce the Robust Safe Gradient Flow (RSGF) (Mestres et al., 2025a), a con-
+strained optimization method that will serve as the basis for solving (1). Let V0, V1 : Rd →R
+be continuously differentiable functions and consider the constrained optimization problem
+min
+θ∈Rd V0(θ)
+s.t.
+V1(θ) ≤0.
+(3)
+Let C = {θ ∈Rd : V1(θ) ≤0} denote its feasible set. Given α, β > 0, define the RSGF
+vector field R : Rd →Rd by
+R(θ) = arg min
+ξ∈Rd
+1
+2 ∥ξ + ∇V0(θ)∥2
+s.t.
+αV1(θ) + ∇V1(θ)⊤ξ + β
+2 ∥ξ∥2 ≤0.
+(4)
+Thus, R(θ) selects a direction that remains as close as possible to the negative gradient
+−∇V0(θ) while satisfying a constraint designed to preserve feasibility. Given a sequence of
+positive stepsizes {ht}t∈N, we consider the discrete-time RSGF iteration
+θt+1 = θt + htR(θt).
+(5)
+As shown in (Mestres et al., 2025b, Lemma 1) and (Mestres et al., 2025a, Lemma IV.2, Prop.
+IV.3) (consolidated in Proposition 5 in Appendix B for completeness), under a constraint
+qualification and suitable Lipschitz and stepsize conditions, the limit points of (5) are KKT
+points of (3). Besides ensuring convergence to KKT points of (3), this result highlights
+the anytime nature of RSGF: provided that the initial iterate is feasible and the stepsizes
+satisfy the stated conditions, every subsequent iterate remains feasible.
+4
+
+
+Towards Probabilistically Safe Reinforcement Learning
+3. Safe Reinforcement Learning with the Robust Safe Gradient Flow
+Although the RSGF iterates (5) have KKT points of the constrained optimization prob-
+lem (1) as limit points, they cannot be applied directly in the model-free RL setting. In
+particular, because the transition kernel P of the MDP is unknown, the value functions
+V0, V1 and their gradients ∇V0, ∇V1 cannot in general be evaluated exactly. In this section,
+we therefore construct estimates of these quantities from policy rollouts.
+The following result provides an expression for the gradient of the general functions V0
+and V1 introduced in (1), and will serve as the basis for estimating such gradients from
+sampled trajectories. This result is a direct consequence of the likelihood-ratio gradient
+identity (Glynn, 1990), and its proof is deferred to Appendix C, where we also discuss
+the special cases it recovers (including the standard Policy Gradient Theorem (Sutton and
+Barto, 2018, Chapter 13)).
+Proposition 1 (Policy gradient for general objective and constraints): Suppose that, for
+every a ∈A and s ∈S, the mapping θ 7→log πθ(a|s) is continuously differentiable, the
+functions g0, g1 are uniformly bounded, and for every θ ∈Rd, there exists a neighborhood
+Uθ and a constant Mθ > 0 where
+sup
+θ′∈Uθ
+sup
+s∈S,a∈A
+∥∇θ′ log πθ′(a|s)∥≤Mθ.
+(6)
+Let Ht = (s0, a0, s1, a1, . . . , at−1, st) ∈(S × A)t × S denote the trajectory history available
+when action at is selected. Further,1, for each t ∈0 : T, let bj,t : (S × A)t × S × Rd →R be
+an arbitrary integrable function. Then, for j ∈{0, 1},
+∇Vj(θ) = E
+h
+T
+X
+t=0
+ gj(s, a) −bj,t(Ht, θ)
+
+∇θ log πθ(at|st)
+i
+.
+(7)
+Fix j ∈{0, 1}. Given N ∈N independent episodes generated under πθ with initial distri-
+bution η, empirical averages of gj and (7) yield unbiased estimators of Vj and ∇Vj, respec-
+tively. Practical RL algorithms, however, often modify these estimators to reduce variance
+or improve numerical performance, generally at the cost of bias: PPO-clip (Schulman et al.,
+2017, Section 3) optimizes a clipped surrogate objective, and actor–critic methods (Konda
+and Tsitsiklis, 2003) build lower-variance gradient estimates from learned value functions.
+We therefore consider general estimators
+bVj(θ) = 1
+N
+N
+X
+n=1
+Gθ
+j,n,
+d
+∇V j(θ) = 1
+N
+N
+X
+n=1
+˜Gθ
+j,n,
+(8)
+where Gθ
+j,n ∈R and ˜Gθ
+j,n ∈Rd satisfy, for all n ∈1 : N, i ∈1 : d, and some constants
+ζj, ˜ζj ≥0 and Bj, ˜Bj (independent of θ),
+E[Gθ
+j,n] −Vj(θ)
+ ≤ζj,
+E[( ˜Gθ
+j,n)i] −(∇Vj(θ))i
+ ≤˜ζj,
+(9)
+|Gθ
+j,n| ≤Bj,
+|( ˜Gθ
+j,n)i| ≤˜Bj
+a.s.
+(10)
+1. For non-negative integers n1, n2, we use the notation n1 : n2 = {n1, n1 + 1, . . . , n2}.
+5
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Assumption (10) is standard in RL (Zhang et al., 2020; Bai et al., 2024; Mestres et al.,
+2025b,a); for the estimators induced by (7), it holds whenever ∇θ log πθ, {gj}, and {bj,t}
+are uniformly bounded over (s, a). Bounds of the form (9) are available for PPO (D¨oring
+et al., 2026, Theorem 4.2) and actor–critic algorithms (Mu and Klabjan, 2024, Lemma
+4.10). Using (8), we define the empirical RSGF direction
+ˆR(θ) = arg min
+ξ∈Rd
+1
+2
+ξ + d
+∇V0(θ)
+
+2
+s.t.
+αbV1(θ) + d
+∇V 1(θ)⊤ξ + β
+2 ∥ξ∥2 ≤0,
+(11)
+and the stochastic policy update
+θt+1 = θt + ht ˆR(θt),
+(12)
+where for every θt, ˆR(θt) is computed through (11) (with θ = θt) and estimates obtained
+through N independent rollouts as in (8), and {ht} is a deterministic sequence of stepsizes.
+We note that ˆR(θ) (and R(θ)) can be computed in closed-form (cf. Mestres et al., 2025b,
+Lemma 3). We refer to the algorithm that updates policy parameters according to (12) as
+RSGF-RL. If problem (11) is infeasible at θ = θt, we set ˆR(θt) := −d
+∇V 1(θt)/β. We next
+investigate the extent to which RSGF-RL retains the safety and convergence properties of
+the nominal RSGF iterates (5). In the following results, we let Ft be the filtration obtained
+from all stochasticity up to iteration t (but not including the rollouts from πθt). We begin
+by establishing a bound on the number of samples required to achieve a probabilistic safety
+guarantee.
+Proposition 2 (Probabilistic safety): Consider a sequence {θt}t∈N generated by (12), and
+let K ∈N. Suppose that ∇V1 is L1-Lipschitz, that the stepsizes satisfy 0 < ht ≤hmax <
+min{1/α, β/L1}, and that, almost surely, (11) is feasible at θ = θt for every t ∈0 : K −1.
+Fix ϵ > 0 and ¯δ ∈(0, 1), and let
+N ≥max
+n2B2
+1 log(4/¯δ)
+ϵ2
+, 2d ˜B2
+1 log(4d/¯δ)
+ϵ2
+o
+.
+(13)
+Define Πt := Qt−1
+k=0(1 −αhk) and
+¯c := ζ1 + ϵ +
+(
+√
+d ˜ζ1 + ϵ)2
+2α(β −L1hmax).
+(14)
+Then, with probability at least 1 −K¯δ,
+V1(θt) ≤Πt V1(θ0) + (1 −Πt) ¯c
+for all t ∈0 : K.
+(15)
+In particular, with probability at least 1 −K¯δ: (i) if V1(θ0) ≤0, then V1(θt) ≤¯c for all
+t ∈0 : K; (ii) if V1(θ0) > 0, then V1(θt) ≤ΠtV1(θ0) + ¯c for all t ∈0 : K.
+The proof of Proposition 2 follows an argument similar to that of (Mestres et al., 2025b,
+Proposition 5) and is included for completeness in Appendix E. Proposition 2 quantifies
+how estimation error and bias affect the safety of policy updates.
+It shows that with
+high probability (which degrades linearly with the safety horizon length K), (i) RSGF-RL
+6
+
+
+Towards Probabilistically Safe Reinforcement Learning
+iterates with safe initial policy stay in a neighborhood of the safe set (with the size of the
+neighborhood determined by ¯c, which shrinks as the estimator bias decreases and the number
+of rollouts N increases); (ii) RSGF-RL iterates with unsafe initial policy exponentially
+converge (e.g. by choosing constant stepsizes) to this neighborhood of the safe set. Note
+that if we want to ensure exact constraint satisfaction with high probability, we can simply
+tighten the constraint in (3) by a margin ¯c.
+We next study the convergence properties of (12). For θ ∈Rd define
+D(θ) := ∥∇V1(θ)∥2
+β2
+−2αV1(θ)
+β
+,
+ˆD(θ) := ∥d
+∇V 1(θ)∥2
+β2
+−2αbV1(θ)
+β
+.
+(16)
+As shown in Lemma 8, problem (4) (resp. (11)) is feasible if and only if D(θ) ≥0 (resp.
+ˆD(θ) ≥0).
+Proposition 3 (Convergence): Suppose that:
+(i) Θ ⊂Rd is compact and convex, and θt ∈Θ for all t ∈N almost surely;
+(ii) ∇V0, ∇V1 are L0-, L1-Lipschitz on Θ;
+(iii) problem (4) is feasible for all θ ∈Θ and ρ := minθ∈Θ
+p
+D(θ) > 0;
+Define the constants Gj := maxθ∈Θ ∥∇Vj(θ)∥for j ∈{0, 1},
+¯u := (G0 + G1/β)2
+βρ2
+,
+c1 := 1
+β +
+√
+d ˜B1 + G1
+β2ρ
+,
+cV := 2α
+βρ,
+(17)
+ε2
+N := 3
+h
+d
+ ˜ζ2
+0 +
+˜B2
+0
+N
+
++ c2
+1 d
+ ˜ζ2
+1 +
+˜B2
+1
+N
+
++ c2
+V
+ ζ2
+1 + B2
+1
+N
+i
+.
+(18)
+Fix any κ ≥¯u, and let Φκ(θ) := V0(θ) + κ[V1(θ)]+, GΦ := G0 + κG1, LΦ := L0 + κL1,
+∆0 := Φκ(θ0) −minΘ V0, and HK := PK−1
+t=0 ht for K ∈N. Let {θt} be generated by (12)
+with 0 < ht ≤¯h := min{1/α, 1/(2LΦ)}. Then:
+(a) (Non-asymptotic bound) For every K ∈N,
+1
+HK
+K−1
+X
+t=0
+ht E∥R(θt)∥2 ≤2∆0
+HK
++ 2GΦ εN + 2LΦε2
+N
+HK
+K−1
+X
+t=0
+h2
+t .
+(19)
+In particular, for a constant stepsize ht ≡h ≤¯h,
+min
+0≤t<K E∥R(θt)∥2 ≤
+1
+K
+K−1
+X
+t=0
+E∥R(θt)∥2 ≤2∆0
+hK + 2GΦ εN + ε2
+N.
+(20)
+(b) (Almost-sure asymptotic bound) If P
+t ht = ∞, then almost surely
+lim sup
+K→∞
+1
+HK
+K−1
+X
+t=0
+ht∥R(θt)∥2 ≤2GΦ εN + ε2
+N,
+(21)
+so in particular lim inft→∞∥R(θt)∥2 ≤2GΦεN + ε2
+N a.s.
+7
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+The proof of Proposition 3 is included in Appendix F. Let us comment on the assump-
+tions of Proposition 3. First, (i) can easily be guaranteed by adding an additional deter-
+ministic constraint in (11) that guarantees that Θ is forward invariant, as done in Mestres
+et al. (2025a). On the other hand, (ii) is standard in the literature, and the Lipschitz con-
+stants can even be obtained explicitly as in (Zhang et al., 2020, Lemma 3.2). Finally, since
+feasibility of problem (4) at parameter θ is equivalent to D(θ) ≥0, condition (iii) requires
+that problem (4) has a strict feasibility margin in the set Θ.
+Since Θ is compact and R is continuous, Proposition 3(b) implies that, almost surely,
+a subsequence of the RSGF-RL iterates (12) converges to a point which satisfies the KKT
+conditions of (3) up to a tolerance that vanishes with εN. Hence, as εN →0 (equivalently,
+as the estimator biases approach 0 and the number of rollouts N increases), such points
+form an approximate KKT sequence as introduced in (Andreani et al., 2011), whose limit
+points are KKT points of (3) (because assumption (iii) implies MFCQ). In particular, if
+estimates are constructed so that they become asymptotically unbiased, the approximation
+error only depends on the number of rollouts N.
+4. Experiments
+We implement RSGF-RL (12) for humanoid whole-body control and drone obstacle avoid-
+ance tasks2. For all tasks we use Gaussian policies with mean parametrized by a multi-layer
+perceptron (MLP). Furthermore, the policy acts on observations rather than on the full
+state; this fits our framework by augmenting the state with such observations3. We obtain
+estimates d
+∇V 0 through PPO-clip, and estimates d
+∇V 1, bV1 through an actor-critic scheme.
+Both provide biased estimates (cf. D¨oring et al., 2026, Theorem 4.2 and Kumar et al., 2023,
+Theorem 2 for bias bounds). Since the choice of g1 in Example 2 tends to stall learning,
+possibly due to its sparse nature, we use g0, g1 as in Example 1, with R1 as in (23). Re-
+wards, hyperparameters, and details on how the estimates are computed are reported in
+Appendices G and H.
+4.1. Humanoid whole-body control
+We evaluate RSGF-RL on whole-body control tasks for a Unitree G1 humanoid robot,
+whose high dimensionality, contact-rich dynamics, and underactuation make safety-critical
+controller design challenging. In all tasks, we train the RL policy in mjlab (Zakka et al.,
+2026). Simulated dynamics run at 200 Hz and the policy at 50 Hz, with 10 second episodes.
+The learned policies output joint position set-point commands that are tracked by a low-level
+PD controller. For sim-to-real transfer, we randomize base disturbances, contact friction,
+and center-of-mass and joint-encoder estimation errors.
+First, we learn a fixed forward-gait walking policy, where the safe set requires a base
+height of at least 0.67 m, roll in [−0.35, 0.35] rad, pitch in [−0.5, 0.5] rad, and the center of
+2. Videos of the different experiments are available at the following link: https://drive.google.com/
+file/d/19_EAcHGyLCidhLtGAe3-6qqPSirQZppJ/view?usp=sharing.
+3. In this setting, conditions (6) and (10) do not hold for Gaussian policies with unbounded support, but
+they hold for Gaussian policies truncated to a compact action set A with standard deviation bounded
+away from zero on the compact parameter space Θ and observations bounded on a compact set. Trun-
+cating actions and observations on a sufficiently large set retains the same performance in practice.
+8
+
+
+Towards Probabilistically Safe Reinforcement Learning
+0
+10
+20
+30
+40
+Reward
+0.0
+0.5
+1.0
+1.5
+Environment Steps
+£109
+0.00
+0.05
+0.10
+0.15
+0.20
+Violation Rate
+CPO
+RSGF-RL
+Vanilla PPO
+PPO-Lagrangian
+PPO (reward weight -0.1)
+PPO (reward weight -1)
+PPO (reward weight -10)
+PPO (reward weight -100)
+(a) Squatting
+¡40
+¡20
+0
+20
+40
+Reward
+0
+1000
+2000
+3000
+4000
+5000
+Training Iteration
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+Violation Rate
+RSGF-RL
+Vanilla PPO
+(b) Crawling
+0
+100
+200
+300
+0
+2500
+Training iteration
+0.00
+0.04
+0.08
+0.12
+RSGF-RL
+Vanilla PPO
+(c) Obstacle Avoid.
+¡20
+0
+20
+40
+60
+80
+0
+2000
+4000
+6000
+8000
+Training Iteration
+0.02
+0.04
+0.06
+0.08
+0.10
+RSGF-RL
+Vanilla PPO
+(d) Walking
+Figure 1:
+Training curves for vanilla PPO and RSGF-RL. In each panel, the top plot shows the
+mean reward and the bottom plot the safety violation rate per episode (i.e., the fraction of episodes
+that contain at least one safety violation). Shaded areas represent ±1 standard deviation over 5 seeds.
+Panel (a) also compares against CPO (Achiam et al., 2017), PPO-Lagrangian (Ray et al., 2019) and
+vanilla PPO with a safety-aware reward penalty for several penalty weights, and uses environment
+steps on the horizontal axis since CPO uses a different number of steps per environment.
+pressure (CoP) inside the support polygon of foot contact points. Figure 1(d) shows that,
+when trained with the same g0, RSGF-RL learns a policy with substantially fewer safety
+constraint violations than vanilla PPO, while asymptotically achieving comparable rewards.
+Next, we test RSGF-RL on crawling and squatting motion imitation tasks (Figures 2(a)-
+2(b)), training a separate policy for each with motion imitation rewards (Liao et al., 2026)
+and reference motions from a human motion dataset (BONES Studio, 2025). We constrain
+the base height to be at least 0.4 m for squatting, and the base and head heights to be
+at most 0.2 m for crawling (with a curriculum from 0.3 m to 0.2 m). Figures 1(a)-1(b)
+show that, with the same g0, RSGF-RL learns the squatting and crawling motions while
+respecting the height constraint, whereas vanilla PPO does not. Figure 1(a) also shows
+that for the squatting motion task, RSGF-RL improves upon CPO (Achiam et al., 2017)
+both in terms of safety and performance, and upon PPO-Lagrangian (Ray et al., 2019) in
+safety, with very similar performance. Additionally, vanilla PPO with an added safety-aware
+reward has safety and performance similar to RSGF-RL, as long as the penalty weight of
+the safety-aware reward is chosen appropriately. However, the correct penalty weight is
+very task-dependent, and it is unclear how to select it a priori.
+4.2. Drone collision avoidance
+We learn a policy that steers a Crazyflie drone to a hover target that changes every 5 sec-
+onds, in an arena with a randomized number of obstacles, some of which move randomly and
+others toward the drone. For sim-to-real transfer, we use domain randomization with ran-
+dom perturbations on the velocity, thrust coefficient, drag, command delays, and low-level
+controller feedback delay. The learned policy outputs velocity commands that are tracked
+by the drone’s onboard low-level controller. We train the RL policy in IsaacLab (Mittal
+et al., 2025). The simulated dynamics run at 400 Hz and the policy at 100 Hz, with 10
+second episodes. In this case, we add safety penalties to vanilla PPO for entering, or being
+predicted to enter within 0.5 seconds, the safety margin of obstacles or the arena boundary,
+with a terminal penalty for collisions or leaving the arena. Figure 1(c) again shows that
+RSGF-RL achieves a task return comparable to vanilla PPO while maintaining a low safety
+9
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+0
+2
+4
+6
+Time (s)
+0.1
+0.2
+0.3
+Pelvis Height (m)
+Unsafe
+Vanilla PPO
+RSGF-RL
+(a) Crawling
+0
+2
+4
+6
+8
+Time (s)
+0.4
+0.6
+0.8
+Pelvis Height (m)
+Unsafe
+Vanilla PPO
+RSGF-RL
+(b) Squatting
+0
+10
+20
+30
+Time (s)
+0.0
+0.4
+0.8
+1.2
+Obstacle Dist. (m)
+Unsafe
+RSGF-RL
+(c) Obstacle Avoidance
+Figure 2: (a)–(b) Humanoid crawling and squatting: vanilla PPO violates the safety constraints
+whereas RSGF-RL does not. (c) The RSGF-RL drone policy avoids two approaching obstacles.
+violation rate throughout training, whereas vanilla PPO sacrifices safety for higher return.
+Increasing these penalties made vanilla PPO training unstable. Although more careful tun-
+ing might improve its safety, RSGF-RL has no penalty parameter, and its own parameters
+(α, β, {ht}) required little tuning in this experiment. On hardware, the RSGF-RL policy
+successfully avoids obstacles while staying within the arena boundary (Fig. 2(c)).
+4.3. Discussion on theory to practice gap
+Some assumptions of our results, such as the bound (13) on the number of rollouts and the
+stepsize condition 0 < ht ≤¯h, are not met in the experiments, and the probabilistic safety
+guarantees in Propositions 2 and 4 are loose compared to the safety achieved in practice.
+Moreover, our safety and convergence results depend on the estimator biases ζ1, ˜ζ0, ˜ζ1.
+The estimates used in Section 4, detailed in Appendix H, rely on standard practical RL
+techniques, such as learned value critics, multiple Adam steps on the PPO loss, and omitting
+the discount weighting of the policy gradient, each of which introduces bias.
+Although
+techniques such as those in (D¨oring et al., 2026), (Kumar et al., 2023) can be used to bound
+these biases, we do not have tight characterizations for them. Finally, the curriculum in the
+crawling task makes the constraint iteration dependent, and is not directly covered by our
+analysis. However, Proposition 2 still applies for policy updates with the same constraint.
+5. Conclusions
+We have extended RSGF-RL to a general class of constraints, including probabilistic and cu-
+mulative ones, and to biased gradient and value function estimators, enabling its integration
+with state-of-the-art RL algorithms such as PPO. We established safety and convergence
+guarantees for the resulting algorithm, and demonstrated it on whole-body motor skills for
+a G1 humanoid robot and collision-free waypoint navigation for a Crazyflie drone. Future
+work will refine our assumptions and bias bounds and design estimators with good practi-
+cal performance and provable guarantees, in order to narrow the gap between theory and
+practice discussed in Section 4.3.
+10
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Acknowledgments
+The authors used various AI assistants to write code, check arguments, and edit the paper.
+The authors verified all results in the paper and take full responsibility for the content.
+References
+J. Achiam, D. Held, A. Tamar, and P. Abbeel. Constrained policy optimization. In Proceed-
+ings of the 34th International Conference on Machine Learning, volume 70, pages 22–31,
+Sydney, Australia, 2017.
+M. Alshiekh, R. Bloem, R. Ehlers, B. K¨onighofer, and S. Niekum.
+Safe reinforcement
+learning via shielding. In Proceedings of the Thirty-Second AAAI Conference on Artificial
+Intelligence, pages 2669–2678, 2018.
+E. Altman. Constrained Markov Decision Processes, volume 7. CRC Press, 1999.
+R. Andreani, G. Haeser, and J. M. Mart´ınez. On sequential optimality conditions for smooth
+constrained optimization. Optimization, 60(5):627–641, 2011.
+T. M. Apostol. Mathematical analysis. Addison-Wesley, 1974.
+Q. Bai, W. U. Mondal, and V. Aggarwal. Regret analysis of policy gradient algorithm
+for infinite horizon average reward Markov decision processes.
+In Proceedings of the
+38th AAAI Conference on Artificial Intelligence, pages 10980–10988, Vancouver, Canada,
+2024.
+H. H. Bauschke and P. L. Combettes. Convex analysis and monotone operator theory in
+Hilbert spaces. Springer Nature, 1991.
+F. P. Bejarano, L. Brunke, and A. P. Schoellig. Safety filtering while training: improving
+the performance and sample efficiency of reinforcement learning agents. IEEE Robotics
+and Automation Letters, 10(1):788–795, 2025.
+BONES Studio.
+BONES-SEED.
+https://huggingface.co/datasets/bones-studio/
+seed, 2025.
+L. Brunkel, M. Greeff, A. W. Hall, Z. Yuan, S. Zhou, J. Panerati, and A. P. Schoellig. Safe
+learning in robotics: from learning-based control to safe reinforcement learning. Annual
+Review of Control, Robotics, and Autonomous Systems, 5:411–444, 2022.
+W. Chen, D. Subramanian, and S. Paternain. Probabilistic Constraint for Safety-Critical
+Reinforcement Learning. IEEE Transactions on Automatic Control, 69(10):6789–6804,
+2024.
+R. Cheng, G. Orosz, R. M. Murray, and J. W. Burdick. End-to-end safe reinforcement
+learning through barrier functions for safety-critical continuous control tasks. Proceedings
+of the 33rd AAAI Conference on Artificial Intelligence, pages 3387–3395, 2019.
+11
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Y. Chow, M. Ghavamzadeh, L. Janson, and M. Pavone. Risk-constrained reinforcement
+learning with percentile risk criteria. The Journal of Machine Learning Research, 18(1):
+6070–6120, 2017.
+D. Ding, K. Zhang, T. Basar, and M. Jovanovic. Natural Policy Gradient Primal-Dual
+Method for Constrained Markov Decision Processes. In Proceedings of the 34th Inter-
+national Conference on Neural Information Processing Systems, volume 33, pages 8378–
+8390, Online Conference, 2020.
+R. Durrett.
+Probability: Theory and Examples.
+Series in Statistical and Probabilistic
+Mathematics. Cambridge University Press, 5th edition, 2010. ISBN 9781108473682.
+L. D¨oring, D. Schmidt, M. Melcher, S. Kassing, B. Wille, T. Aach, and S. Weiss-
+mann. An approximate ascent approach to prove convergence of PPO. arXiv preprint
+arXiv:2602.03386, 2026.
+M. Fr´echet. G´en´eralizations du th´eor`eme des probabilit´es totales. Fundamenta Mathemat-
+icae, 1(25):379–387, 1935.
+J. Garcia and F. Fernandez. A comprehensive survey on safe reinforcement learning. Journal
+of Machine Learning Research, 16:1437–1480, 2015.
+P. W. Glynn. Likelihood ratio gradient estimation for stochastic systems. Communications
+of the ACM, 33(10):75–84, 1990.
+S. Gu, L. Yang, Y. Du, G. Chen, F. Walter, J. Wang, and A. Knoll. A review of safe rein-
+forcement learning: methods, theories, and applications. IEEE Transactions on Pattern
+Analysis and Machine Intelligence, 46(12):11216 – 11235, 2024.
+T. Haarnoja, A. Zhou, P. Abbeel, and S. Levine. Soft actor-critic: off-policy maximum
+entropy deep reinforcement learning with a stochastic actor.
+Proceedings of the 41st
+International Conference on Machine Learning (ICML), pages 36455–36485, 2024.
+D. Hafner, J. Pasukonis, J. Ba, and T. Lillicrap. Mastering diverse control tasks through
+world models. Nature, 640:647–653, 2025.
+W. Hoeffding. Probability inequalities for sums of bounded random variables. Journal of
+the American Statistical Association, 58(301):13–30, 1963.
+K. Hsu, H. Hu, and J. F. Fisac. The safety filter: a unified view of safety-critical control in
+autonomous systems. Annual Review of Control, Robotics, and Autonomous Systems, 7:
+47–72, 2024.
+J. Hwangbo, J. Lee, A. Dosovitskiy, D. Bellicoso, V. Tsounis, V. Koltun, and M. Hut-
+ter. Learning agile and dynamic motor skills for legged robots. Science Robotics, 4(26):
+eaau5872, 2019.
+E. Kaufmann, L. Bauersfeld, A. Loquercio, M. M¨uller, V. Koltun, and D. Scaramuzza.
+Champion-level drone racing using deep reinforcement learning. Nature, 620:982–987,
+2023.
+12
+
+
+Towards Probabilistically Safe Reinforcement Learning
+V. R. Konda and J. N. Tsitsiklis. On actor-critic algorithms. SIAM Journal on Control
+and Optimization, 42(4):1143–1166, 2003.
+H. Kumar, A. Koppel, and A. Ribeiro. On the sample complexity of actor-critic method for
+reinforcement learning with function approximation. Machine Learning, 112:2433–2467,
+2023.
+K. Li, Z. Olkin, Y. Yue, and A. D. Ames. CLF-RL: Control Lyapunov function guided
+reinforcement learning. IEEE Robotics and Automation Letters, 2026.
+Q. Liao, T. E. Truong, X. Huang, Y. Gao, G. Tevet, K. Sreenath, and K. C. Liu. Beyond-
+Mimic: From motion tracking to versatile humanoid control via guided diffusion. arXiv
+preprint arXiv:2508.08241, 2025.
+Qiayuan Liao, Takara E Truong, Xiaoyu Huang, Yuman Gao, Guy Tevet, Koushil Sreenath,
+and C Karen Liu. Beyondmimic: From motion tracking to versatile humanoid control
+via guided diffusion. Science Robotics, 11(117):eadx8924, 2026.
+P. Mestres, A. Marzabal, and J. Cort´es.
+Off-Policy Reinforcement Learning with
+Anytime Safety Guarantees via Robust Safe Gradient Flow.
+2025a.
+Available at
+https://arxiv.org/pdf/2510.01492.
+P. Mestres, A. Marzabal, and J. Cort´es. Anytime safe reinforcement learning. In Learning
+for Dynamics and Control Conference, volume 283 of Proceedings of Machine Learning
+Research, pages 221–232. 2025b.
+Mayank Mittal et al. Isaac lab: A GPU-accelerated simulation framework for multi-modal
+robot learning. arXiv preprint arXiv:2511.04831, 2025. URL https://arxiv.org/abs/
+2511.04831.
+S. Mu and D. Klabjan. On the second-order convergence of biased policy gradient algo-
+rithms. Proceedings of the 41st International Conference on Machine Learning (ICML),
+pages 36455–36485, 2024.
+Siddharth Mysore, Bassel Mabsout, Renato Mancuso, and Kate Saenko. Regularizing action
+policies for smooth control with reinforcement learning.
+In 2021 IEEE International
+Conference on Robotics and Automation (ICRA), pages 1810–1816. IEEE, 2021.
+Y. Nesterov. Lectures on Convex Optimization, volume 137 of Springer Optimization and
+Its Applications. Springer International Publishing, 2nd edition, 2018. ISBN 3319915770.
+OpenAI. Safety starter agents. https://github.com/openai/safety-starter-agents,
+2019. Accessed November 2026.
+OpenAI, M. Andrychowitz, and B. Baker et al. Learning dexterous in-hand manipulation.
+The International Journal of Robotics Research, 39(1):3–20, 2020.
+S. Paternain, L. Chamon, M. Calvo-Fullana, and A. Ribeiro. Constrained Reinforcement
+Learning Has Zero Duality Gap. In Proceedings of the 33rd Conference in Neural Infor-
+mation Processing Systems, volume 32, pages 7555–7565, Vancouver, Canada, 2019.
+13
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+S. Paternain, M. Calvo-Fullana, L. F. O. Chamon, and A. Ribeiro. Safe Policies for Rein-
+forcement Learning via Primal-Dual Methods. IEEE Transactions on Automatic Control,
+68(3):1321–1336, 2023.
+A. Ray, J. Achiam, and D. Amodei.
+Benchmarking safe exploration in deep reinforce-
+ment learning.
+Technical report, OpenAI, 2019.
+URL https://cdn.openai.com/
+safexp-short.pdf.
+N. Rudin, D. Hoeller, P. Reist, and M. Hutter. Learning to walk in minutes using massively
+parallel deep reinforcement learning. In Conference on Robot Learning (CoRL), pages
+91–100, 2022.
+J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov. Proximal policy opti-
+mization algorithms. 2017. Available at https://arxiv.org/pdf/1707.06347.
+X. Shen, S. Jiang, A. Wachi, K. Hashimoto, and S. Gros. Flipping-based policy for chance-
+constrained Markov decision processes. In Proceedings of the 38th International Confer-
+ence on Neural Information Processing Systems, pages 64377–64411, 2024.
+J. Siekmann, Y. Godse, A. Fern, and J. Hurst. Sim-to-real learning of all common bipedal
+gaits via periodic reward composition. In IEEE International Conference on Robotics
+and Automation (ICRA), pages 7309–7315, 2021.
+A. Sootla, A. I. Cowen-Rivers, T. Jafferjee, Z. Wang, D. H. Mguni, J. Wang, and H. Am-
+mar. Saute RL: almost surely safe reinforcement learning using state augmentation. In
+Proceedings of the 39th International Conference on Machine Learning, volume 162 of
+Proceedings of Machine Learning Research, pages 20423–20442, 2022.
+R. S. Sutton and A. G. Barto. Reinforcement Learning: An Introduction. MIT Press, 2018.
+D. Williams. Probability with Martingales. Cambridge University Press, 1991.
+L. Yang, B. Werner, M. de Sa, and A. D. Ames. CBF-RL: Safety filtering reinforcement
+learning in training with control barrier functions. In IEEE International Conference on
+Robotics and Automation, pages 17825–17823, 2026.
+T. Yang, J. Rosca, K. Narasimhan, and P. J. Ramadge.
+Projection-based constrained
+policy optimization.
+In Proceedings of the 8th International Conference on Learning
+Representations, Online Conference, 2020.
+C. Ying, X. Zhou, D. Yan, and J. Zhu. Towards safe reinforcement learning via constraining
+conditional value at risk. In ICML 2021 Workshop on Adversarial Machine Learning,
+2021.
+K. Zakka, Q. Liao, B. Yi, L. L. Lay, K. Sreenath, and P. Abbeel. mjlab: A lightweight
+framework for GPU-accelerated robot learning. arXiv preprint arXiv:2601.22074, 2026.
+K. Zhang, A. Koppel, H. Zhu, and T.Ba¸sar. Global convergence of policy gradient methods
+to (almost) locally optimal policies. SIAM Journal on Control and Optimization, 58(6):
+3586–3612, 2020.
+14
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Appendix A. Connection between cumulative and probabilistic
+constraint
+Here we show that, with an appropriate choice of the cost function R1, the cumulative
+constraint V1(θ) ≤0 induced by the choice of g1 in Example 1 implies (up to a term that
+vanishes as γ →1) the probabilistic constraint in (2).
+Consider
+R1(st, at, st+1) = −I(st ∈¯C) + 1 −
+δ
+T + 1,
+(22)
+which assigns a cost 1 −
+δ
+T+1 to unsafe states and −
+δ
+T+1 to safe ones. In practice, we use a
+smoothened version of (22) given by
+R1(st, at, st+1) =
+(
+δ
+T+1
+ e−˜h(st) −1
+
+,
+if st ∈¯C,
+1 −
+δ
+T+1,
+else,
+(23)
+where ˜h : S →R is a function whose 0-superlevel set includes ¯C. Since ˜h(st) ≥0 for st ∈¯C,
+(23) upper bounds (22) pointwise, while additionally encouraging the state to stay away
+from the boundary of ¯C. For γ ∈(0, 1], define
+κ(γ) =
+1
+T + 1
+T
+X
+k=0
+γ−k =
+1 −γT+1
+(T + 1)(1 −γ)γT
+(γ < 1),
+(24)
+κ(1) = 1, and κ(γ) ≥1 for all γ ∈(0, 1].
+Proposition 4
+Let γ ∈(0, 1], let g1 be as in Example 1, and let R1 be either (22) or (23).
+If V1(θ) ≤0, then
+P
+ T\
+t=0
+{st ∈¯C}
+
+≥1 −δ −ε(γ),
+ε(γ) = δ
+ κ(γ) −1
+
+≤δ T(1 −γ)
+2γT
+.
+(25)
+In particular, for γ = 1 the probabilistic constraint in (2) holds exactly, and for fixed T its
+violation vanishes linearly in 1 −γ as γ →1.
+Proof Let Ut = I(st /∈¯C), so that (22) reads R1 = Ut −
+δ
+T+1. Since (23) upper bounds (22),
+in both cases
+0 ≥V1(θ) ≥E
+h
+T
+X
+t=0
+γtUt
+i
+−
+δ
+T + 1
+T
+X
+t=0
+γt.
+(26)
+Using the union bound on probabilities (Durrett, 2010, Theorem 1.1.1) and γt ≥γT for
+t ≤T,
+P
+ T[
+t=0
+{st /∈¯C}
+
+≤E
+h
+T
+X
+t=0
+Ut
+i
+≤γ−T E
+h
+T
+X
+t=0
+γtUt
+i
+≤
+δ
+T + 1
+T
+X
+t=0
+γt−T = δ κ(γ),
+15
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+where in the last inequality we used (26), and gives the first part of (25). For the bound on
+ε(γ), note that 1−γk = (1−γ) Pk−1
+i=0 γi ≤k(1−γ) and γk ≥γT , so γ−k−1 = 1−γk
+γk
+≤k(1−γ)
+γT
+.
+Hence
+κ(γ) −1 =
+1
+T + 1
+T
+X
+k=0
+ γ−k −1
+
+≤
+1 −γ
+(T + 1)γT
+T
+X
+k=0
+k = T(1 −γ)
+2γT
+.
+Remarks.
+The case γ = 1 with (22) was established in (Paternain et al., 2023, Theorem
+1). However, in our experiments we found that taking γ < 1, together with the choice of
+R1 in (23), leads to better practical performance. Proposition 4 shows that the price paid
+for this choice is a violation of the probabilistic constraint of at most ε(γ) = O
+ δT(1 −γ)
+
+.
+If exact satisfaction is required for γ < 1, it suffices to replace the constant
+δ
+T+1 in (22)
+and (23) by
+δ
+T+1κ(γ)−1 = δγT (1−γ)
+1−γT +1 , at the cost of a more conservative constraint. Finally,
+since Proposition 4 only provides a sufficient condition for the satisfaction of the probabilistic
+constraint (2), (assuming γ = 1 or correct constraint tightening), the two formulations are
+not equivalent.
+Appendix B. Properties of the RSGF
+We next summarize the properties of (5), adapted from (Mestres et al., 2025b, Lemma 1)
+and (Mestres et al., 2025a, Lemma IV.2, Prop. IV.3).
+Proposition 5 (RSGF Properties): Suppose that (3) satisfies the Mangasarian–Fromovitz
+constraint qualification (MFCQ)4 at every θ ∈C.
+Then (4) is well-defined on an open
+neighborhood of C.
+Moreover, θ ∈C is a KKT point of (3) if and only if R(θ) = 0.
+Furthermore, suppose that ∇V1 is L1-Lipschitz and that ht < min{1/α, β/L1} for all t ∈N.
+Then C is forward invariant under (5). If, in addition, ∇V0 is L0-Lipschitz and ht < 1/L0,
+then every limit point of a sequence {θt}t∈N initialized at θ0 ∈C is a KKT point of (3).
+Proposition 5 is a direct consequence of (Mestres et al., 2025b, Lemma 1) and (Mestres
+et al., 2025a, Lemma IV.2). However, we note that (Mestres et al., 2025a, Lemma IV.2)
+requires that (4) satisfies the Constant Rank Condition (CRC) at (θ, R(θ)) for every θ ∈C,
+but that hypothesis is not stated in the statement of Proposition 5.
+The following result explains the reason behind this mismatch: given that (3) only has
+a single constraint, the satisfaction of MFCQ for (3) at every θ ∈C implies the satisfaction
+of CRC for (4) at (θ, R(θ)) for every θ ∈C.
+Lemma 6 (MFCQ implies CRC for single constraint problems): Suppose that (3) satisfies
+MFCQ for each θ ∈C. Then, (4) satisfies CRC at (θ, R(θ)) for every θ ∈C.
+4. For the single-constraint problem considered here, MFCQ requires that, for every θ ∈C satisfying
+V1(θ) = 0, there exists q ∈Rd such that ∇V1(θ)⊤q < 0. Equivalently, ∇V1(θ)̸ = 0 whenever V1(θ) = 0.
+16
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Proof Suppose that CRC does not hold for (4) at some θ ∈C. Then we necessarily have
+that
+αV1(θ) + ∇V1(θ)⊤R(θ) + β
+2 ∥R(θ)∥2 = 0,
+(27)
+and
+∂
+∂ξ
+
+αV1(θ) + ∇V1(θ)⊤ξ + β
+2 ∥ξ∥2 
+ξ=R(θ)
+= ∇V1(θ) + βR(θ) = 0.
+(28)
+Plugging (28) into (27) we get
+αV1(θ) −β
+2 ∥R(θ)∥2 = 0.
+(29)
+Since θ ∈C, we have V1(θ) ≤0.
+Hence, (29) implies that V1(θ) = 0 and R(θ) = 0,
+which from (28) implies that ∇V1(θ) = 0, violating MFCQ for (3) at θ ∈C. Hence, CRC
+necessarily holds for (4) at (θ, R(θ)) for every θ ∈C.
+Appendix C. Proof of Proposition 1
+When gj is a discounted cumulative return, as in Example 1, and bj,t ≡0, Proposition 1
+recovers the standard Policy Gradient Theorem (Sutton and Barto, 2018, Section 13.2).
+If the baseline is time-independent and depends only on st, it recovers the corresponding
+baseline formulation (Sutton and Barto, 2018, Section 13.4). Likewise, for the probabilistic
+constraint in Example 2 with bj,t ≡0, it reduces to (Chen et al., 2024, Theorem 2). As
+usual, the baselines {bj,t} leave the expected gradient unchanged (as shown next in the
+proof) while potentially reducing its variance.
+Proof
+The proof is standard and follows arguments analogous to (Glynn, 1990) and the
+Policy Gradient Theorem (Sutton and Barto, 2018, Chapter 13). We include it here for
+completeness. Let us first show that
+∇Vj(θ) = E
+h
+T
+X
+t=0
+gj(s, a)∇θ log πθ(at|st)
+i
+.
+(30)
+Let σ : ST+2 × AT+1 × Rd →R be defined as
+σ(s, a, θ) = η(s0)
+T
+Y
+t=0
+πθ(at|st)P(st+1|at, st).
+Since the hypothesis for differentiation under the integral sign hold (Apostol, 1974, Theorem
+10.39) (because θ →log πθ(a|s) is continuously differentiable and for each θ ∈Rd, (6) holds),
+we have
+∇Vj(θ) =
+Z
+Γ
+gj(s, a)σ(s, a, θ)∇θ log σ(s, a, θ)dsda,
+17
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+where Γ = ST+2 × AT+1. Now, note that since
+log σ(s, a, θ) = log η(s0) +
+T
+X
+t=0
+
+logP(st+1|at, st) + log πθ(at|st)
+
+,
+we have
+∇Vj(θ) =
+Z
+Γ
+gj(s, a)σ(s, a, θ)
+T
+X
+t=0
+∇θ log πθ(at|st)dsda,
+proving (30). Next, let us show that for each t ∈0 : T, we have
+E[bj,t(Ht, θ)∇θ log πθ(at|st)] = 0,
+which will complete the proof. Using the tower property of conditional expectation (Williams,
+1991, Section 9.7),
+E[b(Ht, θ)∇θ log πθ(at|st)] = EHt[Eat[b(Ht, θ)∇θ log πθ(at|st)|Ht]],
+where on the right hand side expression, the outer expectation is with respect to the history
+Ht and the inner expectation is with respect to action at only. Now, note that for any fixed
+Ht, since Ht does not depend on at and at ∼πθ(·|st), we have
+Eat[b(Ht, θ)∇θ log πθ(at|st)|Ht] = b(Ht, θ)
+Z
+A
+∇θ log πθ(at|st)πθ(at|st)dat
+= b(Ht, θ)
+Z
+A
+∇θπθ(at|st)dat = 0,
+where in the last equality we have used the fact that since 1 =
+R
+A πθ(at|st)dat, by differen-
+tiating under the integral sign we have 0 =
+R
+A ∇θπθ(at|st)dat.
+Appendix D. Statistical properties of estimators
+The following result establishes different statistical properties of the estimators (8), which
+are needed for the proof of Proposition 2.
+Proposition 7 (Statistical properties of estimators): Let j ∈{0, 1}, θ ∈Rd, and bVj(θ),
+d
+∇V j(θ) be defined as in (8), and suppose that conditions (10), (9) hold. Then,
+|E[bVj(θ)] −Vj(θ)| ≤ζj,
+E[d
+∇V j(θ)] −∇Vj(θ)
+ ≤
+√
+d˜ζj,
+P
+
+|bVj(θ) −Vj(θ)| ≤ζj + ϵ
+
+≥1 −2 exp
+n
+−Nϵ2
+2B2
+j
+o
+,
+P
+ d
+∇V j(θ) −∇Vj(θ)
+ ≤
+√
+d˜ζj + ϵ
+
+≥1 −2d exp
+n
+−Nϵ2
+2d ˜B2
+j
+o
+,
+for all ϵ > 0.
+18
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Proof The proof of Proposition 7 follows an argument analogous to that of (Mestres et al.,
+2025b, Lemma 2), but we include it here for completeness. Fix j ∈{0, 1} and θ ∈Rd. We
+first establish the bounds on the bias. By definition of bVj(θ) and condition (9),
+E[bVj(θ)] −Vj(θ)
+ =
+
+1
+N
+N
+X
+n=1
+
+E[Gθ
+j,n] −Vj(θ)
+ ≤1
+N
+N
+X
+n=1
+E[Gθ
+j,n] −Vj(θ)
+ ≤ζj.
+Similarly, for every i ∈1 : d,
+
+
+E[ d
+∇Vj(θ)] −∇Vj(θ)
+
+i
+ =
+
+1
+N
+N
+X
+n=1
+
+E[( ˜Gθ
+j,n)i] −(∇Vj(θ))i
+ ≤˜ζj.
+Consequently,
+E[ d
+∇Vj(θ)] −∇Vj(θ)
+ ≤
+v
+u
+u
+t
+d
+X
+i=1
+˜ζ2
+j =
+√
+d ˜ζj.
+We next establish the concentration bounds. Since the N episodes are independent, the
+random variables {Gθ
+j,n}N
+n=1 are independent. Moreover, by (10), Gθ
+j,n ∈[−Bj, Bj] almost
+surely. Hence, Hoeffding’s inequality (Hoeffding, 1963) yields, for every ϵ > 0,
+P
+bVj(θ) −E[bVj(θ)]
+ > ϵ
+
+≤2 exp
+(
+−Nϵ2
+2B2
+j
+)
+.
+Using
+bVj(θ) −Vj(θ)
+ ≤
+bVj(θ) −E[bVj(θ)]
+ +
+E[bVj(θ)] −Vj(θ)
+ ≤
+bVj(θ) −E[bVj(θ)]
+ + ζj,
+we obtain
+P
+bVj(θ) −Vj(θ)
+ ≤ζj + ϵ
+
+≥1 −2 exp
+(
+−Nϵ2
+2B2
+j
+)
+.
+We finally consider the gradient estimator. For every i ∈1 : d, condition (10) implies
+( eGθ
+j,n)i ∈[−˜Bj, ˜Bj] almost surely. Thus, Hoeffding’s inequality (Hoeffding, 1963) gives
+P
+( d
+∇Vj(θ))i −(E[ d
+∇Vj(θ)])i
+ >
+ϵ
+√
+d
+
+≤2 exp
+(
+−Nϵ2
+2d ˜B2
+j
+)
+.
+Therefore, by Fr´echet’s inequality (Fr´echet, 1935),
+P
+ d\
+i=1
+( d
+∇Vj(θ))i −(E[ d
+∇Vj(θ)])i
+ ≤
+ϵ
+√
+d
+!
+≥1 −2d exp
+(
+−Nϵ2
+2d ˜B2
+j
+)
+.
+(31)
+Now, if the event inside the probability in (31) holds, we have that
+ d
+∇Vj(θ) −E[ d
+∇Vj(θ)]
+ ≤
+v
+u
+u
+t
+d
+X
+i=1
+ϵ2
+d = ϵ.
+19
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Combining this inequality with the bias bound established above gives
+ d
+∇Vj(θ) −∇Vj(θ)
+ ≤
+ d
+∇Vj(θ) −E[ d
+∇Vj(θ)]
+ +
+E[ d
+∇Vj(θ)] −∇Vj(θ)
+ ≤ϵ +
+√
+d ˜ζj.
+Hence,
+P
+ d
+∇Vj(θ) −∇Vj(θ)
+ ≤
+√
+d ˜ζj + ϵ
+
+≥1 −2d exp
+(
+−Nϵ2
+2d ˜B2
+j
+)
+,
+which completes the proof.
+Appendix E. Proof of Proposition 2
+Proof Throughout, fix t ∈0 : K −1 and let ∆t := θt+1 −θt = ht ˆR(θt).
+Step 1 (one-step safety evolution). Since ∇V1 is L1-Lipschitz, by (Nesterov, 2018, Lemma
+1.2.3) we have
+V1(θt+1) ≤V1(θt) + ∇V1(θt)⊤∆t + L1
+2 ∥∆t∥2.
+Adding and subtracting d
+∇V 1(θt)⊤∆t and using the Cauchy–Schwarz inequality,
+V1(θt+1) ≤V1(θt) + d
+∇V 1(θt)⊤∆t +
+∇V1(θt) −d
+∇V 1(θt)
+ ∥∆t∥+ L1
+2 ∥∆t∥2.
+Since (11) is feasible at θt, ˆR(θt) satisfies its constraint; multiplying it by ht > 0 and
+using ∆t = ht ˆR(θt) gives d
+∇V 1(θt)⊤∆t ≤−αht bV1(θt) −
+β
+2ht ∥∆t∥2. Using also the identity
+V1(θt) −αht bV1(θt) = (1 −αht)V1(θt) −αht
+ bV1(θt) −V1(θt)
+
+, we obtain
+V1(θt+1) ≤(1 −αht)V1(θt) + αht
+bV1(θt) −V1(θt)
+
++
+∇V1(θt) −d
+∇V 1(θt)
+ ∥∆t∥−1
+2
+ β
+ht
+−L1
+
+∥∆t∥2.
+(32)
+Inequality (32) holds deterministically, i.e., for every realization of the N rollouts collected
+at iteration t.
+Step 2 (eliminating the step length). Since ht < β/L1, the coefficient ct := 1
+2(β/ht −L1) is
+positive. For every e ≥0, we have maxx≥0{ex −ctx2} = e2/(4ct). Hence the last two terms
+of (32) are at most ht∥∇V1(θt) −d
+∇V 1(θt)∥2/(2(β −L1ht)), and
+V1(θt+1) ≤(1 −αht)V1(θt) + αht
+bV1(θt) −V1(θt)
+ + ht
+∇V1(θt) −d
+∇V 1(θt)
+2
+2(β −L1hmax)
+,
+(33)
+where we also used ht ≤hmax.
+Step 3 (bounding estimates deviation from true values). Define the events
+EV,t :=
+nbV1(θt) −V1(θt)
+ ≤ζ1 + ϵ
+o
+,
+E∇,t :=
+nd
+∇V 1(θt) −∇V1(θt)
+ ≤
+√
+d ˜ζ1 + ϵ
+o
+,
+20
+
+
+Towards Probabilistically Safe Reinforcement Learning
+and Et := EV,t ∩E∇,t.
+Note that ϵ > 0 is fixed before sampling.
+Moreover, θt is Ft-
+measurable and, conditionally on Ft, the N episodes collected at iteration t are independent
+and generated under πθt. Hence Proposition 7 applies conditionally on Ft with θ = θt, and
+yields
+P
+ EV,t
+ Ft
+
+≥1 −2 exp
+n
+−Nϵ2
+2B2
+1
+o
+≥1 −
+¯δ
+2,
+P
+ E∇,t
+ Ft
+
+≥1 −2d exp
+n
+−Nϵ2
+2d ˜B2
+1
+o
+≥1 −
+¯δ
+2,
+where the second inequality in each line follows from (13). By Fr´echet’s inequality (Fr´echet,
+1935), P(Et | Ft) ≥1 −¯δ. By the union bound (cf. Durrett, 2010, Theorem 1.1.1) and the
+tower property (cf. Williams, 1991, Section 9.7),
+P
+ K−1
+[
+t=0
+Ec
+t
+
+≤
+K−1
+X
+t=0
+P(Ec
+t ) =
+K−1
+X
+t=0
+E
+
+1Ec
+t
+
+=
+K−1
+X
+t=0
+E
+h
+E
+
+1Ec
+t
+ Ft
+i
+=
+K−1
+X
+t=0
+E
+
+P(Ec
+t | Ft)
+
+≤K¯δ,
+(34)
+Step 4 (conclusion). On Et, inequality (33) and the definition (14) of ¯c give
+V1(θt+1) ≤(1 −αht)V1(θt) + αht(ζ1 + ϵ) + ht(
+√
+d ˜ζ1 + ϵ)2
+2(β −L1hmax) = (1 −αht)V1(θt) + αht ¯c,
+or, equivalently, V1(θt+1) −¯c ≤(1 −αht)
+ V1(θt) −¯c
+
+.
+On TK−1
+t=0 Et, which by (34) has
+probability at least 1 −K¯δ, this holds for all t ∈0 : K −1. Since 0 < 1 −αht < 1 (because
+0 < ht < 1/α), iterating it yields V1(θt) −¯c ≤Πt
+ V1(θ0) −¯c
+
+for all t ∈0 : K, which is (15).
+Item (i) follows because ΠtV1(θ0) ≤0 and 1−Πt ≤1 when V1(θ0) ≤0, and item (ii) follows
+from 1 −Πt ≤1.
+Appendix F. Proof of Proposition 3
+Throughout this section, we let [x]+ = max{x, 0}, Rt := R(θt), ˆRt :=
+ˆR(θt), Et :=
+∥ˆRt −Rt∥, and Et[·] := E[· | Ft] in order to simplify notation. We also drop the dependency
+in θ wherever it is clear. Given p ∈Rd and a compact set A ⊂Rd, ProjA(p) denotes the
+projection of p onto A.
+We introduce a few technical lemmas which are crucial for the proof of Proposition 3.
+Lemma 8 (Projection interpretation of RSGF): For v ∈R, p, q ∈Rd, the set {ξ ∈Rd :
+αv + q⊤ξ + β
+2 ∥ξ∥2 ≤0} is nonempty iff ∥q∥2/β2 −2αv/β ≥0, in which case it equals the
+closed ball B(−q/β, r) with r =
+p
+∥q∥2/β2 −2αv/β. Hence, whenever (4) is feasible we
+have
+R(θ) = PB(−∇V1(θ)/β, r(θ))(−∇V0(θ)).
+21
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Proof
+Completing the square, αv + q⊤ξ + β
+2 ∥ξ∥2 = β
+2
+ ∥ξ + q/β∥2 −r2
+, and the objec-
+tive function 1
+2 ∥ξ + ∇V0(θ)∥2 is minimized over the closed convex set B(−q/β, r) by the
+projection of −∇V0(θ) onto this set B(−q/β, r).
+Lemma 9 (Multiplier bound): Suppose that Θ ⊂Rd is compact and that assumption (iii)
+of Proposition 3 holds, and let ¯u be as defined in (17). Let θ ∈Θ and let u(θ) be the (unique)
+multiplier of (4). Then u(θ) ≤¯u.
+Proof The center ¯ξ = −∇V1/β satisfies
+αV1(θ) + ∇V1(θ)⊤¯ξ + β
+2
+¯ξ
+2 = −β
+2 D(θ) ≤−β
+2 ρ2 < 0.
+Hence, Slater’s condition holds and R(θ) admits a KKT multiplier u ≥0. Since u ≥0, the
+Lagrangian
+L(ξ, u) = 1
+2∥ξ + ∇V0∥2 + u
+
+αV1 + ∇V ⊤
+1 ξ + β
+2 ∥ξ∥2 
+is convex in ξ, and stationarity gives ∇ξL(R, u) = 0, so R minimizes L(·, u). Together
+with complementary slackness of (4) this yields
+1
+2∥R + ∇V0∥2 = L(R, u) ≤L(¯ξ, u) ≤
+1
+2∥¯ξ + ∇V0∥2 −uβ
+2 ρ2, and therefore u ≤∥∇V0 −∇V1/β∥2/(βρ2) ≤¯u.
+Lemma 10 (RSGF perturbation bound): Suppose that Θ ⊂Rd is compact and that as-
+sumption (iii) of Proposition 3 holds, and let c1, cV be as defined in (17) and εN as defined
+in (18). Let θ ∈Θ, eV := bV1(θ) −V1(θ), ej := d
+∇V j(θ) −∇Vj(θ). Then, almost surely,
+∥ˆR(θ) −R(θ)∥≤∥e0∥+ c1∥e1∥+ cV |eV |.
+(35)
+If, in addition, θt ∈Θ almost surely for some t ∈N, then Et[E2
+t ] ≤ε2
+N, Et[Et] ≤εN and
+∥R(θt) −Et[ ˆR(θt)]∥≤εN.
+Proof Throughout, we let P(y; c, s) := ProjB(c,s)(y). We also write ˆs(θ) :=
+q
+[ ˆD(θ)]+. By
+Lemma 8 and since ˆR(θ) = −d
+∇V 1(θ)/β by convention whenever (11) is infeasible, we have
+R(θ) = P
+ −∇V0(θ); −∇V1(θ)/β,
+p
+D(θ)
+
+,
+ˆR(θ) = P
+ −d
+∇V 0(θ); −d
+∇V 1(θ)/β, ˆs(θ)
+
+,
+(36)
+where R(θ) is well defined since r(θ) ≥ρ > 0 for all θ ∈Θ by assumption. We split the
+proof in three steps.
+Step 1 (Lipschitz dependence of ball projections). Let us show that for all y, y′, c, c′ ∈Rd
+and s, s′ ≥0,
+∥P(y; c, s) −P(y′; c′, s′)∥≤∥y −y′∥+ ∥c −c′∥+ |s −s′|.
+(37)
+To prove it, we use three standard facts. First, for any nonempty, closed, convex C ⊆
+Rd, both ProjC and I −ProjC are (firmly) nonexpansive (Bauschke and Combettes, 1991,
+22
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Prop. 4.16 and 4.4). Second, we have P(y; c, s) = c+P(y−c; 0, s) (Bauschke and Combettes,
+1991, Prop. 29.1). Third, P(0; 0, s) = 0 and P(z; 0, s) = min{s, ∥z∥} z/∥z∥for z̸ = 0. By
+the triangle inequality,
+P(y; c, s) −P(y′; c′, s′)
+ ≤∥P(y; c, s) −P(y′; c, s)∥+ ∥P(y′; c, s) −P(y′; c′, s)∥
++ ∥P(y′; c′, s) −P(y′; c′, s′)∥
+Now, by the non-expansiveness, we have
+P(y; c, s) −P(y′; c, s)
+ ≤
+y −y′ .
+With Q := I −ProjB(0,s), the translation property gives P(y′; c, s) = y′ −Q(y′ −c), so
+the (firm) nonexpansiveness of Q yields
+∥P(y′; c, s) −P(y′; c′, s)∥= ∥Q(y′ −c′) −Q(y′ −c)∥≤
+c −c′ .
+Finally,
+∥P(y′; c′, s) −P(y′; c′, s′)∥= ∥P(y′ −c′; 0, s) −P(y′ −c′; 0, s′)∥
+= | min{s,
+y′ −c′} y′ −c′
+∥y′ −c′∥−min{s′,
+y′ −c′} y′ −c′
+∥y′ −c′∥|
+= | min{s,
+y′ −c′} −min{s′,
+y′ −c′}| ≤|s −s′|,
+from where (37) follows. Now, applying (37) to (36) with y = −d
+∇V 0, c = −d
+∇V 1/β, s = ˆs
+and y′ = −∇V0, c′ = −∇V1/β, s′ =
+√
+D (all evaluated at θ),
+∥ˆR −R∥≤∥e0∥+ ∥e1∥
+β
++ |ˆs −
+√
+D|.
+(38)
+Step 2 (bounding the radius error). We first note that for a ∈R and b > 0,
+p
+[a]+ −
+√
+b
+ ≤|a −b|
+√
+b
+.
+(39)
+If a ≥0, this follows from |√a−
+√
+b| = |a−b|/(√a+
+√
+b) and √a+
+√
+b ≥
+√
+b. If a < 0, then
+|
+p
+[a]+ −
+√
+b| =
+√
+b = b/
+√
+b ≤(b −a)/
+√
+b. Applying (39) with a = ˆD(θ), b = D(θ) ≥ρ2 > 0
+gives |ˆs −
+√
+D| ≤| ˆD −D|/ρ. By (16),
+| ˆD −D| ≤
+∥d
+∇V 1∥2 −∥∇V1∥2
+β2
++ 2α|eV |
+β
+.
+Moreover,
+∥d
+∇V 1∥2 −∥∇V1∥2 = |(d
+∇V 1 −∇V1)⊤(d
+∇V 1 + ∇V1)| ≤∥e1∥(∥d
+∇V 1∥+ ∥∇V1∥) ≤
+∥e1∥(
+√
+d ˜B1 + G1), where we used the Cauchy–Schwarz inequality, ∥∇V1∥≤G1, and
+∥d
+∇V 1∥≤
+√
+d ˜B1 a.s. Therefore
+|ˆs −
+√
+D| ≤
+√
+d ˜B1 + G1
+β2ρ
+∥e1∥+ 2α
+βρ|eV |,
+23
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+and substituting into (38) yields (35) with c1, cV as in (17).
+Step 3 (moment bounds). Let θ = θt, which is Ft-measurable. Squaring (35) and using
+(a + b + c)2 ≤3(a2 + b2 + c2) for all a, b, c > 0,
+Et[E2
+t ] ≤3
+ Et∥e0∥2 + c2
+1 Et∥e1∥2 + c2
+V Et[e2
+V ]
+
+.
+(40)
+Fix j ∈{0, 1} and write d
+∇V j = 1
+N
+PN
+n=1 ˜Gθt
+j,n. Now, since Et[d
+∇V j −Et[d
+∇V j]] = 0, we have
+Et∥ej∥2 = ∥Et[d
+∇V j] −∇Vj(θt)∥2 + Et∥d
+∇V j −Et[d
+∇V j]∥2.
+For the first term, by (9) each coordinate of Et[d
+∇V j]−∇Vj(θt) is at most ˜ζj in absolute value,
+so the term is at most d˜ζ2
+j . For the second term, d
+∇V j −Et[d
+∇V j] = 1
+N
+P
+n( ˜Gθt
+j,n −Et ˜Gθt
+j,n).
+By assumption, the ˜Gθt
+j,n are conditionally independent given Ft, so Et⟨˜Gθt
+j,n−Et ˜Gθt
+j,n, ˜Gθt
+j,m−
+Et ˜Gθt
+j,m⟩= 0 for n̸ = m, and
+Et∥d
+∇V j −Et[d
+∇V j]∥2 =
+1
+N2
+N
+X
+n=1
+Et∥˜Gθt
+j,n −Et ˜Gθt
+j,n∥2 =
+1
+N2
+N
+X
+n=1
+
+Et
+ ˜Gθt
+j,n
+
+2
+−
+Et ˜Gθt
+j,n
+
+2 
+≤
+1
+N2
+N
+X
+n=1
+Et∥˜Gθt
+j,n∥2 ≤
+d ˜B2
+j
+N ,
+where we used ∥˜Gθt
+j,n∥2 ≤d ˜B2
+j a.s. by (10). Hence Et∥ej∥2 ≤d(˜ζ2
+j + ˜B2
+j /N). The same
+argument applied to the scalar samples Gθt
+1,n, using |Et[bV1] −V1(θt)| ≤ζ1 and |Gθt
+1,n| ≤B1,
+gives Et[e2
+V ] ≤ζ2
+1 +B2
+1/N. Substituting into (40) gives Et[E2
+t ] ≤ε2
+N. By Jensen’s inequality,
+Et[Et] ≤(Et[E2
+t ])1/2 ≤εN. Finally, by Jensen’s inequality we have ∥R(θt) −Et[ ˆR(θt)]∥=
+∥Et[ ˆR(θt) −R(θt)]∥≤Et[Et] ≤εN.
+Lemma 11 (Φκ function descent): Suppose that assumptions (i)–(iii) of Proposition 3
+hold, fix κ ≥¯u, and let Φκ, GΦ and LΦ be as defined in Proposition 3. If ht ≤1/α then,
+Φκ(θt+1) ≤Φκ(θt) −ht∥Rt∥2 + htGΦEt + LΦh2
+t
+2
+∥ˆRt∥2
+a.s.
+(41)
+If moreover ht ≤1/(2LΦ), then Φκ(θt+1) ≤Φκ(θt) −ht
+2 ∥Rt∥2 + htGΦEt + LΦh2
+t E2
+t .
+Proof Throughout the proof, all gradients are evaluated at θt unless stated otherwise. We
+let ∆t := θt+1 −θt = ht ˆRt, and ut := u(θt) be the multiplier of (4) at θt, which by Lemma 9
+satisfies 0 ≤ut ≤¯u. No expectation is taken in this proof: all inequalities hold for every
+realization with θt, θt+1 ∈Θ (by assumption, this means that all inequalities hold almost
+surely).
+Since θt, θt+1 ∈Θ, Θ is convex and ∇Vj is Lj-Lipschitz on Θ, (Nesterov, 2018, Lemma
+1.2.3) gives, for j ∈{0, 1},
+Vj(θt+1) ≤Vj(θt) + ∇Vj(θt)⊤∆t + Lj
+2 ∥∆t∥2
+24
+
+
+Towards Probabilistically Safe Reinforcement Learning
+= Vj(θt) + ht∇Vj(θt)⊤Rt + ht∇Vj(θt)⊤( ˆRt −Rt) + Lj
+2 ∥∆t∥2.
+By the Cauchy–Schwarz inequality and ∥∇Vj(θt)∥≤Gj, we have ht∇Vj(θt)⊤( ˆRt −Rt) ≤
+htGjEt, so
+Vj(θt+1) ≤Vj(θt) + ht∇Vj(θt)⊤Rt + htGjEt + Lj
+2 ∥∆t∥2,
+j ∈{0, 1}.
+(42)
+The map [·]+ is nondecreasing, subadditive ([a + b]+ ≤[a]+ + [b]+), and satisfies [c]+ = c
+for c ≥0. Applying these properties to (42) with j = 1 (the last two terms there are
+nonnegative) gives
+[V1(θt+1)]+ ≤[V1(θt) + ht∇V1(θt)⊤Rt]+ + htG1Et + L1
+2 ∥∆t∥2.
+Multiplying this inequality by κ ≥0 and adding (42) with j = 0 yields
+Φκ(θt+1) ≤Ψt + htGΦEt + LΦh2
+t
+2
+∥ˆRt∥2,
+(43)
+where
+Ψt := V0(θt) + ht∇V ⊤
+0 Rt + κ[V1(θt) + ht∇V ⊤
+1 Rt]+,
+and we used GΦ = G0 + κG1, LΦ = L0 + κL1 and ∥∆t∥2 = h2
+t ∥ˆRt∥2. The result follows if
+we show that
+Ψt ≤Φκ(θt) −ht∥Rt∥2.
+(44)
+To see this, note that by (4):
+V1(θt) + ht∇V ⊤
+1 Rt ≤(1 −αht)V1(θt) −βht
+2 ∥Rt∥2 ≤(1 −αht)V1(θt).
+(45)
+On the other hand, as shown in (Mestres et al., 2025a, Proposition IV.5 (i)) we have
+ht∇V ⊤
+0 Rt ≤−ht∥Rt∥2 + ut αht V1(θt).
+(46)
+Now we distinguish two cases:
+Case V1(θt) ≤0. Combining (45), (46), V1(θt) ≤0 and the definition of [·] we get
+Ψt ≤V0(θt) −ht ∥Rt∥2 ≤Φκ(θt) −ht ∥Rt∥2 ,
+where in the last inequality we used that [V1(θt)]+ ≥0. Hence, (44) holds.
+Case V1(θt) > 0. Combining (45) and (46) we get
+Ψt ≤V0(θt) −ht∥Rt∥2 + ¯uαhtV1(θt) + κV1(θt) −καhtV1(θt)
+= Φκ(θt) −ht∥Rt∥2 −(κ −¯u) αht V1(θt) ≤Φκ(θt) −ht∥Rt∥2,
+where the last inequality uses κ ≥¯u.
+Proof [Proof of Proposition 3] (a) Summing the second inequality of Lemma 11 over t =
+0, . . . , K −1 and using Φκ(θK) ≥minΘ V0,
+1
+2
+K−1
+X
+t=0
+ht∥Rt∥2 ≤∆0 + GΦ
+K−1
+X
+t=0
+htEt + LΦ
+K−1
+X
+t=0
+h2
+t E2
+t ,
+(47)
+25
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+for every realization. Taking expectations and using E[Et] ≤εN, E[E2
+t ] ≤ε2
+N (Lemma 10
+and the tower property) and dividing by HK/2 gives (19).
+For constant h, 2LΦh ≤1
+gives (20).
+(b) By Lemma 8 (and the convention for infeasible (11)), ˆRt lies in the closed ball with
+center −d
+∇V 1(θt)/β and radius
+q
+[ ˆD(θt)]+. Since ∥d
+∇V 1(θt)∥≤
+√
+d ˜B1 and | ˆV1(θt)| ≤B1
+a.s. by (10), so
+q
+[ ˆD(θt)]+ ≤
+q
+d ˜B2
+1/β2 + 2αB1/β ≤
+√
+d ˜B1/β +
+p
+2αB1/β, which means
+that ∥ˆRt∥≤2
+√
+d ˜B1/β +
+p
+2αB1/β a.s. Moreover, R is continuous on the compact set
+Θ (by Lemma 10) and θt ∈Θ a.s., so ∥Rt∥≤maxΘ ∥R∥< ∞.
+Hence Et ≤∥ˆRt∥+
+∥Rt∥≤¯E a.s.
+for a deterministic constant ¯E.
+Hence, Dt := Et −Et[Et] and D′
+t :=
+E2
+t −Et[E2
+t ] are bounded martingale differences adapted to Ft+1. With Ht+1 = P
+k≤t hk,
+we have (ht/Ht+1)2 ≤¯h (1/Ht −1/Ht+1) for t ≥1, so P
+t(ht/Ht+1)2 < ∞and therefore
+the martingales P
+k≤t(hk/Hk+1)Dk, P
+k≤t(hk/Hk+1)D′
+k are bounded in L2, hence converge
+a.s by (Durrett, 2010, Theorem 4.4.6). Since HK →∞, Kronecker’s lemma (Durrett, 2010,
+Theorem 2.5.9) yields
+1
+HK
+X
+t<K
+htDt →0,
+1
+HK
+X
+t<K
+htD′
+t →0,
+a.s.,
+so lim supK
+1
+HK
+P
+t<K htEt ≤εN and lim supK
+1
+HK
+P
+t<K htE2
+t ≤ε2
+N a.s. Dividing (47) by
+HK/2, using LΦh2
+t E2
+t ≤1
+2htE2
+t and letting K →∞gives (21).
+For the lim inf statement, fix a realization for which (21) holds, and let at := ∥R(θt)∥2 ≥
+0 and c := 2GΦεN + ε2
+N. Suppose, by contradiction, that lim inft→∞at > c. Then there
+exist m > c and T ∈N such that at ≥m for all t ≥T. Since at ≥0 and ht > 0, for every
+K > T,
+1
+HK
+K−1
+X
+t=0
+htat ≥
+1
+HK
+K−1
+X
+t=T
+htat ≥m HK −HT
+HK
+.
+Since HT is fixed and HK →∞, the right-hand side converges to m as K →∞, so
+lim supK→∞
+1
+HK
+PK−1
+t=0 htat ≥m > c, which contradicts (21). Hence lim inft→∞∥R(θt)∥2 ≤
+c for every realization for which (21) holds, i.e., almost surely.
+Appendix G. Experiments reward definitions
+Table 1 lists the reward terms for all experiments. Each term contributes w · r to the total
+reward, where r is the expression shown and w its weight. All expressions are non-negative;
+penalties carry negative weights.
+For the humanoid squatting and crawling, terms follow BeyondMimic (Liao et al., 2025)
+as implemented in mjlab (Zakka et al., 2026): pr, qr root position/orientation; pi, qi, vi, ωi
+position, orientation, linear and angular velocity of tracked body i; dq geodesic quaternion
+distance; cjoint soft joint-limit violation; Fi,b contact force on body h. ∆x = xref −x; (·) is
+the mean over the Nb tracked bodies.
+For the humanoid walking, generic terms follow (Rudin et al., 2022); the gait term fol-
+lows (Siekmann et al., 2021). v⋆
+x commanded forward speed; ey, eψ lateral and heading drift;
+26
+
+
+Towards Probabilistically Safe Reinforcement Learning
+sf, s⋆
+f stride length and target; sℓlateral stride offset; dL, dR left/right leg deviation; hi, h⋆
+swing-foot height and target; ci contact of foot i; td, i touchdown of foot i; gb,xy projected
+gravity in base frame; zb base height; Gσ(e) = e−e2/(2σ2); a→b denotes a curriculum.
+For the Crazyflie experiment, p, v denote drone position and velocity, pref the hover
+target, d = ∥p −pref∥, vb, ωb body-frame linear and angular velocities, and at, ¨pt action and
+acceleration at step t. V denotes a quadratic CLF on position and attitude errors and their
+rates (Li et al., 2026); ¯λ = λmax(P), and ∆max clips the decrease condition ˙V ≤−0.02 V .
+CAPS (Mysore et al., 2021) uses µt = µ(st) policy mean action, ϵ small random state
+perturbation, sg[·] stop-gradient.
+We also denote by pi, vi, ri the center, velocity, and
+radius of obstacle i; drone radius r = 0.05 m safety margin m = 0.1 m, cobs = mini ∥pi −
+p∥−(ρi + r + m), and carena is the clearance to the arena boundary minus m. The safety
+reward is R1 = 1 −
+δ
+T+1 outside the safe set ¯C = {min(cobs, carena) ≥0} (Table 2); episodes
+terminate only on contact. ˆcobs = max{0, mini mint∈[0,τ] ∥(pi −p)+t(vi −v)∥−(ρi +r+m)},
+with τ = 0.5 s, is the clearance predicted at constant relative velocity, so ˜h ≥0 on ¯C.
+Appendix H. Training details
+Algorithm 1 proposes a practical implementation of RSGF-RL as used in Section 4. It
+summarizes how the estimates bV1, d
+∇V 1 and d
+∇V 0 entering (11) are computed at each
+iteration.
+At iteration t, the policy πθt is rolled out in N parallel environments for Tr
+steps each (cf. Table 2); environments that terminate are reset and keep running, so each
+environment produces a segment containing one or more, possibly partial, episodes. The
+constraint estimates are built from the discounted cost-to-go of R1 along these segments,
+using a learned cost critic Wψ as the baseline b1,t in (7).
+For the objective, instead of
+forming a gradient explicitly, we run a standard PPO-clip update starting from θt and
+define d
+∇V 0(θt) as the resulting parameter displacement divided by ht, so that −htd
+∇V 0(θt)
+is exactly the PPO step. Although this quantity is not an unbiased estimate of ∇V0(θt) (as
+it accumulates J Adam-preconditioned minibatch steps evaluated along the PPO iterates),
+it is uniformly bounded, and hence satisfies (9)-(10) for some ˜ζ0, and we have found works
+well in practice. In this way, problem (11) acts as a filter on the PPO step: if ξ = −d
+∇V 0(θt)
+is feasible for (11), then ˆR(θt) = −d
+∇V 0(θt) and the update coincides with the PPO iterate;
+otherwise, the PPO step is replaced by ht ˆR(θt).
+In Algorithm 1, Lclip is as defined in (Schulman et al., 2017, Equation 9) and KL is the
+KL divergence averaged over the rollout states. Adam uses gradient-norm clipping, and
+its moment estimates are carried over across iterations. The cost critic Wψ has the same
+architecture as the value critic and receives the same observations.
+Regarding the baseline comparison in Figure 1(a), we point out that PPO-Lagrangian
+follows the implementation in OpenAI (2019) (Lagrange multiplier λ = softplus(ϑ) initial-
+ized to 1 and updated with Adam, learning rate 0.05), with all PPO settings matching the
+PPO baselines in Table 2 and the cost limit applied to the mean per-step cost. On the
+other hand, CPO (Achiam et al., 2017) uses the parameters in Table 3.
+27
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+(a) Humanoid squatting and crawling (motion tracking)
+Term
+Expression
+Weight
+Task reward R0
+Root position
+e−∥∆pr∥2/0.32
+0.5
+Root orientation
+e−dq(qref
+r
+,qr)2/0.42
+0.5
+Body position
+e−∥∆pi∥2/0.32
+1.0
+Body orientation
+e−dq(qref
+i
+,qi)2/0.42
+1.0
+Body lin. velocity
+e−∥∆vi∥2/1.02
+1.0
+Body ang. velocity
+e−∥∆ωi∥2/3.142
+1.0
+Action rate
+∥at −at−1∥2
+−0.2
+Joint limits
+cjoint
+−10
+Self-collision
+PB
+b=1 I
+
+maxi ∥Fi,b∥> 10
+
+−10
+Safety reward R1
+Base / head height R1 in (23), δ = 0.1
+–
+(b) Humanoid walking
+Term
+Expression
+Weight
+Term
+Expression
+Weight
+Task
+Posture / stability
+Forward velocity
+Gσv(vx −v⋆
+x)
+1→3
+Arm posture
+mean
+ (q −q⋆)2/σ2
+−1
+Straight line
+Gσy(ey) Gσψ(eψ)
+1.5→3
+Leg posture
+mean
+ (q −q⋆)2/σ2
+−0.7
+Gait
+Lateral motion
+v2
+b,y + v2
+b,z
+−0.5
+Foot gait
+phase-dependent contacts
+1
+Orientation rate
+ω2
+x + ω2
+y
+−1
+Stride length
+Gσs(sf −s⋆
+f) Gσℓ(sℓ)
+1
+Upright
+G0.15(∥gb,xy∥)
+1.8
+Leg symmetry
+e−mean(dL+dR)2/σ2
+sym
+3
+Base height
+G0.05(zb −0.793)
+1
+Foot clearance
+P
+i |hi −h⋆| ∥˙pi,xy∥
+−2
+Regularization
+Foot slip
+P
+i(∥˙pi,xy∥2 + 0.25 ω2
+i,z) 1ci
+−1
+Alive
+1
+0.05
+Soft landing
+P
+i ∥Fi∥1td,i
+−10−3
+Action
+∥at∥2
+−0.1
+Action rate
+∥at −at−1∥2
+−0.15
+Joint acceleration ∥¨q∥2
+−10−6
+Joint limits
+soft joint-limit violation
+−0.5
+Safety reward R1
+Height / attitude / CoP R1 in (23), δ = 0.1
+–
+(c) Crazyflie obstacle avoidance
+Term
+Expression
+Weight
+Task reward R0
+Settle
+ 1 −tanh ∥p−pref ∥
+0.2
+ 1 −tanh ∥v∥
+0.3
+
+20
+Target distance
+10 −d
+0.5
+CLF
+e−V/(0.72¯λ)
+10
+CLF decrease
+clip
+ [ ˙V + 0.02 V ]+/∆max, 0, 1
+
+−5
+Lin. / ang. velocity ∥vb∥2 / ∥ωb∥2
+−0.01 / −0.02
+Action rate
+∥at −at−1∥2
+−0.01
+Jerk
+∥¨pt −¨pt−1∥2
+−10−4
+Policy-loss regularization (CAPS)
+Temporal / spatial
+∥µt −µt−1∥2 / ∥µ(st + ϵ) −sg[µ(st)]∥2
+1 / 1
+Safety reward R1
+Hazard proximity
+R1 in (23) with δ = 0.05 and ˜h = min{6 ˆcobs, 10 carena}
+–
+Table 1: Reward terms for all experiments.
+28
+
+
+Towards Probabilistically Safe Reinforcement Learning
+Squat./crawl.
+Hum. walking
+Drone flight
+Training parameters
+Actor/Critic MLP size
+(512, 256, 128)
+(256, 128, 64)
+(256, 256, 256)
+Activation function
+ELU
+ELU
+ELU
+Entropy coef.
+0.005
+0.003
+0.001
+Epochs / minibatches
+5 / 4
+5 / 4
+5 / 4
+J
+20
+20
+20
+Ec
+4
+4
+4
+KLmax
+0.08
+0.08
+0.08
+PPO learning rate∗
+10−3
+3 × 10−4
+3 × 10−4
+PPO clip
+0.2
+0.2
+0.2
+Discount factor γ
+0.99
+0.99
+0.99
+GAE parameter λ
+0.95
+0.95
+0.95
+Rollout (steps/env)
+24
+32
+24
+Parallel envs
+4096
+2048
+8192
+Total environment steps
+≈(5.9/7.9) × 108
+≈5.2 × 108
+≈7.9 × 108
+Safety constraint
+Base height ≥0.4 m /
+Base and head ≤0.2 m
+Base height ≥0.67 m,
+|roll| ≤0.35 rad,
+|pitch| ≤0.50 rad, CoP
+in support polygon
+Distance to obstacles
+and arena edge ≥0.1 m
+RSGF-RL parameters
+{ht}
+constant, 0.5
+constant, 0.5
+constant, 0.15
+α
+2 × 10−5
+2 × 10−5
+0.1
+β
+1
+1
+1
+Table 2: Training and RSGF-RL parameters for each experiment.
+All experiments use
+observation normalization. ∗Adaptive, except for drone flight. The reported values refer to
+the initial PPO learning rate.
+Parameter
+Value
+Returns and advantages
+Reward discount γ
+0.99
+Cost discount γc
+0.99
+Reward / cost GAE parameter λ
+0.95 / 0.95
+Cost limit d
+0
+Critics
+Critic learning rate
+10−3
+Critic epochs / minibatches
+5 / 4
+Parameter
+Value
+Trust-region policy step
+KL trust-region limit δ
+0.01
+Conjugate-gradient iterations
+15
+Conjugate-gradient damping
+0.1
+Fisher-vector-product subsampling
+5
+Line-search attempts
+15
+Line-search decay
+0.8
+Table 3: CPO parameters for the squatting comparison in Figure 1(a).
+29
+
+
+Mestres Gabbita Siu Esteban Serneke Burdick Ames
+Algorithm 1 One iteration of RSGF-RL as implemented in Section 4
+Require: Policy parameter θt; cost critic Wψ; PPO value critic and Adam state; stepsize
+ht; parameters α, β, γ
+1: Rollout:
+for n ∈1 : N, k ∈0 : Tr −1, sample an
+k ∼πθt(· | sn
+k) and record
+(sn
+k, an
+k, rn
+k, cn
+k, dn
+k), where rn
+k = R0(sn
+k, an
+k, sn
+k+1), cn
+k = R1(sn
+k, an
+k, sn
+k+1), and dn
+k ∈{0, 1}
+indicates termination of an episode at step k
+2: Cost-to-go: set Gn
+Tr = 0 and Gn
+k = cn
+k + γ(1 −dn
+k) Gn
+k+1 for k = Tr −1, . . . , 0
+3: Constraint value: bV1(θt) =
+1
+NTr
+PN
+n=1
+PTr−1
+k=0 Gn
+k
+4: Cost critic: fit Wψ to the targets {Gn
+k} by minimizing the squared error with Ec
+epochs of minibatch Adam
+5: Constraint gradient:
+d
+∇V 1(θt) =
+1
+NTr
+P
+n,k
+ Gn
+k −Wψ(sn
+k)
+
+∇θ log πθt(an
+k | sn
+k)
+6: PPO advantages: compute GAE advantages ˆAn
+k from {rn
+k} and the value critic; set
+θ(0) = θt
+7: for j = 0, . . . , J −1
+(J = epochs × minibatches) do
+8:
+Obtain θ(j+1) through Adam update on θ(j), using gradient of Lclip computed with
+minibatch Bj.
+9: end for
+10: Objective gradient: d
+∇V 0(θt) = −
+ θ(J) −θt
+
+/ht
+11: RSGF direction: compute ˆR(θt) from (11) in closed form (Mestres et al., 2025b,
+Lemma 3), or set ˆR(θt) = −d
+∇V 1(θt)/β if (11) is infeasible
+12: if ξ = −d
+∇V 0(θt) is feasible for (11) then
+13:
+θt+1 = θ(J)
+(constraint inactive: ˆR(θt) = −d
+∇V 0(θt))
+14: else
+15:
+θt+1 = θt + σht ˆR(θt), where σ = 2−m and m is the smallest integer in 0 : 4 such that
+KL(πθt ∥πθt+1) ≤KLmax (m = 4 if none)
+16: end if
+30

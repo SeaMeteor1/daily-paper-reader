@@ -1,0 +1,1934 @@
+1
+Fuzzy Explainable Continual Hierarchical Reinforcement Learning
+for Robotic Navigation
+Peng Qin, Tao Zhao,
+Abstract—Continual robot navigation requires reinforcement
+learning policies to continuously adapt to new environments while
+retaining previously acquired knowledge. Meanwhile, explainable
+reinforcement learning aims to learn meaningful behavioral rep-
+resentations through policy interaction. However, these objectives
+are inherently conflicting, as continual learning emphasizes policy
+stability whereas explainable behavior learning requires adaptive
+exploration. Existing methods rarely address both simultaneously.
+To resolve this issue, this paper proposes a Fuzzy Explain-
+able Continual Hierarchical Reinforcement Learning (FECHRL)
+method. A two-stage behavior cloning strategy is introduced
+to balance rapid policy adaptation and explainable behavior
+evolution by progressively transitioning from strong imitation
+guidance to autonomous reinforcement learning. Furthermore, a
+fuzzy critic based on a Takagi–Sugeno fuzzy inference system
+is proposed to alleviate value extrapolation errors during the
+transition between imitation-guided learning and autonomous
+exploration, thereby improving continual training stability. Ex-
+perimental results on sequential multi-scenario navigation tasks
+demonstrate that the proposed method effectively unifies contin-
+ual learning capability and policy explainability within a single
+reinforcement learning framework, achieving stable knowledge
+retention and meaningful behavioral explanation.
+Index Terms—Continual reinforcement learning; Explainabil-
+ity; Fuzzy critic; Hierarchical reinforcement learning; Robotic
+navigation
+I. INTRODUCTION
+N
+Avigation is one of the fundamental capabilities required
+for autonomous robots operating in complex environ-
+ments, with broad applications in transportation, inspection,
+and service robotics. In recent years, reinforcement learning
+(RL) has demonstrated strong decision-making capability in
+end-to-end navigation tasks. However, robotic navigation in
+continual multi-environment scenarios still faces several im-
+portant challenges.
+First, when learning new navigation tasks, RL often requires
+extensive interaction and random exploration, resulting in low
+learning efficiency and unstable policy optimization in com-
+plex environments. Although prior knowledge and behavior
+cloning (BC) can alleviate this issue by accelerating policy
+initialization, excessive dependence on cloning guidance may
+constrain policy adaptability and reduce the capability of
+autonomous behavior learning. Second, in continual learning
+(CL) scenarios, adapting to new environments often causes
+catastrophic forgetting of previously learned navigation skills,
+thereby degrading long-term task performance. Furthermore,
+most existing RL-based navigation methods rely on black-
+box policy representations, making it difficult to provide
+Peng Qin,(qinpengdeyouxiang@outlook.com).
+Tao Zhao,(zhaotaozhaogang@126.com).
+explainability for navigation behaviors and internal decision-
+making processes.
+Existing studies have attempted to address these problems
+from different perspectives. Continual reinforcement learning
+(CRL) methods alleviate forgetting through parameter regular-
+ization and memory replay mechanisms [1], [2], while explain-
+able RL methods improve policy explainability through hier-
+archical structures, latent behavior representations, or reward
+decomposition [3], [4]. In addition, BC and imitation learning
+have been widely used to accelerate policy learning and reduce
+negative transfer during early-stage training. However, these
+approaches are typically studied independently. In particular,
+CL and explainability-oriented policy learning exhibit conflict-
+ing requirements. CL prefers stronger prior constraints to sta-
+bilize policy transfer, whereas explainability-oriented behavior
+learning requires sufficient autonomous interaction to form
+environment-adaptive and semantically meaningful behavior
+patterns. Excessive cloning guidance may therefore suppress
+the emergence of explainable behavior representations.
+To address this issue, this study proposes an Explainable
+Fuzzy-Enhanced Continual Hierarchical Reinforcement Learn-
+ing method, which jointly considers CL capability and policy
+explainability within a unified navigation framework. To bal-
+ance knowledge guidance and autonomous behavior formation,
+a two-stage behavior cloning mechanism is introduced. During
+the early training stage, strong cloning supervision is employed
+to accelerate policy acquisition and alleviate negative transfer,
+while in the later stage the cloning constraint is weakened to
+release exploration capability and enable the formation of ex-
+plainable behavior patterns through environmental interaction.
+Furthermore, to stabilize the transition from cloning-guided
+learning to autonomous interaction learning, a fuzzy critic
+is proposed to reduce extrapolation-sensitive value estimation
+and stabilize policy optimization during distributional transi-
+tion. In addition, CL auxiliary mechanisms are incorporated
+to mitigate catastrophic forgetting in sequential tasks.
+The main contributions of this work are summarized as
+follows:
+1) An explainable continual reinforcement learning frame-
+work for robotic navigation is proposed, which jointly
+considers continual adaptation and explainability-oriented
+policy learning in sequential navigation tasks.
+2) A two-stage behavior cloning mechanism is proposed to
+balance early-stage knowledge guidance and late-stage
+autonomous behavior formation, enabling efficient policy
+learning while preserving the emergence of explainable
+behavior patterns.
+3) A fuzzy critic is proposed to stabilize the transition from
+cloning-guided learning to autonomous interaction learn-
+arXiv:2611.20427v1  [cs.LG]  16 Nov 2026
+
+
+2
+ing by reducing extrapolation-sensitive value estimation
+during policy updates.
+4) Experiments are conducted in incremental navigation
+scenarios, demonstrating that the proposed method effec-
+tively combines CL capability with policy explainability.
+The rest of this paper is organized as follows. The related
+work are presented in Section II. Then, the Methodology is
+discussed in Section III. The experimental setup is discussed
+in Section IV. The results and analysis are described in Section
+V. Finally, the conclusion is given in Section VI.
+II. RELATED WORK
+A. Guided Reinforcement Learning
+Exploration inefficiency remains a major challenge in
+RL for robotic navigation and control, especially in high-
+dimensional or sparse-reward environments. To alleviate this
+issue, many studies have introduced external knowledge or
+expert experience to guide policy learning and improve sample
+efficiency.
+One representative direction incorporates expert demonstra-
+tions or prior policies into RL. For example, expert mod-
+els, hybrid action selection strategies, and offline-generated
+trajectories have been employed to constrain the exploration
+space and accelerate policy initialization [5]–[7]. In addition,
+methods such as Hindsight Experience Replay and BC regu-
+larization improve learning stability by encouraging policies
+to reuse historically effective behaviors [8]. Some studies
+further reduce learning difficulty through task decomposition
+and staged policy guidance [9].
+Recently, fuzzy systems have also been integrated into RL to
+provide structured and explainable guidance mechanisms. By
+combining fuzzy-rule reasoning with RL policies, these meth-
+ods improve exploration stability while maintaining adaptive
+capability in complex environments [10], [11].
+Inspired by these studies, this research adopts BC to im-
+prove policy learning efficiency in the early training stage.
+B. Continual Reinforcement Learning
+In long-term robotic navigation, agents are required to
+continually adapt to changing environments while preserving
+previously acquired knowledge. Existing CRL methods can
+generally be divided into three categories: knowledge reuse,
+experience replay , and parameter regularization.
+Knowledge reuse methods improve cross-task adaptation by
+transferring historical policies or representations. Representa-
+tive approaches employ policy libraries, attention mechanisms,
+or persistent policy guidance to improve transfer efficiency
+and reduce forgetting [12], [13]. Experience replay methods
+alleviate forgetting by storing and replaying representative ex-
+periences, where structured replay and context-aware memory
+strategies have shown effectiveness in CL scenarios [2], [14]–
+[17]. Parameter regularization methods preserve historical
+knowledge by constraining updates to important parameters.
+Typical approaches include Fisher-information-based EWC [1]
+and trajectory-based SI [18], together with several extended
+regularization strategies [19].
+Although these approaches have achieved promising results,
+most existing studies focus on only a single perspective
+and rarely consider CL together with policy guidance and
+explainability in a unified framework. Motivated by this obser-
+vation, the present work integrates knowledge-guided learning,
+continual regularization, and explainable policy structures into
+a unified RL framework, thereby enabling both CL capability
+and policy explainability.
+C. Fuzzy Reinforcement Learning
+Due to their explainability and uncertainty modeling capa-
+bility, fuzzy systems have been widely incorporated into RL to
+improve control performance and training stability. In robotic
+control and navigation tasks, fuzzy RL is commonly used for
+value approximation, policy guidance, and reward design.
+One category of methods employs fuzzy systems as function
+approximators or dynamic models to assist RL optimization.
+Representative studies utilized fuzzy systems to approximate
+value functions, model uncertain dynamics, and construct
+approximately optimal controllers for nonlinear systems [20]–
+[22]. These approaches improve modeling capability and sys-
+tem robustness, but fuzzy systems are generally treated only
+as auxiliary components.
+Another category directly integrates fuzzy systems into
+policy or control architectures. For example, hierarchical
+frameworks combined RL decision-making with low-level
+fuzzy controllers [23], while several studies fused fuzzy prior
+policies with RL policies through adaptive weighting mech-
+anisms [24]. Fuzzy systems have also been employed for
+reward shaping and auxiliary evaluation in complex control
+problems [25]. Although these methods improve explainability
+and stability, most adopt loosely coupled designs between
+fuzzy systems and RL policies.
+Overall, existing fuzzy RL methods mainly utilize fuzzy
+systems for auxiliary modeling or external guidance, while
+deeper integration with policy learning and CL mechanisms
+remains limited. Motivated by this observation, the pro-
+posed framework incorporates fuzzy systems directly into the
+network structure for value estimation and policy learning,
+thereby enabling explainability and CL capability within a
+unified framework.
+D. Hierarchical Explainability in Reinforcement Learning
+As RL has been increasingly applied to robotic control
+and autonomous navigation, policy explainability has attracted
+growing attention. Existing studies mainly improve explain-
+ability from two perspectives: post-hoc explanation and struc-
+tural explainability.
+Post-hoc methods analyze trained policies to estimate the
+contribution of input features to decision-making. Represen-
+tative approaches employ Shapley-value-based analysis, se-
+mantic feature grouping, and attention mechanisms to explain
+policy behaviors from the input–output perspective [3], [26],
+[27]. These methods provide intuitive explanation of policy
+decisions without modifying the original learning framework.
+Another line of research improves explainability through
+policy structure design. For example, some studies modeled
+
+
+3
+policies using graph-based structures to explicitly represent de-
+cision dependencies [4], while others introduced intermediate
+semantic variables or auxiliary tasks to generate explainable
+latent representations during decision-making [28]. Compared
+with post-hoc analysis, these approaches provide more direct
+structural explanation of the policy process.
+Overall, existing explainable RL methods have demon-
+strated the effectiveness of both external explanation and struc-
+tural modeling. Motivated by these studies, the present work
+adopts an intermediate-variable-based explainability frame-
+work by introducing semantically meaningful latent variables
+into the policy architecture, thereby enabling structured expla-
+nation of navigation behaviors.
+III. METHODOLOGY
+A. Overview
+The proposed FECHRL framework integrates CRL and
+explainable policy learning within a unified architecture. The
+overall framework is illustrated in Fig.1. To preserve previ-
+ously acquired knowledge during incremental task learning, in-
+tegrative consolidation and memory augmentation mechanisms
+are incorporated into the learning framework. To improve
+policy explainability, a hierarchical actor structure with an
+intermediate behavior mode layer is introduced, enabling the
+policy generation process to be represented through seman-
+tically meaningful latent modes. Furthermore, a fuzzy critic
+and a two-stage behavior cloning mechanism are proposed
+to support stable policy adaptation during CL. The two-stage
+cloning mechanism balances external policy guidance and
+autonomous exploration by switching from strong cloning
+supervision to weak cloning constraints during training. Mean-
+while, the fuzzy critic utilizes controllable initialization and
+activation-based local updates to alleviate critic extrapolation
+errors during the switching stage, thereby improving learning
+stability.
+Remark 1: Feature 1: Unified continual and explainable
+reinforcement learning. The proposed framework jointly sup-
+ports continual task adaptation and semantically explainable
+policy generation within a unified learning architecture.
+Remark 2: Feature 2: Two-stage guided policy adap-
+tation. The proposed two-stage behavior cloning mechanism
+balances rapid task adaptation and autonomous policy learn-
+ing, enabling explainable behavior mode formation during CL.
+Remark 3: Feature 3: Stable fuzzy critic learning. The
+fuzzy critic improves training stability during the transition
+from imitation learning to autonomous interaction by reducing
+critic extrapolation errors.
+B. Problem Formulation
+We consider a CRL setting where an agent sequentially
+interacts with a series of tasksT = [T1, T2, . . . , Tk, . . .]. Each
+task is characterized by distinct environmental dynamics and
+reward distributions, while sharing the same state and action
+spaces.
+For each task Tk, the agent learns a policy parameterized
+by θ to maximize the expected return:
+θ∗
+Tk = arg max
+θ
+JTk(θ)
+(1)
+When a new task Tk+1 arrives, the objective is to learn a
+new policy that maximizes performance on the current task
+while preserving performance on previously learned tasks.
+This leads to the following unified optimization problem:
+θ∗
+Tk+1 = arg max
+θ
+JTk+1(θ) + λU(θ)
+(2)
+s.t.
+E[RTi(θ)] ≥E[RTi(θ∗
+Ti)] −ε,
+∀i ≤k
+(3)
+where RTi denotes the expected return on task Ti, and ε
+controls the allowable performance degradation across tasks.
+The term U(θ) represents a general regularization objective
+that jointly encourages stable CL and structured behavioral
+organization of the policy, thereby implicitly promoting ex-
+plainability. The coefficient λ balances task performance and
+this auxiliary inductive bias.
+Due to the sequential and non-revisitable nature of tasks, the
+above constraints cannot be explicitly enforced during training.
+Therefore, they are typically approximated using parameter
+regularization and memory-based replay mechanisms to mit-
+igate catastrophic forgetting while maintaining stable policy
+learning across tasks.
+C. Fuzzy Critic
+To improve the stability and explainability of value esti-
+mation in CRL, this study replaces the conventional neural-
+network critic with a Takagi–Sugeno (TS) fuzzy critic. Tra-
+ditional actor–critic methods generally approximate the value
+function using a globally coupled neural network:
+Q(s, a) = fϕ(s, a)
+(4)
+Although neural networks possess strong nonlinear approx-
+imation capability, their globally shared parameters may cause
+value overestimation and parameter overwriting during CL. In
+the proposed two-stage behavior cloning framework, the first
+stage mainly relies on supervised imitation learning, where
+most samples correspond to feasible or high-reward trajec-
+tories. Consequently, the critic may produce overestimated
+values for unseen state–action pairs:
+Q(su, au) ≫Q∗(su, au)
+(5)
+where Q∗(s, a) denotes the true value function. Since the actor
+update directly depends on the critic gradient,
+∇θJ(θ) = E [∇aQ(s, a)∇θπθ(s)]
+(6)
+incorrect value estimation may further mislead policy opti-
+mization during the free exploration stage.
+In addition, neural-network critics exhibit globally coupled
+parameter updates:
+ϕ ←ϕ −α∇ϕLQ
+(7)
+where updates induced by new samples may simultaneously
+affect previously learned regions, resulting in parameter over-
+writing during CL.
+To alleviate these issues, the proposed method employs a
+TS fuzzy system for value estimation:
+Q(s, a) =
+K
+X
+k=1
+¯wkyk
+(8)
+
+
+4
+Two-Stage Behavior-Constrained Policy Optimization
+𝜃𝑇1
+∗→𝜃𝑇2
+Strategy 
+transfer
+𝑇1
+𝑇2
+𝑇3
+𝑇𝑘
+Incremental 
+task 
+sequence
+Auxiliary Continual Learning Mechanism
+𝑎
+𝜃𝑇1
+𝜃𝑇1
+∗
+Hierarchical Actor
+Fuzzy Critic
+ℒmem
+𝐻𝐴
+ℒ𝑟𝑒𝑔
+𝐻𝐴
+ℒ𝐵𝐶
+𝐻𝐴
+ℒ𝑇𝑘
+𝐻𝐴
+ℒ𝑇𝑘
+𝑄
+𝜃𝑇2
+𝜃𝑇2
+∗
+Hierarchical Actor
+Fuzzy Critic
+ℒmem
+𝐻𝐴
+ℒ𝑟𝑒𝑔
+𝐻𝐴
+ℒ𝐵𝐶
+𝐻𝐴
+ℒ𝑇𝑘
+𝐻𝐴
+ℒ𝑇𝑘
+𝑄
+𝜃𝑇3
+𝜃𝑇3
+∗
+Hierarchical Actor
+Fuzzy Critic
+ℒmem
+𝐻𝐴
+ℒ𝑟𝑒𝑔
+𝐻𝐴
+ℒ𝐵𝐶
+𝐻𝐴
+ℒ𝑇𝑘
+𝐻𝐴
+ℒ𝑇𝑘
+𝑄
+𝜃𝑇𝑘
+𝜃𝑇𝑘
+∗
+Hierarchical Actor
+Fuzzy Critic
+ℒmem
+𝐻𝐴
+ℒ𝑟𝑒𝑔
+𝐻𝐴
+ℒ𝐵𝐶
+𝐻𝐴
+ℒ𝑇𝑘
+𝐻𝐴
+ℒ𝑇𝑘
+𝑄
+𝜃𝑇2
+∗→𝜃𝑇3
+Strategy 
+transfer
+𝜃𝑇3
+∗→𝜃𝑇𝑘
+Strategy 
+transfer
+𝑎
+𝑎
+𝑎
+Fig. 1: The overall framework of the proposed methodology.
+where K denotes the number of fuzzy rules,
+¯wk is the
+normalized activation weight, and yk is the local consequent
+output. The k-th fuzzy rule is defined as:
+Rk : IF x1 is Ak
+1 AND · · · AND xn is Ak
+n THEN yk
+(9)
+Gaussian membership functions are adopted:
+µAk
+i (xi) = exp
+
+−(xi −ck
+i )2
+2(σk
+i )2
+
+(10)
+and the normalized rule activation is computed as (11)
+¯wk =
+Qn
+i=1 µAk
+i (xi)
+PK
+j=1
+Qn
+i=1 µAj
+i (xi)
+(11)
+Unlike globally coupled neural-network critics, the TS fuzzy
+critic possesses localized update characteristics. The conse-
+quent parameter gradient satisfies:
+∂Q
+∂yk = ¯wk
+(12)
+which indicates that weakly activated rules receive only minor
+parameter updates. Therefore, newly observed samples mainly
+affect locally activated regions, reducing interference with
+previously learned knowledge.
+In addition, the consequent outputs are initialized with
+small values in this work, allowing unseen regions to main-
+tain conservative value estimation during early exploration.
+Consequently, the proposed fuzzy critic alleviates Q-value
+overestimation and parameter overwriting during CL, thereby
+improving the stability of policy optimization and supporting
+smooth transition in the proposed two-stage behavior cloning
+framework.
+D. Hierarchical Actor Architecture
+This study introduced a hierarchical actor architecture with
+intermediate behavioral patterns to establish a semantic asso-
+ciation between high-level environmental perception and low-
+level motion control.
+First, high-dimensional sensory observations obtained from
+LiDAR and other perception sensors were mapped into low-
+dimensional latent representations through a convolutional
+encoding network:
+z = fenc(slidar)
+(13)
+where fenc(·) denotes the convolutional feature extraction
+network with parameters W, and z represents the compact
+latent representation of the environmental state.
+Subsequently, a behavioral pattern generation layer was
+introduced to further project the latent features into a low-
+dimensional behavioral pattern space:
+m = gψ(z)
+(14)
+where m denotes the high-level behavioral tendency of the
+agent under the current state.
+Finally, the low-level policy network generated the control
+action by jointly considering the latent state representation,
+behavioral pattern, and robot state information:
+a = πθ(z, m, sbot, sg)
+(15)
+where πθ(·) denotes the low-level action policy.
+By introducing the behavioral pattern variable, the actor
+network was able to preserve semantic behavioral information
+during the action generation process, thereby improving the
+explainability of policy execution and enhancing the structural
+decoupling between high-level decision tendencies and low-
+level control actions.
+E. Two-Stage Behavior-Constrained Policy Optimization
+BC can effectively improve the early-stage learning effi-
+ciency of RL by introducing external demonstrations:
+LBC = E(s,a∗)∼Dd
+h
+∥πθ(s) −aks∥2i
+(16)
+where Dd denotes the demonstration dataset and aks is the
+demonstrated action.
+
+
+5
+However, maintaining strong cloning constraints through-
+out the entire training process may suppress autonomous
+exploration and restrict the evolution of the intermediate
+behavior pattern variable m, resulting in reduced behavioral
+diversity and explainability. To balance learning efficiency and
+autonomous adaptation, a Two-Stage Behavior-Constrained
+Policy Optimization strategy is proposed.
+In the first stage, a large cloning weight is employed to
+rapidly establish fundamental navigation behaviors:
+LHA = LRL + λhLBC + Lreg
+(17)
+where LRL denotes the RL objective and Lreg represents CL
+regularization terms.
+After the policy acquires basic navigation capability, the
+cloning constraint is weakened to release exploration ability:
+LHA = LRL + λlLBC + Lreg,
+λl ≪λh
+(18)
+Assuming the total number of training episodes is TT , the
+switching point is defined as (19).
+Ts = ηTT
+(19)
+where η ∈(0, 1) is the stage ratio. A hard switching strategy
+is adopted:
+λBC(t) =
+(
+λh,
+t < Ts
+λl,
+t ≥Ts
+(20)
+In this work, the first 20% of training episodes employ
+strong cloning constraints with λh = 10, while the remain-
+ing stage uses weak constraints with λl = 0.01. The final
+optimization objective is:
+LHA =
+(
+LRL + LBC + Lreg,
+t < 0.2T
+LRL + 0.01LBC + Lreg,
+t ≥0.2T
+(21)
+Besides hard switching, the proposed framework can also
+be extended to progressive or soft switching strategies:
+λBC(t) = λhe−kt
+(22)
+λBC(t) = λl +
+λh −λl
+1 + exp (β(t −Ts))
+(23)
+where k and β denote decay coefficients.
+F. Auxiliary Continual Learning Mechanism
+Since this work was conducted under a CRL setting, the
+policy network was prone to catastrophic forgetting during
+incremental task learning. To improve knowledge retention
+capability, this study adopted the stabilization mechanism
+proposed in [29], which combines parameter consolidation
+and memory replay strategies. As this component was not the
+primary focus of this work, only the key procedures are briefly
+introduced.
+1) Parameter Consolidation: To reduce the destructive in-
+fluence of new task learning on previously acquired knowl-
+edge, an integrated parameter importance estimation strategy
+was adopted:
+Ωk
+i = αΥk
+i + (1 −α)F HA
+Tk,i
+(24)
+where
+Υk
+i =
+Ik
+i
+|Ik
+i | + ϵ,
+F HA
+Tk,i = Es∼Dk
+"∂HA(s|θ)
+∂θi
+2#
+(25)
+represent the trajectory-contribution importance and Fisher
+information importance, respectively. HA represents Hierar-
+chical Actor.
+Based on the estimated importance, the regularization con-
+straint was defined as (26).
+Lic = c
+X
+i
+Ωk
+i (θi −θTk,i)2
+(26)
+where c denotes the regularization coefficient. This mechanism
+constrains updates of important parameters during new task
+learning.
+2) Memory Replay: Besides parameter consolidation, a
+dual-buffer replay mechanism was introduced to preserve
+representative historical data. Current-task samples were stored
+in a prioritized replay buffer, where the sampling priority was
+determined according to the TD error:
+pi = |Q(st, at) −yt| + ϵ
+(27)
+Meanwhile, successful trajectories from previous tasks were
+stored in a historical memory buffer, where DBSCAN cluster-
+ing was employed to reduce redundant samples while preserv-
+ing representative experiences.
+During training, historical samples were replayed together
+with current-task samples, leading to the replay constraint:
+Lmem =
+1
+|Bmem|
+X
+∥HA(s) −a∥2
+(28)
+Accordingly, the final actor optimization objective jointly
+consisted of the reinforcement learning loss, behavior cloning
+loss, parameter consolidation term, and replay regularization:
+LHA = LRL + λBCLBC + Lreg
+(29)
+where Lreg = Lic+Lmem. Through the joint use of parameter
+consolidation and memory replay, the proposed framework
+improved policy stability and enhanced historical knowledge
+retention during CL.
+G. Bi-level Optimization Mechanism for Behavioral Pattern
+Stability
+Since the behavioral pattern variable m is used for dynamic
+reward modulation, fully end-to-end joint optimization may
+lead to unintended reward exploitation, where the pattern
+generation layer learns to increase returns by implicitly weak-
+ening penalty-related reward components rather than forming
+semantically meaningful behaviors. This can degrade both
+explainability and generalization. To address this issue, a
+bi-level optimization mechanism is introduced to decouple
+behavioral pattern learning from low-level policy optimization.
+
+
+6
+The overall dynamic reward is defined as (30).
+rdyn(s, a, m) = rtask(s, a) +
+M
+X
+i=1
+hai(m) rk(s, a)
+(30)
+where hai(m) denotes the pattern-dependent reward weight-
+ing.
+1) Inner-Level Policy Optimization: In the inner loop, the
+behavioral pattern generator parameter ψ is fixed, and only the
+encoder W, actor θ, and fuzzy critic η are updated. The critic
+is trained using the Bellman error:
+LQη = E
+h
+(Qη(st, at) −yt)2i
+,
+yt = rdyn + γQη−(st+1, πθ−(st+1))
+(31)
+The actor objective follows:
+Jπ = E[Qη(s, a)] + λBCLBC + Lreg
+(32)
+Since m is embedded in policy generation, the encoder
+gradient contains an additional modulation path:
+∇W J = E
+
+∇aQη
+∂a
+∂z + ∂a
+∂m
+∂m
+∂z
+ ∂z
+∂W
+
+(33)
+During this stage, the pattern generator is not updated.
+2) Outer-Level Behavioral Pattern Optimization: In the
+outer loop, the encoder and actor are frozen:
+∇W = 0,
+∇θ = 0
+(34)
+and only the behavioral pattern generator ψ is optimized.
+To avoid bias introduced by dynamic reward shaping, the
+outer critic is trained using only the task reward:
+LQξ = E
+
+Qξ(st, at) −yξ
+t
+2
+,
+yξ
+t = rtask + γQξ−(st+1, πθ(st+1))
+(35)
+The gradient for pattern learning is given by:
+∇ψJouter = E
+
+∇aQξ(s, a) ∂a
+∂m
+∂m
+∂ψ
+
+(36)
+This bi-level formulation ensures that behavioral patterns
+are optimized only through improvements in true task per-
+formance, rather than through reward manipulation, thereby
+improving stability and preserving explainability. The overall
+algorithm flow is shown in Algorithm.1.
+IV. EXPERIMENTAL SETUP
+This study proposed a CRL framework that integrates
+a
+fuzzy
+critic,
+two-stage
+behavior
+cloning,
+and
+multi-
+dimensional parameter regularization, with the objective of
+jointly improving CL capability and policy explainability in
+incremental robotic navigation scenarios. Accordingly, the
+experiments were designed with two primary objectives:
+1) To verify whether the proposed method can effectively
+integrate CL capability and policy explainability;
+2) To evaluate and analyze the characteristics of the fuzzy
+critic and the two-stage behavior cloning mechanism.
+This section provides detailed descriptions of the experi-
+mental settings.
+Algorithm 1 FECHRL
+Require: πθ;
+critic
+Qη;
+critic
+Qξ;
+feature
+encoder
+fconv(·; W);
+mode
+generation
+network
+gψ(·);
+fuzzy
+reward module Fϕ(·).
+1: Initialize θ, η, W, ψ, ϕ, ξ
+2: Initialize target networks θ′, η′, ξ′
+3: Initialize replay buffer D
+4: for Task=1,2,...K do
+5:
+for episode = 1 to TT do
+6:
+Observe initial state s0
+7:
+for t = 1 to T do
+8:
+Extract feature zt, build pattern mt, get reward-
+weight hat via fuzzy inference
+9:
+Select action at = πθ(zt, mt)
+10:
+Execute at, observe rt, rtask
+t
+, and st+1
+11:
+Store transition (st, at, rt, rtask
+t
+, st+1, aks) in DT k
+12:
+end for
+13:
+Sample a minibatch data from DT k and Dmem
+{Inner-Level Update (Freeze ψ)}
+14:
+Update Qη using dynamically weighted reward (31)
+15:
+Update πθ and encoder fconv(·; W) via policy gradi-
+ent (32-33)
+16:
+Soft-update target networks θ′, η′
+{Outer-Level Update (Freeze θ, W, η)}
+17:
+Update critic Qξ using task-level reward rtask. (35)
+18:
+Update mode generation network gψ by (36)
+19:
+Soft-update target network ξ′
+20:
+end for
+21: end for
+1) Baseline: To evaluate the effectiveness of the proposed
+framework in continual policy learning and behavior-aware
+optimization, several representative RL and CL methods were
+selected for comparison. All baseline methods were imple-
+mented under the same network architecture, training envi-
+ronment, and replay settings to ensure a fair evaluation.
+• DDPG [30]: A classical actor–critic RL algorithm for
+continuous control tasks, which was employed as the
+fundamental baseline method.
+• EWC-DDPG [1]: A CRL method that constrains param-
+eter updates using Fisher information regularization.
+• SI-DDPG [18]: A CRL approach based on synaptic im-
+portance accumulated along the optimization trajectory.
+• CORESET [17]: A replay-based CRL method.
+• SCOMMER [2]: A dual-memory CL framework.
+2) Evaluation Metrics: To evaluate continual policy learn-
+ing performance, the standard CL metrics of forgetting and
+forward transfer are adopted.
+• Forgetting: This metric measures the performance degra-
+dation on previously learned tasks after learning new
+tasks. It is defined as (37).
+F (Tk) =
+1
+k −1
+k−1
+X
+i=1
+(Ai(Ti) −Ai(Tk))
+(37)
+where Ai(Ti) denotes the performance on task Ti im-
+mediately after training, and Ai(Tk) denotes the perfor-
+
+
+7
+mance on the same task after learning task Tk.
+• Forward Transfer: Forward transfer evaluates how pre-
+viously acquired knowledge facilitates learning subse-
+quent tasks:
+FT (Tk) =
+1
+k −1
+k−1
+X
+i=1
+Ak(Ti)
+(38)
+A. Training Scenarios and Experimental Environments
+Five different simulation environments are constructed to
+evaluate the performance of FECHRL (see Fig. 2). In Env1–
+Env4, the number of obstacles gradually increases and the
+layouts continuously change, thereby progressively increasing
+the environmental complexity. These environments are mainly
+used to evaluate continual learning capability. Env5 is a narrow
+corridor scenario in which the optimal behavior mode is
+relatively easy to identify, and is therefore used to evaluate
+policy explainability.
+(a) Env1
+(b) Env2
+(c) Env3
+(d) Env4
+(e) Env5
+Fig. 2: Simulation environment
+To verify the ability of simulation to reality, two scenarios
+(see Fig.3) were constructed with different obstacle distribu-
+tions and sizes from the training scenario.
+(a) Env1
+(b) Env2
+Fig. 3: Real environment
+1) Network Architecture: The overall network architecture
+is illustrated in Fig. 4. The actor network consists of three
+layers. The feature extraction layer receives 90-dimensional
+point cloud inputs and performs feature compression. The in-
+termediate layer generates behavior modes, which are concate-
+nated with the 2-dimensional target state and 2-dimensional
+action command as the input to the low-level policy network.
+The fuzzy critic receives the concatenated state-action vector
+and performs inference using 600 fuzzy rules. In addition,
+the fuzzy dynamic reward network is implemented as a
+fixed-parameter network to generate dynamic reward weights.
+Table I summarizes the detailed hyperparameter settings.
+TABLE I: PARAMETER SETTINGS
+Items
+Value
+optimizer π / gψ / Qη / Qξ
+Adam lr:0.0003/0.0003/0.001/0.01
+γ / λ / τ c
+0.99/1/0.05/ 0.1 /0.1
+Buffer size/Btask/Bmem
+100000/256/64
+Episodes
+300(Env1) 1000(Env2-Env4) 500(Env5)
+max steps
+200(Env1),350(Env2-Env4),500(Env5)
+The reward function consists of a task-level objective and
+several behavior-aware auxiliary terms:
+r = rtask −ha1
+ 10(0.2 −v)
+2 −ha2ω2
++ ha3
+ 2d0
+d0 + d −1
+
+−ha4|θg|
+−20 ha5 I(dmin < 0.22)
+(39)
+where v and ω denote the linear and angular velocities,
+d0 and d are the initial and current goal distances, θg is the
+goal heading error, and dmin denotes the minimum obstacle
+distance.
+The task-level reward is defined as (40).
+rtask = 2500 I(reached) −2000 I(collision or timeout)
++
+1000
+|PL + 0.15 −Gd| + 0.001 +
+1000
+|ET −GT | + 0.001
+(40)
+where PL is the path length, Gd denotes the goal distance,
+ET is the episode duration, and GT represents the minimum
+expected arrival time.
+V. RESULTS AND ANALYSIS
+A. Incremental Task Training Comparison
+As environmental complexity gradually increases, the train-
+ing process is divided into four sequential navigation tasks.
+T1 corresponds to a simple open environment and is trained
+for 300 episodes, while the more challenging tasks T2-T4 are
+each trained for 1000 episodes. The success rate is adopted as
+the primary evaluation metric.
+Fig. 5 illustrates the training success rates of different RL
+methods, including DDPG, DDPG+EWC, DDPG+SI, CORE-
+SET, SCOMMER, and the proposed FECHRL framework. For
+fairness, all baseline methods follow the same experimental
+settings and training protocols as our previous continual nav-
+igation study [29].
+Overall, all methods achieve relatively high success rates on
+the simple T1. However, as task complexity increases, most
+baseline methods exhibit degraded adaptability in subsequent
+tasks. Consolidation-based methods can alleviate catastrophic
+forgetting to some extent, but the imposed parameter con-
+straints reduce policy adaptability under new environmental
+distributions. In contrast, SCOMMER demonstrates perfor-
+mance improvements during the later stages of T3 and T4,
+indicating that its dual-memory mechanism provides relatively
+stable knowledge transfer during CL.
+The proposed FECHRL framework maintains stable learn-
+ing performance across all incremental tasks and rapidly re-
+covers policy performance after task transitions. This suggests
+that the introduced guided learning mechanism effectively
+
+
+8
+Fuzzy Critic
+𝑎
+𝑠
+…
+𝑅1: IF 𝑥1 is 𝐴1
+1 AND ⋯AND 𝑥𝑛is 𝐴𝑛1THEN 𝑦1
+𝑅2: IF 𝑥1 is 𝐴1
+2 AND ⋯AND 𝑥𝑛is 𝐴𝑛2THEN 𝑦2
+𝑅𝑘: IF 𝑥1 is 𝐴1
+𝑘AND ⋯AND 𝑥𝑛is 𝐴𝑛𝑘THEN 𝑦𝑘
+…
+(600)
+Fuzzy Rule Base
+Fuzzy Layer
+Inference 
+Output
+ConvNet
+Fuzzy net
+(6,512)(512,512)
+(12,512)(512,512)(512,2)
+MLP
+Concat
+𝑧
+𝑚
+High-Level Feature 
+Extraction
+Behavior Mode 
+Generation
+Fuzzy Dynamic 
+Reward
+𝑠𝑙𝑖𝑑𝑎𝑟
+𝑠𝑏𝑜𝑡
+Hierarchical Actor
+(640,6)
+(512,2)
+Fig. 4: Implementation framework
+improves policy learning efficiency during the early stages of
+new tasks while reducing performance degradation caused by
+unstable exploration during task switching.
+0
+500
+1000
+1500
+2000
+2500
+3000
+Episodes
+-0.5
+0.0
+0.5
+1.0
+1.5
+Success Rate
+T1
+T2
+T3
+T4
+DDPG
+DDPG+EWC
+DDPG+SI
+CORESET
+SCOMMER
+FECHRL
+Fig. 5: Training success rates of different RL methods
+B. Quantitative Analysis of Sequential Task Performance
+To further evaluate the CL capability of the proposed frame-
+work, quantitative experiments were conducted over four se-
+quential navigation tasks. The baseline CL methods follow the
+same evaluation protocol and experimental settings adopted
+in our previous continual navigation study [29]. The results
+averaged over five random seeds are reported in Table II.
+Table II presents the performance of different methods after
+sequentially learning tasks T1-T4. Here, MTk denotes the
+model obtained after completing the training of task Tk. The
+last two columns report the average forgetting rate F Tk and
+forward transfer rate FT Tk, respectively.
+Overall, the baseline methods exhibit different degrees of
+catastrophic forgetting during sequential learning. In particu-
+lar, KGDDPG shows severe performance degradation on pre-
+viously learned tasks after training subsequent environments,
+indicating limited knowledge retention capability. Although
+KGEWC and KGSI alleviate forgetting through parameter
+consolidation, their performance on earlier tasks still decreases
+significantly after later-stage training, suggesting that consoli-
+dation alone cannot fully balance stability and adaptability in
+continual navigation scenarios.
+In contrast, the proposed FECHRL framework demonstrates
+strong CL capability across all sequential tasks. As shown
+in Table II, FECHRL maintains consistently high success
+rates on previously learned tasks even after completing all
+subsequent training stages. For example, the success rate on
+T2 further improves from 0.88 at MT2 to 0.94 at MT4, while
+the performance on T1 remains close to perfect throughout
+the entire learning process. Moreover, the forgetting metrics
+of FECHRL remain negative across all stages, indicating
+that subsequent task learning not only alleviates catastrophic
+forgetting but also promotes knowledge refinement on previous
+tasks.
+FECHRL also achieves competitive forward transfer per-
+formance. In particular, the framework obtains forward trans-
+fer rates of 0.221 and 0.200 on later tasks, demonstrating
+that the learned behavioral representations and guided policy
+adaptation mechanism provide effective prior knowledge for
+unseen environments. These results indicate that the proposed
+framework is capable of simultaneously preserving historical
+knowledge and supporting efficient adaptation to new tasks,
+thereby achieving stable CRL performance.
+C. Two-stage Cloning Analysis
+In Section III, three behavior cloning switching strate-
+gies, namely Hard switching, Progressive switching, and Soft
+switching, were introduced. To further analyze the differences
+among these strategies, comparisons are conducted from two
+perspectives: training performance, testing results.
+The training results of the three switching strategies are
+shown in Fig.6. Overall, all strategies exhibit similar success-
+rate trends during CL across multiple tasks. However, Hard
+switching achieves lower success rates than the other two
+strategies during the middle stage of learning in T2, followed
+by a subsequent recovery in the later stage. This phenomenon
+is mainly caused by the earlier switching point of Hard
+switching, which leaves more time for autonomous exploration
+and interaction. Therefore, the temporary performance decline
+is associated with increased exploration capability.
+Table III further compares the effects of different BC
+switching strategies, including Progressive switching and Soft
+switching. Compared with the Hard switching strategy adopted
+in FECHRL, both methods maintain relatively large cloning
+constraints over a longer training period, resulting in different
+CL characteristics.
+As shown in the table, both Progressive switching and Soft
+switching achieve high performance on previously learned
+tasks, indicating that stronger cloning supervision can ef-
+fectively stabilize policy learning. However, compared with
+FECHRL, these two strategies exhibit weaker adaptability in
+
+
+9
+TABLE II: Performance after training each task across different methods.
+Method
+Train after
+MT1
+MT2
+MT3
+MT4
+F Tk
+FT Tk
+KGDDPG
+T1
+0.91±0.01
+0.91±0.01
+0.90±0.00
+0.75±0.01
+-
+-
+T2
+0.09±0.02
+0.79±0.05
+0.61±0.05
+0.43±0.01
+0.000±0.026
+0.084±0.017
+T3
+0.01±0.00
+0.46±0.05
+0.78±0.05
+0.42±0.04
+0.110±0.034
+0.162±0.021
+T4
+0.02±0.01
+0.03±0.02
+0.14±0.01
+0.80±0.07
+0.296±0.040
+0.131±0.127
+KGEWC
+T1
+0.75±0.06
+0.77±0.01
+0.73±0.01
+0.55±0.02
+-
+-
+T2
+0.05±0.02
+0.91±0.00
+0.70±0.03
+0.50±0.05
+-0.002±0.065
+0.050±0.023
+T3
+0.00±0.00
+0.36±0.02
+0.78±0.02
+0.62±0.03
+0.128±0.044
+0.115±0.013
+T4
+0.00±0.00
+0.12±0.02
+0.09±0.00
+0.74±0.10
+0.261±0.017
+0.099±0.011
+KGSI
+T1
+0.93±0.02
+0.96±0.01
+0.82±0.02
+0.72±0.02
+-
+-
+T2
+0.06±0.02
+0.87±0.02
+0.53±0.01
+0.56±0.02
+-0.024±0.027
+0.060±0.021
+T3
+0.00±0.00
+0.51±0.02
+0.81±0.00
+0.71±0.01
+0.227±0.033
+0.158±0.012
+T4
+0.00±0.00
+0.11±0.01
+0.20±0.01
+0.79±0.07
+0.209±0.029
+0.139±0.006
+FECHRL
+T1
+0.95±0.00
+1.00±0.00
+1.00±0.00
+1.00±0.01
+-
+-
+T2
+0.01±0.00
+0.88±0.01
+0.89±0.01
+0.94±0.01
+-0.048±0.004
+0.012±0.004
+T3
+0.01±0.00
+0.85±0.02
+0.82±0.03
+0.90±0.01
+-0.033±0.009
+0.221±0.006
+T4
+0.00±0.00
+0.26±0.02
+0.22±0.00
+0.89±0.01
+-0.064±0.010
+0.200±0.004
+0
+500
+1000
+1500
+2000
+2500
+3000
+Episodes
+0.0
+1.0
+Success Rate
+T1
+T2
+T3
+T4
+Hard switching
+Progressive 
+Soft switching
+Fig. 6: Training success rates of different switching
+continual tasks. For example, although Progressive switching
+achieves relatively high forward transfer on T3 and T4, its
+forgetting metrics gradually become positive, suggesting that
+excessive dependence on cloning guidance restricts policy
+plasticity during later-stage adaptation. A similar phenomenon
+can also be observed in Soft switching, where the delayed
+decay of the cloning loss preserves behavioral consistency but
+limits autonomous exploration capability, resulting in reduced
+performance under unseen environmental distributions.
+In contrast, the Hard switching strategy employed in
+FECHRL enforces an early transition from strong imitation
+guidance to weak cloning constraints during training. This
+mechanism rapidly releases policy exploration capability, en-
+abling the agent to learn from environmental interaction more
+effectively. Consequently, FECHRL achieves lower forgetting
+rates and stronger forward transfer performance across con-
+tinual tasks. These results indicate that appropriately reducing
+imitation constraints during the intermediate stage of training
+is essential for balancing knowledge guidance and policy
+adaptability in continual reinforcement learning.
+Overall, different switching strategies can be flexibly se-
+lected according to different task requirements. Moreover,
+through appropriate parameter adjustment, these strategies can
+achieve approximately equivalent learning performance under
+different CL scenarios.
+D. Ablation Study
+1) Fuzzy Critic Ablation: Due to the coupled structure
+and parameter representation of neural-network-based critics,
+the values of unseen state–action pairs cannot be explicitly
+initialized to low values. Consequently, when switching from
+BC to autonomous interaction, the extrapolation error of the
+critic may provide incorrect gradient directions, causing the
+policy initialized by cloning to deviate from the correct opti-
+mization trajectory and leading to unstable learning. To verify
+this issue and demonstrate the effectiveness of the proposed
+fuzzy critic, we compare the training performance of a neural-
+network-based critic and the fuzzy critic on task T1. The
+results are shown in Fig.7. The learning process switches from
+0
+50
+100
+150
+200
+250
+300
+Episode
+0.0
+0.5
+1.0
+Success Rate
+FECHRL(fuzzy critic)
+FECHRL(neural network)
+Fig. 7: Comparison of different critics
+cloning-based training to autonomous interaction at episode
+60. As shown in the figure, under the neural-network critic, the
+success rate begins to decline after approximately 40 episodes
+of autonomous learning, indicating that the policy gradually
+deviates from the stable behavior initialized by cloning. As
+autonomous interaction continues, this deviation becomes in-
+creasingly severe and eventually results in training collapse. In
+contrast, the fuzzy critic maintains a continuous improvement
+in success rate after the switching stage, demonstrating that
+the transition process remains stable. This indicates that the
+fuzzy critic effectively suppresses extrapolation error and
+preserves stable value estimation during policy adaptation.
+Furthermore, the subsequent learning process remains within
+the normal fluctuation range of stochastic exploration. These
+
+
+10
+TABLE III: Mean performance after training each task for Progressive and Soft switching.
+Method
+Train after
+MT1
+MT2
+MT3
+MT4
+F Tk
+FT Tk
+Progressive
+T1
+0.97±0.01
+1.00±0.00
+1.00±0.00
+1.00±0.00
+-
+-
+T2
+0.03±0.01
+0.91±0.01
+0.84±0.02
+0.83±0.01
+-0.030±0.008
+0.033±0.005
+T3
+0.02±0.01
+0.76±0.01
+0.92±0.01
+0.93±0.02
+0.020±0.014
+0.212±0.005
+T4
+0.00±0.00
+0.27±0.03
+0.33±0.03
+0.89±0.02
+0.013±0.005
+0.208±0.010
+Soft switching
+T1
+0.97 ±0.01
+1.00±0.00
+1.00±0.00
+1.00±0.00
+-
+-
+T2
+0.01 ±0.00
+0.95±0.01
+0.86±0.01
+0.88±0.01
+-0.027±0.005
+0.010±0.000
+T3
+0.00 ±0.00
+0.64±0.02
+0.84±0.05
+0.80±0.01
+0.028±0.005
+0.164±0.004
+T4
+0.00 ±0.01
+0.11±0.01
+0.42±0.03
+0.83±0.00
+0.029±0.016
+0.168±0.002
+results demonstrate the positive role of the fuzzy critic in
+stabilizing the learning process and validate the rationality of
+its design within the proposed framework.
+2) Two-stage-clone Ablation: In CL, previously learned
+policies introduce behavioral biases into new tasks, thereby
+restricting policy exploration and leading to negative transfer.
+BC can alleviate this issue by providing external guidance;
+however, full-stage cloning continuously constrains policy
+updates and suppresses autonomous exploration as well as
+behavioral mode evolution. To verify this phenomenon and to
+investigate the importance of the proposed two-stage cloning
+mechanism for explainable policy formation, the proposed
+method is compared with two variants: no cloning (N-CLONE)
+and full-stage cloning (FULL-CLONE). The corresponding
+results are shown in Fig.8.
+0
+100
+200
+300
+400
+500
+Episode
+0.0
+0.5
+1.0
+Success Rate
+FULL-CLONE
+FECHRL
+N-CLONE
+Fig. 8: Comparison of different critics
+As shown in Fig.8, in the narrow corridor environment, re-
+lying solely on random exploration makes it difficult to obtain
+effective interaction data, resulting in the failure of N-CLONE.
+In contrast, both FULL-CLONE and Two-stage-clone achieve
+significantly improved success rates, demonstrating that be-
+havior cloning effectively facilitates new task learning. From
+the perspective of continual learning, this process can also
+be regarded as correcting the behavioral bias induced by
+previously learned policies. Moreover, FULL-CLONE and
+Two-stage-clone exhibit similar success-rate trends, indicating
+that both methods possess strong task-learning capability.
+To further analyze the differences in behavioral mode for-
+mation, the five sub-reward weights (hai) and the outputs
+of the mode layer (mi) under the same target condition are
+compared, as shown in Fig.9. Fig.9(a) shows that FULL-
+CLONE forms a behavior mode that consistently favors safety,
+where the collision-related weight ha5 remains high while
+the turning-related weight ha2 stays low. This indicates that
+FULL-CLONE mainly learns the inherent behavioral bias of
+the cloned policy rather than an environment-adaptive behavior
+mode. For the narrow corridor environment, a more suitable
+behavior mode should suppress unnecessary turning while
+encouraging motion efficiency, meaning that ha1 and ha2
+should remain relatively high and the efficiency-related mode
+m2 should dominate. As shown in Fig.9(b), the proposed two-
+stage cloning strategy gradually learns behavior modes that
+are more consistent with the environmental characteristics,
+demonstrating that appropriately releasing autonomous explo-
+ration capability is essential for explainable behavioral mode
+formation.
+0
+20
+40
+60steps
+0.2
+0.5
+0.8
+Value
+ha1
+ha2
+ha3
+ha4
+ha5
+m1
+m2
+(a) FULL-CLONE
+0
+20
+40
+60steps
+0.2
+0.5
+0.8
+Value
+ha1
+ha2
+ha3
+ha4
+ha5
+m1
+m2
+(b) TWO-STAGE
+Fig. 9: Comparison of Behavior Modes under Different Clone
+Switching
+E. Explainability
+The explainability of the proposed method is reflected in
+two aspects: behavior mode learning and internal reasoning.
+Specifically, the learned behavior modes and dynamic reward
+weights provide semantic explanations for policy actions,
+while the internal reasoning process of reward generation can
+be further visualized through rule activations. The objective of
+this analysis is not only to explain the final navigation actions,
+but also to verify whether the learned intermediate variables
+preserve human-understandable semantic meanings.
+
+
+11
+To analyze the explainability of the proposed framework,
+one representative trajectory from task T4 is selected for
+visualization. The results are shown in Fig. 10–Fig. 13, corre-
+sponding to steps 0, 22, 61, and 73, respectively. In each figure,
+subfigure (a) illustrates the current environment state, where
+the red square denotes the target position, while subfigure (b)
+presents the corresponding reward weights (hai) and behavior
+mode values (mi).
+In the initial state, the robot is far from the target and
+remains stationary. From a human navigation perspective, a
+balanced strategy between safety and efficiency is generally
+preferred in such situations. Correspondingly, the learned
+mode is observed as [0.46, 0.54], indicating a relatively bal-
+anced behavior tendency. Meanwhile, the reward weights ha1–
+ha5 remain at comparable levels, reflecting that the policy does
+not strongly bias either aggressive exploration or conservative
+avoidance.
+(a) a
+ha1
+ha2
+ha3
+ha4
+ha5
+0.52
+0.68
+0.52
+0.52
+0.48
+samll
+mid
+lager
+0.0
+0.5
+1.0
+0.46 0.54
+m1(safety)
+m2(efficiency)
+(b) b
+Fig. 10: Status, reward weight, and mode for steps(0)
+In Fig. 11, the robot has turned toward the target direction
+while approaching nearby obstacles. In human navigation
+understanding, turning behavior is expected in this situation,
+while obstacle proximity usually requires more conservative
+motion. Correspondingly, the turning-related reward weight
+ha2 decreases from 0.68 to 0.35, reducing the penalty on
+steering behavior, whereas the collision-related weight in-
+creases to 0.73. The learned mode simultaneously shifts toward
+safety dominance, indicating consistency between the learned
+internal representation and human-understandable navigation
+behavior.
+(a)
+ha1
+ha2
+ha3
+ha4
+ha5
+0.27
+0.35
+0.27
+0.27
+0.73
+samll
+mid
+lager
+0.0
+0.5
+1.0
+0.74
+0.26
+m1(safety)
+m2(efficiency)
+(b)
+Fig. 11: Status, reward weight, and mode for steps(22)
+In Fig. 12, the robot moves close to the target position,
+but its heading direction still deviates from the goal direc-
+tion. In this situation, human navigation behavior generally
+emphasizes heading correction while maintaining movement
+efficiency in the absence of nearby obstacles. The observed
+results show that both the velocity-related reward weight ha1
+and the heading-related reward weight ha4 increase to ap-
+proximately 0.39, while the collision-related weight decreases.
+Correspondingly, the overall behavior mode shifts toward
+efficiency, indicating that the learned policy adapts its internal
+semantic representation according to environmental changes.
+(a)
+ha1
+ha2
+ha3
+ha4
+ha5
+0.39
+0.53
+0.39
+0.39
+0.61
+samll
+mid
+lager
+0.0
+0.5
+1.0
+0.65
+0.35
+m1(safety)
+m2(efficiency)
+(b)
+Fig. 12: Status, reward weight, and mode for steps(61)
+In Fig. 13, the robot is about to reach the target but
+simultaneously moves closer to nearby obstacles. From a
+navigation safety perspective, more conservative behavior is
+typically required in this stage. Correspondingly, the safety-
+related mode component increases to 0.76, while the efficiency
+component decreases to 0.24, indicating that the policy dynam-
+ically adjusts its behavior preference to reduce collision risk
+near the goal region.
+(a)
+ha1
+ha2
+ha3
+ha4
+ha5
+0.24
+0.29
+0.24
+0.24
+0.76
+samll
+mid
+lager
+0.0
+0.5
+1.0
+0.76
+0.24
+m1(safety)
+m2(efficiency)
+(b)
+Fig. 13: Status, reward weight, and mode for steps(70)
+Fig. 14 further visualizes the corresponding rule activa-
+tion heatmaps. During the initial stage, Rule 3 dominates
+the inference process. In subsequent stages, the navigation
+conditions become more complex, and the policy behavior is
+jointly influenced by Rules 3, 4, 5, and 8. In particular, when
+the robot approaches obstacles, safety-related rules exhibit
+stronger activations, whereas efficiency-related rules become
+relatively weaker. Overall, the activated rules consistently
+exhibit a stronger tendency toward safety-oriented behavior.
+This visualization provides an explainable reasoning pathway
+from behavior modes to dynamic reward generation.
+Overall, the results indicate that the learned behavior modes
+and reward weights maintain stable semantic correspondence
+with environmental changes and human navigation priors.
+Furthermore, the rule activation analysis demonstrates that
+the proposed framework provides an explainable reasoning
+
+
+12
+0
+20
+40
+60
+Steps
+12345678
+Rule index
+0.25
+0.50
+0.75
+ (activation)
+Fig. 14: Rule activation heatmap
+mechanism rather than merely generating explainable final
+actions.
+F. Real-world Experiments
+To evaluate the performance of the proposed method in
+real-world scenarios, experiments were conducted in two real
+environments shown in Fig. 3. Five target points were set in
+each environment (Table.IV), and the corresponding results are
+presented as follows.
+TABLE IV: TARGET FOR EXPERIMENT 1 AND 2
+Axes
+Target
+Exp1
+x
+1.20
+1.40
+1.60
+2.00
+2.50
+y
+0.00
+0.00
+0.00
+0.00
+0.00
+Exp2
+x
+1.90
+2.40
+1.70
+1.00
+0.20
+y
+-0.50
+0.25
+0.90
+0.56
+0.00
+1) Experiment 1: This environment simulates an open-
+space scenario similar to Env1 and Env5. Fig. 15 presents the
+navigation trajectories and real-world motion snapshots. The
+robot exhibited behavior consistent with that observed during
+training, reaching all target points along relatively straight
+trajectories.
+2
+0
+2
+4
+x/(m)
+2
+0
+2
+y/(m)
+Trajectory
+Real Positon
+Goal
+Obstacle
+P1
+P2
+P3
+P4
+P5
+Fig. 15: Recorded trajectories and corresponding real image
+Fig. 16 illustrates the variations of the reward weights
+and behavioral patterns during navigation toward the first
+target point. In the relatively open and safe environment, the
+behavioral pattern m1 remained at a low level, indicating that
+the policy tended to prioritize efficiency. Correspondingly, the
+collision-related reward weight ha5 was relatively small, while
+the velocity-related reward weight ha1 remained compara-
+tively high. These observations suggest that the intermediate
+behavioral patterns can provide an explainable indication of
+the policy tendency during navigation.
+0
+20
+40 steps
+0.0
+0.5
+1.0
+Value
+ha1
+ha2
+ha3
+ha4
+ha5
+m1
+m2
+Fig. 16: Mode and reward weight of Exp1 targert1
+2) Experiment 2: This environment represents an unseen
+cluttered scenario with multiple obstacles, aiming to evaluate
+the generalization capability of the trained model. Fig. 17
+presents the navigation trajectories and real-world motion
+snapshots. The robot successfully completed navigation tasks
+in the narrow multi-obstacle environment, indicating that the
+proposed method possesses a certain degree of generalization
+capability.
+2
+0
+2
+4
+x/(m)
+2
+0
+2
+y/(m)
+Trajectory
+Real Positon
+Goal
+Obstacle
+P1
+P2
+P3
+P4
+P5
+Fig. 17: Recorded trajectories and corresponding real image
+Fig. 18 shows the variations of the behavioral patterns
+and dynamic reward weights during navigation. Compared
+with the previous environment, the behavioral patterns in
+this scenario changed more dynamically. At the beginning of
+navigation, the environment was relatively open, and the policy
+adopted an efficiency-oriented mode. As the robot gradually
+approached surrounding obstacles, the safety-related pattern
+weights increased, causing the policy to shift toward a safety-
+oriented mode. Finally, when reaching the target position, the
+robot stopped and the behavioral patterns gradually became
+balanced. Overall, the above results demonstrate the feasibility
+0
+50
+100
+steps
+0.2
+0.5
+0.8
+Value
+ha1
+ha2
+ha3
+ha4
+ha5
+m1
+m2
+Fig. 18: Mode and reward weight of Exp2 target1
+of deploying the proposed policy in real-world environments.
+
+
+13
+In addition, the introduced intermediate behavioral patterns
+provide a certain degree of explainability for understanding
+the behavioral tendencies of the navigation policy.
+VI. CONCLUSION
+This study investigated the integration of continual learning
+capability and policy explainability in robotic navigation tasks.
+Since continual learning prefers strong prior constraints while
+explainability-oriented behavior learning requires sufficient
+autonomous interaction, a conflict exists between the two
+objectives during policy optimization. To address this issue,
+an explainability-oriented continual reinforcement learning
+framework, FECHRL, was proposed. A two-stage behavior
+cloning mechanism was introduced to balance early-stage
+knowledge guidance and late-stage autonomous behavior for-
+mation, while a localized fuzzy critic was designed to stabilize
+the transition from cloning-guided learning to autonomous
+interaction learning. Experimental results in sequential nav-
+igation tasks demonstrated that the proposed framework can
+simultaneously maintain continual learning capability and gen-
+erate semantically explainable behavior patterns. In particular,
+the proposed two-stage cloning strategy was shown to play an
+important role in balancing policy stability and explainability-
+oriented behavior learning. Although the proposed method is
+effective, it still relies on multiple auxiliary mechanisms and
+hierarchical components, resulting in relatively high structural
+complexity. Future work will investigate whether similar sus-
+tained adaptation and explainability features can be achieved
+through more compact policy structures and intrinsic repre-
+sentation learning mechanisms.
+REFERENCES
+[1] J. Kirkpatrick, R. Pascanu, N. Rabinowitz, et al., “Overcoming catas-
+trophic forgetting in neural networks,” Proceedings of the National
+Academy of Sciences, vol. 114, no. 13, pp. 3521–3526, 2017.
+[2] F. Sarfraz, E. Arani, and B. Zonooz, “Sparse coding in a dual memory
+system for lifelong learning,” in Proceedings of the AAAI Conference
+on Artificial Intelligence, vol. 37, pp. 9714–9722, 2023.
+[3] A. Andres, A. D. Martinez, S. Tun ˜A§ay, et al., “Evaluating reinforce-
+ment learning-based neural controllers for quadcopter navigation in
+windy conditions,” Engineering Applications of Artificial Intelligence,
+vol. 161, p. 112090, 2025.
+[4] T. An and C. Joo, “Dag-nas : An explainable neural architecture search
+framework for reinforcement learning,” Neural Networks, vol. 201,
+p. 108901, 2026.
+[5] Q. Pan, J. Lian, X. Liu, et al., “A reinforcement learning method with an
+expert guidance mechanism for manipulator trajectory generation,” IEEE
+Transactions on Industrial Informatics, vol. 22, no. 3, pp. 2068–2077,
+2026.
+[6] X. Tian, B. Xia, J. Tan, et al., “Behavior cloning assisted reinforcement
+learning for cable-driven continuum space robots in sparse reward
+environments,” IEEE Robotics and Automation Letters, vol. 10, no. 9,
+pp. 9232–9239, 2025.
+[7] X. Yang, J. Ni, H. Cen, et al., “Close-range docking control for recon-
+figurable ground vehicles: Model-guided reinforcement learning with
+robust predictive safety filter,” Engineering Applications of Artificial
+Intelligence, vol. 164, p. 113162, 2026.
+[8] H. Zhong, Z. Wang, and Y. Hao, “A goal-conditioned offline reinforce-
+ment learning algorithm and its application to quad-rotors,” Engineering
+Applications of Artificial Intelligence, vol. 152, p. 110678, 2025.
+[9] S. Liu, Y. Qing, S. Xu, et al., “Curricular subgoals for inverse reinforce-
+ment learning,” Trans. Intell. Transport. Sys., vol. 26, pp. 3016–3027,
+Mar. 2025.
+[10] P. Qin and T. Zhao, “Knowledge guided fuzzy deep reinforcement
+learning,” Expert Systems with Applications, vol. 264, p. 125823, 2025.
+[11] P. Qin and T. Zhao, “Knowledge guided deep deterministic policy
+gradient,” Knowledge-Based Systems, p. 113087, 2025.
+[12] Y.-J. Ho, Z.-Y. Chiu, Y. Zhi, et al., “Surgirl: Toward life-long learning
+for surgical automation by incremental reinforcement learning,” IEEE
+Robotics and Automation Letters, vol. 10, no. 12, pp. 13145–13152,
+2025.
+[13] S. Zhou, J. Liu, Y. Lu, et al., “Script: A scalable continual reinforcement
+learning framework for autonomous penetration testing,” Expert Systems
+with Applications, vol. 285, p. 127827, 2025.
+[14] M. B. Hafez, T. Immisch, T. Weber, et al., “Map-based experience
+replay: a memory-efficient solution to catastrophic forgetting in rein-
+forcement learning,” Frontiers in Neurorobotics, vol. 17, 2023.
+[15] C. Zhao, J. Xu, R. Peng, et al., “Experience consistency distillation
+continual reinforcement learning for robotic manipulation tasks,” in 2024
+IEEE International Conference on Robotics and Automation (ICRA),
+pp. 501–507, 2024.
+[16] X. Li, B. Tang, and H. Li, “Adaer: An adaptive experience replay
+approach for continual lifelong learning,” Neurocomputing, vol. 572,
+p. 127204, 2024.
+[17] G. Zheng, S. Zhou, V. Braverman, et al., “Selective experience replay
+compression using coresets for lifelong deep reinforcement learning in
+medical imaging,” in Medical Imaging with Deep Learning, vol. 227,
+pp. 1751–1764, 2024.
+[18] F. Zenke, B. Poole, and S. Ganguli, “Continual learning through synaptic
+intelligence,” in Proceedings of the 34th International Conference on
+Machine Learning, vol. 70, pp. 3987–3995, 2017.
+[19] P. Qin, J. Zhao, Z. Mei, H. Yang, and T. Zhao, “Knowledge-guided con-
+tinual reinforcement learning for navigation,” IEEE Internet of Things
+Journal, vol. 13, no. 5, pp. 9535–9547, 2026.
+[20] X. Zhuang, H. Li, J. Liu, et al., “Optimal formation control for
+autonomous vehicles: A bilayer predefined-time fuzzy reinforcement
+learning approach,” IEEE Transactions on Fuzzy Systems, vol. 33, no. 12,
+pp. 4405–4417, 2025.
+[21] G. Narayanan, S. Lee, and S. Ahn, “Reinforcement learning-based it-2
+fuzzy fractional-order sliding mode control for leader-follower formation
+tracking of flexible-joint robots,” IEEE Transactions on Fuzzy Systems,
+vol. 34, no. 2, pp. 503–516, 2026.
+[22] P. Li, L. Fu, Z. Song, et al., “Predictor-based event-triggered optimized
+control for uncertain nonlinear systems with time delays: A reinforce-
+ment learning approach,” IEEE Transactions on Fuzzy Systems, vol. 33,
+no. 9, pp. 3360–3374, 2025.
+[23] Y. Wang, D. Xu, Y. Xie, et al., “Hierarchical decision-making for
+autonomous navigation: Integrating deep reinforcement learning and
+fuzzy logic in four-wheel independent steering and driving systems,”
+2025.
+[24] S. Zhu, M. Li, D. Hu, et al., “Knowledge guided self-evolving fuzzy
+deep reinforcement learning with dual-adaptive optimization strategy,”
+Expert Systems with Applications, vol. 307, p. 131004, 2026.
+[25] H. Zhang, Y. Liu, J. Zhao, et al., “Fuzzy reinforcement learning for
+adaptive control of cdq systems in steel industry,” IEEE Transactions
+on Industrial Informatics, pp. 1–12, 2026.
+[26] Y. Lian, N. Li, P. Zhou, et al., “A curriculum-guided and explainable re-
+inforcement learning framework for fixed-wing unmanned aerial vehicle
+autopilots,” Engineering Applications of Artificial Intelligence, vol. 163,
+p. 113015, 2026.
+[27] I. Jency and R. Anto Kumar, “Finquaxbot: enhancing trust and security
+in personalized investment and tax forecasting using homomorphic
+encryption and meta-reinforcement learning with explainability,” Expert
+Systems with Applications, vol. 287, p. 128136, 2025.
+[28] J. Li, D. Isele, K. Lee, et al., “Interactive autonomous navigation with
+internal state inference and interactivity estimation,” IEEE Transactions
+on Robotics, vol. 40, pp. 2932–2949, 2024.
+[29] P. Qin, J. Zhao, J. Zhao, and T. Zhao, “Guided continual reinforce-
+ment learning for navigation via integrative consolidation and memory
+augmentation,” IEEE Transactions on Neural Networks and Learning
+Systems, pp. 1–15, 2026.
+[30] T. P. Lillicrap, J. J. Hunt, A. Pritzel, N. Heess, T. Erez, Y. Tassa,
+D. Silver, and D. Wierstra, “Continuous control with deep reinforcement
+learning,” 2019.

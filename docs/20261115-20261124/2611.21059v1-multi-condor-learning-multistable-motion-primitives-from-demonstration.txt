@@ -1,0 +1,1021 @@
+Multi-CONDOR: Learning Multistable Motion Primitives from
+Demonstration
+Gabriele Giuseppe Di Marzo1,4,∗,†, Mariano Ram´ırez Montero1,∗,†,
+Maximilian St¨olzle1,2, Rodrigo P´erez-Dattari1,3, and Cosimo Della Santina1
+Abstract— Dynamical-system-based motion policies provide
+a framework for learning reactive robot motions with stability
+and convergence properties. Many manipulation tasks, however,
+admit several distinct goals or a continuous set of acceptable
+outcomes, requiring motion primitives that preserve these alter-
+natives. Accommodating both goal structures within a unified
+framework with continuous, autonomous dynamics remains an
+open challenge. We propose a CONDOR-based framework,
+multi-CONDOR, for learning motion primitives with either
+multiple discrete attractors or a continuous attracting goal
+contour. The approach combines imitation learning with losses
+that encourage agreement between the learned task dynamics
+and latent reference systems encoding the desired attraction
+structure. We provide a Lyapunov-based analysis of the conver-
+gence properties of the learned motion dynamics. We evaluate
+the framework on simulated benchmarks with discrete goals,
+qualitative examples with continuous goal contours, and robotic
+grasping experiments. In simulation, multi-CONDOR reduces
+trajectory RMSE by approximately 72% compared with sepa-
+rately learned single-goal motion primitives selected by a state
+machine. For tasks with two and three goals, respectively, it
+reduces the fraction of evaluated initial states ending outside
+the goal tolerance from StableNODE’s 0.31% and 7.29% to
+0% in both settings. Experiments with a Franka Emika robot
+arm demonstrate successful grasping of a container by either
+of its two handles using motions learned from demonstrations.
+Together, these results show multi-CONDOR combines motion
+reproduction with the flexibility to converge to alternative valid
+outcomes.
+I. INTRODUCTION
+Imitation learning enables robots to acquire motion skills
+from demonstrations, providing an accessible way to adapt
+their behavior to new tasks. This capability is increasingly
+valuable as robots enter environments where tasks vary
+and frequent manual programming is impractical. General
+approaches, including generative methods such as diffusion
+policies [1], can represent complex behaviors, but may re-
+quire substantial demonstration data [2] and do not inherently
+provide stability or convergence guarantees.
+This work was supported by the European Union’s Horizon Europe pro-
+gram through the EIC EMERGE project (Grant Agreement No. 101070918).
+*These authors contributed equally to this work.
+†Corresponding author.
+1Department
+of
+Cognitive
+Robotics,
+Delft
+University
+of
+Technology,
+Delft,
+The
+Netherlands.
+{m.ramirezmontero-1,
+c.dellasantina}@tudelft.nl.
+2Computer Science and Artificial Intelligence Laboratory, Massachusetts
+Institute of Technology, Cambridge, MA, USA. mstolzle@mit.edu.
+3Department of Robotics, Perception and Learning, KTH Royal Institute
+of Technology, Stockholm, Sweden. rpd@kth.se.
+4Department
+of
+Computer,
+Control
+and
+Management
+Engineering
+(DIAG),
+Sapienza
+University
+of
+Rome,
+Italy.
+gabriele.dimarzo@fisic.ai
+Dynamical systems provide an established framework for
+learning motion primitives with stability and convergence
+properties. Dynamic movement primitives (DMPs) reproduce
+demonstrated motions using an internal phase variable that
+governs their progression [3]. If this phase advances while
+physical interaction slows or blocks the robot [4], the re-
+sulting mismatch can induce unnatural catch-up motions [5].
+Other approaches learn autonomous vector fields that deter-
+mine motion directly from the current task state, without an
+independent time or phase reference [6], [7], [8], [9].
+Standard point-to-point motion primitives typically encode
+convergence to a single prescribed goal [3], [10]. Many
+manipulation tasks instead admit multimodal goal behavior: a
+robot may grasp a container at either of two handles. Other
+tasks admit a continuum of acceptable outcomes, such as
+grasping at any admissible point along its rim. Selecting
+one endpoint in advance discards alternatives that may be
+easier to reach from the current configuration or after a dis-
+turbance. A disturbance can then redirect the motion toward
+another valid goal, allowing the robot to complete the task
+without returning to the originally selected endpoint. Motion
+primitives should therefore capture both the demonstrated
+approach behavior and the freedom to converge to multiple
+isolated goals or a continuous goal set.
+Initial
+work
+has
+addressed
+the
+discrete
+multistable
+case. Augmented-SVM combines motion dynamics through
+learned partitions of the state space and modulates their vec-
+tor fields to preserve the associated attraction regions [11].
+StableNODE learns latent dynamics with multiple attractors
+using a corrective term derived from an energy function [12].
+These approaches demonstrate motion generation toward
+distinct goals, but do not provide a unified framework for
+learning continuous, autonomous motion dynamics with both
+multiple discrete attractors and continuous attracting goal
+sets.
+We propose a unified framework for learning motion
+primitives with continuous, autonomous dynamics and either
+multiple discrete attractors or a continuous attracting goal
+contour. Building on CONDOR [8], we learn a task-space
+vector field together with an encoding into a latent space
+equipped with reference dynamics representing the desired
+attraction structure. We introduce two reference systems: a
+Gaussian potential for multiple isolated goals and a radially
+attracting circle for a continuous goal contour. We establish
+sufficient conditions for convergence to our desired set
+through Lyapunov analysis, and formulate training losses that
+arXiv:2611.21059v1  [cs.RO]  16 Nov 2026
+
+
+350
+300
+250
+200
+150
+100
+50
+0.30
+100
+1.05
+1.80
+200
+2.55
+300
+x (mm)
+400
+3.30 4.05 4.80 5.55
+speed (mm/s)
+6.30
+500
+7.05
+y (mm)
+Dynamical System
+r
+Demonstrations
+Task space
+Latent space
+Fig. 1.
+Overview of multi-CONDOR: an encoder ψ maps task states x(t) to latent states y(t), and a function ϕ maps these to task velocities ˙x(t). Both are
+jointly trained as parts of a single neural network. Training aligns the encoded task dynamics with prescribed latent reference dynamics featuring multiple
+attractors (shown above “Latent space”), encouraging the learned vector field to inherit their multistability while reproducing the demonstrations D.
+encourage these conditions alongside an imitation objective.
+The resulting framework learns motion toward alternative
+admissible goals directly from the current state.
+We evaluate the framework on two-dimensional demon-
+stration datasets with two and three discrete goals, measuring
+trajectory reproduction and convergence from initial states
+distributed throughout the workspace. We further exam-
+ine continuous goal contours through qualitative examples
+and demonstrate robotic grasping with multiple admissible
+grasping locations. Together, these experiments assess the
+framework’s ability to reproduce demonstrated motions while
+accommodating discrete and continuous goal sets.
+II. METHODOLOGY
+Given motion demonstrations in a task domain T ⊂RNx
+and a set of admissible goals G ⊂T , we aim to learn an
+autonomous dynamical system
+˙x = fθ(x),
+(1)
+that reproduces the demonstrated motion while approaching
+a goal in G. We consider both multiple isolated goals and
+a continuous attracting goal contour. The velocity depends
+only on the current state, with no explicit dependence on
+time or a phase variable, so the eventual goal is determined
+by the dynamics from the current state.
+We build on CONDOR [8], which represents the task
+dynamics as a neural network fθ = ϕθ ◦ψθ. The encoder
+ψθ : T
+→RNy maps a task state x to a latent state
+y = ψθ(x), and ϕθ : RNy →RNx maps this latent state to a
+task velocity. CONDOR trains the encoded task trajectories
+to follow prescribed latent reference dynamics ˙y = fL(y)
+with a single asymptotically stable equilibrium. We extend
+this framework by introducing two reference systems that
+encode either multiple discrete attractors or a continuous
+attracting contour.
+Training combines an imitation objective with a stabil-
+ity loss comprising trajectory matching and separation to
+discourage collapsed encodings. The task dynamics inherit
+convergence properties of the reference system under the
+conditions developed below, and our approach is summarized
+in Figure 1. We first introduce the stability loss (Section II-
+A) and the convergence conditions (Section II-B), then
+present the two reference systems and their additional losses
+(Sections II-C and II-D), and finally give the imitation loss
+and complete training objectives (Section II-E).
+A. Stability loss
+We sample Bs initial states x0,b uniformly from T and
+roll out the task and reference dynamics for Hs steps with
+time step ∆t. Using yL
+0,b = ψθ(x0,b), the rollouts are
+xt,b = xt−1,b + ∆t fθ(xt−1,b),
+yL
+t,b = yL
+t−1,b + ∆t fL(yL
+t−1,b).
+(2)
+The matching loss encourages the encoded task trajectories
+yT
+t,b
+= ψθ(xt,b) to follow the reference dynamics and
+reproduce their intended attraction behavior by penalizing
+differences between the two rollouts (Figure 2):
+ℓmatch =
+1
+BsHs
+Bs−1
+X
+b=0
+Hs
+X
+t=1
+yL
+t,b −yT
+t,b
+2
+2.
+(3)
+The matching loss alone admits collapsed encodings: map-
+ping every task state to the same latent equilibrium makes it
+zero regardless of the task dynamics. We therefore introduce
+a separation loss that encourages distinct consecutive task
+states to remain distinguishable in latent space:
+ℓsep =
+1
+BsHs
+Bs−1
+X
+b=0
+Hs
+X
+t=1
+max
+ 0, m−∥yT
+t,b−yT
+t−1,b∥2
+2, (4)
+which penalizes consecutive latent states separated by less
+than a margin m. The separation penalty remains active near
+equilibria, including the desired goals; a small margin limits
+its influence in these regions.
+Our stability loss is
+ℓstable = ℓmatch + ℓsep.
+(5)
+
+
+Task Space
+Latent Space
+ℓmatch
+ℓmatch
+x0,0
+x1,0
+x2,0
+x3,0 xHs,0
+x0,1
+x1,1
+x2,1
+x3,1
+xHs,1
+yL
+1,0
+yL
+2,0 yL
+3,0
+yg1 = ψθ(xg1)
+yT
+1,0
+yT
+2,0
+yT
+3,0
+yT
+Hs,0
+yT
+0,0 = yL
+0,0 = ψθ(x0,0)
+yL
+1,1
+yL
+2,1
+yL
+3,1
+yg2 = ψθ(xg2)
+yT
+1,1
+yT
+2,1
+yT
+3,1
+yT
+Hs,1
+yT
+0,1 = yL
+0,1 = ψθ(x0,1)
+f T
+θ (x)
+fL(y)
+ψθ(xt,b)
+Fig. 2.
+Matching loss for two sampled initial task states x0,b. Encoded
+task rollouts yT
+t,b = ψθ(xt,b) are compared with reference rollouts yL
+t,b
+initialized at the same latent state ψθ(x0,b).
+Section II-B states sufficient conditions for convergence and
+relates them to these losses.
+B. Conditions for multistable dynamics
+Let Z = {y : fL(y) = 0} denote the latent equilibrium
+set. The following theorem transfers convergence to the task
+space through the encoder; both reference systems introduced
+below admit a function VL satisfying its assumptions.
+Theorem 1 (Transfer of convergence). Let T be compact
+and positively invariant under fθ, and let VL be a C1
+function with ˙VL(y) = ∇VL(y)⊤fL(y) ≤0, where ˙VL(y) =
+0 only if fL(y) = 0. If the dynamics-matching condition
+Jψθ(x) fθ(x) = fL(ψθ(x))
+for all x ∈T ,
+(6)
+holds, where Jψθ = ∂ψθ/∂x, then every task trajectory
+converges to the set E = {x ∈T : ψθ(x) ∈Z}.
+Proof. Let VT = VL ◦ψθ. By the chain rule and (6),
+˙VT (x) = ∇VL(ψθ(x))⊤dψθ(x)
+dt
+= ∇VL(ψθ(x))⊤∂ψθ(x)
+∂x
+˙x
+= ∇VL(ψθ(x))⊤Jψθ(x) fθ(x)
+|
+{z
+}
+= fL(ψθ(x)) by (6)
+= ˙VL(ψθ(x)) ≤0.
+(7)
+Since T is compact and positively invariant, LaSalle’s in-
+variance principle [13] implies that every task trajectory
+converges to the largest invariant set in {x : ˙VT (x) = 0}.
+Since ˙VT (x) = ˙VL(ψθ(x)) = 0 if and only if ψθ(x) ∈Z,
+this set is contained in E.
+To connect this convergence result to the desired goals,
+we seek an encoding that maps the goals onto the reference
+attractors. The reference dynamics can also contain unstable
+equilibria, such as the saddle between the two attractors
+in Figure 3. Task states mapped onto these equilibria also
+belong to E. We therefore seek an encoding for which the
+convergence set consists of the desired goals G and task states
+whose latent representations coincide with unstable equilibria
+of the reference dynamics,
+U =
+
+x ∈T \ G : ψθ(x) ∈Z \ ψθ(G)
+	
+.
+(8)
+Remark 1 (Practical effect of unstable equilibria). Small per-
+turbations along unstable directions drive trajectories away
+from an unstable task-space equilibrium. In physical robot
+systems, measurement noise and actuation or tracking errors
+typically introduce such perturbations, making persistent
+trapping at a saddle point unlikely in practice and allowing
+motion to continue toward a stable goal.
+This motivates three requirements on the encoder:
+(R1) G ⊆E: desired goals map to latent equilibria;
+(R2) E ⊆G ∪U: the convergence set contains only the
+desired goals and task states mapped onto unstable
+latent equilibria;
+(R3) ψθ is one-to-one on G∪U: distinct goals and task states
+mapped onto unstable latent equilibria have distinct
+latent representations.
+Under (R1) and (R2), E = G ∪U, so every task trajectory
+converges to this set. Requirement (R3) keeps goal encodings
+distinct and limits U to at most one task state per unstable
+latent equilibrium.
+The matching loss (3) encourages the dynamics-matching
+condition (6), while the separation loss (4) discourages col-
+lapsed encodings along trajectories (R2). For discrete goals
+(Section II-C), the mapping loss (10) separates the Gaussian
+centers, promoting stable equilibria near the goal encodings
+(R1) and keeping these encodings distinct (R3). For goal
+contours (Section II-D), the curve loss (14) encourages goal
+encodings to lie on the attracting circle (R1) and other states
+to lie away from it (R2), while the orientation loss (15) keeps
+contour goal encodings distinct (R3).
+C. Reference dynamics with discrete equilibria
+Let yg = ψθ(xg) be the latent encoding of task goal
+xg ∈G, g = 1, . . . , Ng. We define the reference dynamics
+as gradient ascent on a Gaussian potential:
+P(y) =
+Ng
+X
+g=1
+e−∥y−yg∥2
+2,
+fL(y) = ∇P(y).
+(9)
+With VL = −P, we obtain ˙VL = −∥fL∥2
+2 ≤0, which
+vanishes only at latent equilibria, as Theorem 1 requires.
+Trajectories are bounded because the superlevel sets {y :
+P(y) ≥c}, c > 0, are compact and positively invariant.
+In theory, closely spaced Gaussian centers can yield a
+single potential maximum. In practice, we prevent this by
+choosing fixed reference positions ξg with sufficient sepa-
+ration to support distinct attractors and anchoring the goal
+encodings to these positions through the mapping loss,
+ℓmap = 1
+Ng
+Ng
+X
+g=1
+∥yg −ξg∥2
+2.
+(10)
+This separation reduces the interaction between Gaussians
+and promotes stable equilibria near the goal encodings,
+
+
+−2
+−1
+0
+1
+2
+푦0
+−2
+−1
+0
+1
+2
+푦1
+푓L with 2 discrete, stable attractors
+−1.5
+−1.0
+−0.5
+0.0
+0.5
+1.0
+1.5
+푦0
+−1.5
+−1.0
+−0.5
+0.0
+0.5
+1.0
+1.5
+푦1
+푓L with a continuous curve of attraction
+0.0
+0.2
+0.4
+0.6
+0.8
+∥¤푦∥
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+∥¤푦∥
+Fig. 3.
+Reference dynamics fL in two dimensions: two isolated stable
+attractors (blue dots, left) and a continuous attracting circle (dashed blue
+line, right).
+supporting (R1), while keeping the goal encodings distinct,
+as required by (R3).
+D. Reference dynamics with a continuous set of attraction
+We represent the closed task-space goal contour G = C ⊂
+T by an attracting latent circle. Partition the latent state as
+y = (u, z), with u ∈R2 and z ∈RNy−2, and define the
+Cartesian reference dynamics
+˙u = β(1 −∥u∥2
+2)u,
+˙z = −z,
+(11)
+where β > 0. These dynamics are smooth everywhere,
+including at u = 0. For r = ∥u∥2 > 0, their polar
+interpretation is ˙r = βr(1 −r2) and ˙α = 0, where α is the
+latent angle. Thus, for u(0)̸ = 0, the radius approaches one,
+the angle remains constant, and z decays to zero, yielding
+convergence to the latent goal set
+S = {(u, z) : ∥u∥2 = 1, z = 0}.
+(12)
+The function
+VL(y) = 1
+4(r2 −1)2 + 1
+2∥z∥2
+2,
+˙VL(y) = −β r2(r2 −1)2 −∥z∥2
+2 ≤0,
+(13)
+satisfies the assumptions of Theorem 1: its derivative van-
+ishes only on the equilibrium set S ∪{0}. Its compact,
+positively invariant sublevel sets ensure bounded trajectories.
+Initial states with u(0) = 0 converge to the unstable origin,
+whose task-space preimage forms U.
+To place contour encodings at unit radius and separate
+non-goal encodings from the latent goal set S, we introduce
+a curve loss. We sample contour points BC ⊂C uniformly
+along the curve and form Bneg from non-goal points sampled
+both near the contour on either side and uniformly throughout
+the workspace. Write r(x) = ∥u(ψθ(x))∥2 and z(x) =
+z(ψθ(x)). The squared Euclidean distance from ψθ(x) to
+S is dS(x)2 = (r(x) −1)2 + ∥z(x)∥2
+2. We define
+ℓcurve =
+1
+|BC|
+X
+x∈BC
+ r(x) −1
+2
++
+1
+|Bneg|
+X
+x∈Bneg
+max
+ 0, ϵc −dS(x)2
+.
+(14)
+The first term encourages unit radius for contour encodings,
+while the matching loss (3) encourages their remaining
+coordinates to follow ˙z = −z and vanish as the task
+motion settles at a goal. Together, these losses encourage
+goal encodings to lie on S, supporting (R1). The second term
+penalizes sampled non-goal encodings within a distance √ϵc
+of S, supporting (R2) alongside the separation loss (4).
+Radial placement leaves the angular arrangement of con-
+tour encodings unspecified. To distinguish contour points, we
+order them along the curve and assign each xi a target angle
+ˆαi ∈[−π, π) during preprocessing. With target unit vectors
+ˆui = (cos ˆαi, sin ˆαi)⊤, the orientation loss is
+ℓorient =
+1
+|BC|
+X
+xi∈BC
+
+u(ψθ(xi))
+max(r(xi), ε) −ˆui
+
+2
+2
+,
+(15)
+where ε > 0 is a small normalization constant that keeps
+the expression defined at r(xi) = 0. Comparing unit-vector
+targets accounts for angle periodicity and encourages distinct
+contour goal encodings, supporting (R3).
+E. Imitation loss and training objective
+Following CONDOR [8], we encourage reproduction of
+the demonstrations through a multistep imitation loss. We
+sample Bi demonstration segments with states x∗
+t,b and roll
+out the task dynamics for Hi steps from ˆx0,b = x∗
+0,b:
+ˆxt,b = ˆxt−1,b + ∆t fθ(ˆxt−1,b).
+(16)
+The imitation loss is the mean squared trajectory error:
+ℓIL =
+1
+BiHi
+Bi−1
+X
+b=0
+Hi
+X
+t=1
+x∗
+t,b −ˆxt,b
+2
+2.
+(17)
+We combine imitation, stability, and reference-specific
+losses into the training objectives for discrete goals,
+Ld = λILℓIL + λstableℓstable + λmap(k) ℓmap,
+(18)
+and continuous goals,
+Lc = λILℓIL + λstableℓstable + λcurveℓcurve + λorientℓorient.
+(19)
+We observe empirically that goal separation is maintained
+after the initial training iterations, so we progressively reduce
+the mapping-loss weight as
+λmap(k + 1) = γλmap(k),
+(20)
+where k indexes training iterations and γ ∈(0, 1). We jointly
+optimize the network parameters θ, with nonnegative weights
+balancing the loss terms.
+III. RESULTS
+We first benchmark multi-CONDOR on tasks with discrete
+goals, then demonstrate its application to robotic grasping
+and illustrate its extension to continuous goal contours.
+
+
+A. Discrete multi-attractor benchmarking
+1) Datasets: We evaluate multi-CONDOR on seven 2D
+motion tasks drawn manually on a digital interface: three
+with two attractors and four with three attractors. The tasks
+contain 6–8 and 12–24 demonstrations, respectively, with
+equal numbers of demonstrations per goal. Goal positions
+are estimated by clustering demonstration endpoints using k-
+means, with k equal to the number of attractors, and taking
+each cluster’s mean endpoint. All states are normalized to a
+workspace defined by the demonstration minima and maxima
+multiplied by a factor of 1.3 to provide a margin.
+2) Metrics: We evaluate imitation accuracy and empirical
+stability. For imitation accuracy, we simulate each system
+from the demonstration initial states and compare the re-
+sulting trajectories with the demonstrations using root mean
+squared error (RMSE), dynamic time warping distance nor-
+malized by the number of points (DTWD) [14], and Fr´echet
+distance (FD) [15]. To assess stability, we simulate each
+system for 5000 steps from a 16 × 16 grid covering the
+workspace. We report the percentage of initial states whose
+final state lies more than 5 units (approximately 1% of
+the workspace width) from every goal as the “spurious
+attractors” metric. We also report the mean distance from
+each final state to its nearest goal (distance from goals).
+3) Baselines: We compare our method with two baselines.
+Single-attractor CONDORs + state machine trains one CON-
+DOR model [8] per goal and selects the nearest goal’s model
+at execution time, mirroring the state-space partitioning idea
+of Augmented-SVM [11]. Each model combines imitation
+learning with a contrastive stability loss that encourages
+encoded trajectories to follow reference dynamics with a
+single stable equilibrium. Each model uses the same archi-
+tecture and optimizer as multi-CONDOR, specified below.
+StableNODE [12], our main baseline for learning a single
+autonomous dynamical system with multiple goals, uses a
+neural ODE with a Lyapunov-based correction to its nominal
+vector field. The correction acts when the nominal dynamics
+violate a prescribed Lyapunov decrease condition. Its for-
+mulation admits nonconvex Lyapunov functions, allowing
+multiple attractors. We train it using the average Hausdorff
+distance between generated and demonstrated trajectories,
+which measures geometric similarity without requiring tem-
+poral alignment. The reported results use α = ϵ = 10−2,
+where α specifies the desired Lyapunov decay rate and ϵ
+regularizes the correction near points where the Lyapunov
+gradient vanishes.
+4) Ablations: We evaluate two ablations of the discrete-
+goal objective (18), retaining the multi-CONDOR network
+architecture. Only imitation removes the stability loss (tra-
+jectory matching and separation) and the goal-mapping loss
+(λstable = λmap = 0). It tests whether fitting demonstrations
+alone yields accurate imitation and reliable goal reaching
+throughout the workspace. No mapping loss removes only
+the goal-mapping loss (λmap = 0), retaining imitation and
+stability losses. It tests whether anchoring goal encodings to
+separated reference positions ξg improves imitation accuracy
+and suppresses spurious attractors.
+5) Multi-CONDOR implementation details: As a safe-
+guard, rollout transitions that would leave T are projected
+back onto its boundary. The encoder has four hidden layers
+and the decoder three, all with 300 units, GELU activations
+and layer normalization, and the latent space has dimen-
+sion 300. The reference system is the Gaussian mixture of
+Section II-C. For two attractors, the reference positions are
+ξ1 = (1, . . . , 1) and ξ2 = (−1, . . . , −1); for three attractors,
+they are sampled uniformly at random in the latent space.
+We use horizons Hi = 10 and Hs = 7, margin m = 0.033,
+weights λIL = 1, λstable = 0.4 and λmap = 0.05 with decay
+factor γ = 0.99, and train for 10,000 iterations with AdamW
+(learning rate 4.9×10−4, weight decay 10−5, batch size 250).
+All results are averaged over five random seeds.
+6) Discussion:
+Table I summarizes the results. The
+imitation-only ablation achieves the lowest imitation er-
+rors in both settings, but its spurious-attractor rates are
+approximately 17% and 37% for two and three attractors,
+respectively. The full method records no spurious attractors
+under our evaluation criterion, with modestly higher imita-
+tion errors. Its mean distance from the goals decreases from
+13.33 to 3.10 and from 28.24 to 2.69, respectively. Removing
+the mapping loss also worsens both stability metrics in both
+settings and substantially increases imitation errors for two
+attractors.
+Compared with separate single-attractor CONDOR models
+selected by a state machine, multi-CONDOR achieves sub-
+stantially lower imitation errors and better stability metrics
+in both settings. StableNODE achieves comparable imitation
+accuracy and the smallest mean distance from the goals for
+two attractors. For three attractors, however, its spurious-
+attractor rate is 7.29%, and its mean distance from the goals
+is 17.90, compared with 2.69 for multi-CONDOR.
+During StableNODE hyperparameter tuning and longer
+training runs, we observed a tradeoff between imitation ac-
+curacy and stability: improving one often degraded the other.
+Figure 4 illustrates this qualitatively: StableNODE produces
+additional spurious attractors (blue) away from the demon-
+stration endpoints, with demonstrations shown in white and
+generated trajectories in red. Overall, multi-CONDOR com-
+bines imitation accuracy close to the imitation-only ablation
+with reliable goal reaching across the evaluated initial states.
+B. A multi-goal robotic grasping task
+We evaluate multi-CONDOR on a robotic grasping task
+in which a Franka FR3 grasps a box from either side. We
+collect ten kinesthetic demonstrations, five per goal, and
+learn dynamics for the 3D Cartesian end-effector position
+(Figure 5).
+At each control step, the learned dynamics map the current
+position to a velocity, which is integrated to obtain the target
+position for an impedance controller. The target orientation
+is taken from the nearest recorded demonstration point, and
+a separate state machine closes the gripper when the end
+effector reaches either goal.
+
+
+TABLE I
+PERFORMANCE METRICS FOR THE 2-ATTRACTOR AND 3-ATTRACTOR DATASETS. WE REPORT THE MEAN AND STANDARD DEVIATION OVER THE
+TOTAL NUMBER OF TASKS (3 FOR 2-ATTRACTOR AND 4 FOR 3-ATTRACTOR) AND OVER 5 RANDOM SEEDS. THE BEST RESULTS ARE SHOWN IN BOLD.
+Method
+RMSE
+DTWD
+FD
+Spurious
+attractors (%)
+Distance
+from goals
+2 attractors
+StableNODE (α=ϵ=10−2)
+17.65±0.64
+8.37±1.35
+32.91±4.10
+0.31±0.63
+0.38±0.21
+Single-attractor CONDORs + state machine
+77.85±3.94
+81.32±2.96
+106.28±9.11
+9.22±9.23
+3.71±0.70
+Multi-CONDOR (only imitation, λstable = λmap = 0)
+15.25±6.53
+5.69±1.48
+20.68±8.03
+16.98±20.89
+13.33±16.38
+Multi-CONDOR (no mapping loss, λmap = 0)
+32.00±32.89
+23.62±42.24
+48.20±69.99
+13.33±35.19
+21.25±48.09
+Multi-CONDOR (Ours)
+21.58±11.30
+8.82±6.97
+24.26±16.15
+0.00±0.00
+3.10±0.97
+3 attractors
+StableNODE (α=ϵ=10−2)
+13.46±0.51
+8.33±1.04
+24.50±1.48
+7.29±6.09
+17.90±10.68
+Single-attractor CONDORs + state machine
+49.70±1.86
+60.03±1.96
+88.22±3.47
+13.75±6.63
+3.76±0.72
+Multi-CONDOR (only imitation, λstable = λmap = 0)
+11.26±7.09
+6.58±4.87
+18.49±14.57
+37.13±21.20
+28.24±30.37
+Multi-CONDOR (no mapping loss, λmap = 0)
+13.23±10.27
+8.85±8.85
+20.15±18.58
+7.38±13.56
+3.77±3.14
+Multi-CONDOR (Ours)
+14.08±10.54
+9.24±8.01
+21.18±17.10
+0.00±0.00
+2.69±0.79
+Fig. 4.
+Learned dynamics of multi-CONDOR (left) and StableNODE [12]
+(right) on two three-attractor benchmark tasks. Demonstrations are white,
+generated trajectories red, and attractors blue. StableNODE produces addi-
+tional spurious attractors away from the intended goals.
+Fig. 5.
+Kinesthetic demonstrations approaching the two grasping goals.
+Figure 6 shows the robot reaching either goal depending
+on its initial position. Figure 7 shows the 5 provided demon-
+strations for each side in green, and 4 examples of successful
+trajectories in red. Note how the trajectories converge to-
+wards the desired goal despite the fact that they do not start
+at the same initial conditions as the provided demonstrations.
+Moreover, to be successful, these trajectories had to follow
+the demonstrations in approaching from the side, rather than
+from the top, to be able to insert one of the fingers in
+the handle. This task thus highlights how the system can
+converge towards the goal when starting from varying initial
+conditions, while still imitating the demonstrated behaviour
+when necessary.
+Fig. 6. Robot executions reaching either grasping goal using a single vector
+field learned with multi-CONDOR.
+C. Convergence to closed curves
+We also provide qualitative results which use the refer-
+ence dynamics with a continuous curve of attraction. In
+this case, rather than task dynamics which reach multiple
+discrete goals, we can learn dynamics which converge to a
+continuous, closed shape. As Figure 8 shows, for example,
+we can learn to converge to a star-shaped contour: the red
+attractors shown on the image on the left all lie on the
+star-shaped goal contour. Moreover, we can still combine
+imitation with this approach, as the plot on the right shows
+with the demonstrations in white, trajectories in red, and the
+attractors lying on the target circle in blue. Similarly to the
+
+
+0.32
+0.34
+0.36
+0.38
+0.40
+0.42
+x (m)
+−0.2
+−0.1
+0.0
+0.1
+0.2
+y (m)
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+Demonstrations
+Executions
+Task goals
+z (m)
+Fig. 7.
+Visualization of provided demonstrations (in green) for the multi-
+goal grasping task and four multi-CONDOR trajectories (in red) which
+successfully grasped the box by the handles. Note how the trajectories
+converge to the desired goals despite starting from initial conditions which
+are not the same as the provided demonstrations.
+0
+100
+200
+300
+400
+500
+600
+x (mm)
+100
+150
+200
+250
+y (mm)
+0.00
+0.15
+0.30
+0.45
+0.60
+0.75
+0.90
+1.05
+1.20
+1.35
+speed (mm/s)
+0
+100
+200
+300
+400
+500
+600
+x (mm)
+0
+50
+100
+150
+200
+250
+300
+350
+400
+y (mm)
+0.0
+0.4
+0.8
+1.2
+1.6
+2.0
+2.4
+2.8
+3.2
+speed (mm/s)
+Fig. 8.
+Example of learned dynamics using multi-CONDOR for a
+continuous, closed star shape (left) without any imitation, and an example
+of a case with a circular shape as a continuous goal with two subgroups of
+demonstrations to imitate (right).
+previous grasping task, such dynamics could thus be useful
+when an object can be grasped along an entire continuous
+set of points, rather than specific, distinct ones.
+IV. CONCLUSION, LIMITATIONS, AND FUTURE WORK
+Grasping a container by either handle or at admissible
+points along its rim exemplifies manipulation tasks with
+multiple valid endpoints. We presented a CONDOR-based
+framework for learning such motions toward discrete goals
+or continuous attracting goal contours. Our method reduces
+mean trajectory RMSE by approximately 72% relative to
+single-attractor CONDORs with a state machine. The ob-
+served rate of spurious attractors falls from StableNODE’s
+0.31% and 7.29% to 0% for two and three goals, respectively.
+A robotic grasping demonstration further illustrates reaching
+alternative goals within a single autonomous vector field.
+Our Lyapunov analysis establishes sufficient conditions
+for transferring convergence from the reference dynamics
+to the learned task dynamics. These guarantees require
+exact dynamics matching, which training only encourages. A
+diffeomorphic encoder, following Euclideanizing Flows [7],
+with task velocities derived through its inverse Jacobian
+could enforce this condition by construction. The analysis
+also requires the intended correspondence between goals
+and latent attractors, including a distinct stable equilibrium
+for each discrete goal. Since Gaussian interactions can shift
+or merge equilibria, this extension should incorporate latent
+dynamics with distinct stable equilibria fixed at the encoded
+discrete goals.
+The current formulation treats discrete attractors and con-
+tinuous attracting contours separately. Future work could
+unify these with single point attractors and limit cycles, with
+convergence guarantees appropriate to each attractor type.
+ACKNOWLEDGEMENTS
+The illustrations of the human demonstrator in Figure 1
+were generated using OpenAI’s ChatGPT image generation.
+Claude Opus 5.5 (Anthropic) assisted in writing code for
+plots and TikZ drawings, Claude Opus 5.5 and GPT-6 Astra
+were also used to edit and revise the manuscript. The authors
+reviewed and edited all AI-assisted content and take full
+responsibility for the content of this paper.
+REFERENCES
+[1] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. C. M. Burchfiel,
+and S. Song, “Diffusion policy: Visuomotor policy learning via action
+diffusion,” in Proceedings of Robotics: Science and Systems, 2023.
+[2] D. Wang, S. Hart, D. Surovik, T. Kelestemur, H. Huang, H. Zhao,
+M. Yeatman, J. Wang, R. Walters, and R. Platt, “Equivariant diffusion
+policy,” in Proceedings of the 8th Conference on Robot Learning, ser.
+Proceedings of Machine Learning Research, vol. 270.
+PMLR, 2025,
+pp. 48–69.
+[3] A. J. Ijspeert, J. Nakanishi, H. Hoffmann, P. Pastor, and S. Schaal,
+“Dynamical movement primitives: Learning attractor models for motor
+behaviors,” Neural Computation, vol. 25, no. 2, pp. 328–373, 2013.
+[4] M. Karlsson, A. Robertsson, and R. Johansson, “Convergence of dy-
+namical movement primitives with temporal coupling,” in Proceedings
+of the European Control Conference (ECC), 2018, pp. 32–39.
+[5] S. Schaal, A. Ijspeert, and A. Billard, “Computational approaches to
+motor learning by imitation,” Philosophical Transactions of the Royal
+Society of London. Series B: Biological Sciences, vol. 358, no. 1431,
+pp. 537–547, 2003.
+[6] S. M. Khansari-Zadeh and A. Billard, “Learning stable nonlinear
+dynamical systems with Gaussian mixture models,” IEEE Transactions
+on Robotics, vol. 27, no. 5, pp. 943–957, 2011.
+[7] M. A. Rana, A. Li, D. Fox, B. Boots, F. Ramos, and N. Ratliff,
+“Euclideanizing flows: Diffeomorphic reduction for learning stable
+dynamical systems,” in Proceedings of the 2nd Conference on Learn-
+ing for Dynamics and Control, ser. Proceedings of Machine Learning
+Research, vol. 120.
+PMLR, 2020, pp. 630–639.
+[8] R. P´erez-Dattari and J. Kober, “Stable motion primitives via imitation
+and contrastive learning,” IEEE Transactions on Robotics, vol. 39,
+no. 5, pp. 3909–3928, 2023.
+[9] R. P´erez-Dattari, C. Della Santina, and J. Kober, “PUMA: Deep metric
+imitation learning for stable motion primitives,” Advanced Intelligent
+Systems, vol. 6, no. 11, p. 2400144, 2024.
+[10] M. Saveriano, F. J. Abu-Dakka, A. Kramberger, and L. Peternel,
+“Dynamic movement primitives in robotics: A tutorial survey,” The
+International Journal of Robotics Research, vol. 42, no. 13, pp. 1133–
+1184, 2023.
+[11] A. Shukla and A. Billard, “Augmented-SVM: Automatic space parti-
+tioning for combining multiple non-linear dynamics,” in Advances in
+Neural Information Processing Systems, vol. 25, 2012.
+[12] A. Sochopoulos, M. Gienger, and S. Vijayakumar, “Learning deep
+dynamical systems using stable neural ODEs,” in Proceedings of the
+IEEE/RSJ International Conference on Intelligent Robots and Systems
+(IROS), 2024, pp. 11 163–11 170.
+[13] H. K. Khalil, Nonlinear Systems, 3rd ed.
+Prentice Hall, 2002.
+[14] H. Sakoe and S. Chiba, “Dynamic programming algorithm optimiza-
+tion for spoken word recognition,” IEEE Transactions on Acoustics,
+Speech, and Signal Processing, vol. 26, no. 1, pp. 43–49, 1978.
+[15] T. Eiter and H. Mannila, “Computing discrete fr´echet distance,” 1994.

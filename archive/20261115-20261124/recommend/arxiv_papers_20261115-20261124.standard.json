@@ -1,0 +1,905 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-11-24T18:11:22.232527+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 33,
+    "deep_cap": 6,
+    "deep_selected": 10,
+    "quick_candidates": 59,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2611.19616v1",
+      "source": "arxiv",
+      "title": "Towards Probabilistically Safe Reinforcement Learning: Theory and Deployment on Humanoid and Aerial Robots",
+      "abstract": "Reinforcement learning (RL) enables robots to acquire complex skills, but standard RL formulations do not guarantee that learned policies satisfy safety constraints, which limits their use in safety-critical settings. Existing safe RL methods with provable guarantees typically support only restricted classes of constraints and require unbiased estimators of the objective and constraint functions, which prevents their direct integration with state-of-the-art algorithms such as proximal policy optimization (PPO). In this paper, we extend the recently introduced robust safe gradient flow-based reinforcement learning (RSGF-RL) framework to overcome these limitations. Our formulation accommodates a general class of trajectory-level safety constraints, including chance constraints such as collision avoidance with a prescribed probability, and our analysis allows for biased value and gradient estimators. We show that, with high probability, the constraint violation throughout training is bounded by the estimator bias plus a term that vanishes as the number of rollouts grows, and decays to this level if the initial policy is unsafe. We also establish the convergence properties of the iterates to approximate KKT points of the original safe RL problem. Finally, we show that RSGF-RL implemented with PPO-style estimates enables zero-shot sim-to-real deployment of whole-body control policies on a Unitree G1 humanoid and collision-free waypoint navigation on a Crazyflie drone.",
+      "authors": [
+        "Pol Mestres",
+        "Varun Gabbita",
+        "Jason H. K. Siu",
+        "Sergio A. Esteban",
+        "Hampus Serneke",
+        "Joel W. Burdick",
+        "Aaron D. Ames"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "eess.SY"
+      ],
+      "published": "2026-11-14 20:57:41+00:00",
+      "link": "https://arxiv.org/pdf/2611.19616v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "safe reinforcement learning for robotic control on humanoid and aerial robots",
+      "llm_evidence_cn": "面向人形与空中机器人的安全强化学习控制",
+      "llm_evidence": "面向人形与空中机器人的安全强化学习控制",
+      "canonical_evidence": "面向人形与空中机器人的安全强化学习控制",
+      "llm_tldr_en": "Extends robust safe gradient flow RL to handle general trajectory constraints and integrate with PPO, deploying probabilistically safe policies on humanoid and aerial robots.",
+      "llm_tldr_cn": "强化学习可让机器人习得复杂技能，但标准RL无法保证策略满足安全约束，限制其在安全关键场景的应用。本文扩展鲁棒安全梯度流强化学习框架，支持更一般的轨迹约束类并可与PPO等先进算法直接结合。作者在人形机器人与空中机器人上部署验证，表明所学策略在保持性能的同时具备概率安全性。这为安全关键机器人控制提供了可落地的理论和方法。",
+      "llm_tldr": "强化学习可让机器人习得复杂技能，但标准RL无法保证策略满足安全约束，限制其在安全关键场景的应用。本文扩展鲁棒安全梯度流强化学习框架，支持更一般的轨迹约束类并可与PPO等先进算法直接结合。作者在人形机器人与空中机器人上部署验证，表明所学策略在保持性能的同时具备概率安全性。这为安全关键机器人控制提供了可落地的理论和方法。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.20427v1",
+      "source": "arxiv",
+      "title": "Fuzzy Explainable Continual Hierarchical Reinforcement Learning for Robotic Navigation",
+      "abstract": "Continual robot navigation requires reinforcement learning policies to continuously adapt to new environments while retaining previously acquired knowledge. Meanwhile, explainable reinforcement learning aims to learn meaningful behavioral representations through policy interaction. However, these objectives are inherently conflicting, as continual learning emphasizes policy stability whereas explainable behavior learning requires adaptive exploration. Existing methods rarely address both simultaneously. To resolve this issue, this paper proposes a Fuzzy Explainable Continual Hierarchical Reinforcement Learning (FECHRL) method. A two-stage behavior cloning strategy is introduced to balance rapid policy adaptation and explainable behavior evolution by progressively transitioning from strong imitation guidance to autonomous reinforcement learning. Furthermore, a fuzzy critic based on a Takagi--Sugeno fuzzy inference system is proposed to alleviate value extrapolation errors during the transition between imitation-guided learning and autonomous exploration, thereby improving continual training stability. Experimental results on sequential multi-scenario navigation tasks demonstrate that the proposed method effectively unifies continual learning capability and policy explainability within a single reinforcement learning framework, achieving stable knowledge retention and meaningful behavioral explanation.",
+      "authors": [
+        "Peng Qin",
+        "Tao Zhao"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-11-16 02:41:53+00:00",
+      "link": "https://arxiv.org/pdf/2611.20427v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "hierarchical reinforcement learning for continual robotic navigation",
+      "llm_evidence_cn": "面向持续机器人导航的分层强化学习",
+      "llm_evidence": "面向持续机器人导航的分层强化学习",
+      "canonical_evidence": "面向持续机器人导航的分层强化学习",
+      "llm_tldr_en": "Proposes Fuzzy Explainable Continual Hierarchical RL for robot navigation, using two-stage behavior cloning to balance continual adaptation with explainable behavior learning.",
+      "llm_tldr_cn": "持续机器人导航要求强化学习策略不断适应新环境并保留旧知识，而可解释性又需自适应探索，二者存在冲突，现有方法少有兼顾。本文提出模糊可解释持续分层强化学习方法，引入两阶段行为克隆策略，在快速策略适应与可解释行为学习之间取得平衡。该方法在持续导航任务中同时提升稳定性与可解释性，为兼顾持续学习与解释性的机器人导航提供新思路。",
+      "llm_tldr": "持续机器人导航要求强化学习策略不断适应新环境并保留旧知识，而可解释性又需自适应探索，二者存在冲突，现有方法少有兼顾。本文提出模糊可解释持续分层强化学习方法，引入两阶段行为克隆策略，在快速策略适应与可解释行为学习之间取得平衡。该方法在持续导航任务中同时提升稳定性与可解释性，为兼顾持续学习与解释性的机器人导航提供新思路。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.20558v1",
+      "source": "arxiv",
+      "title": "Vision-Language Grounded Semantic Navigation for Autonomous Mobile Robots",
+      "abstract": "Language-guided navigation enables mobile robots to interpret natural language commands and navigate toward user-specified targets in unstructured environments. However, integrating open-vocabulary visual perception with classical robotics pipelines for mapping and navigation remains a challenging problem. In this work, we present a complete ROS2-based system that combines frontier-based exploration, open-vocabulary object detection using Grounding DINO, depth-based 3D localization, and semantic mapping to enable end-to-end vision-language grounded navigation in simulation. The system accepts natural language commands such as ``go to the yellow box,'' detects candidate objects from RGB images using text prompts, estimates their positions in the world frame, and generates navigation goals executed by the Nav2 stack. In a Gazebo-based indoor environment with a TurtleBot3 robot, the system autonomously explored the room, detected three of the five target objects, and successfully executed both natural language navigation commands tested, without task-specific training. The results indicate that open-vocabulary grounding models can be integrated into classical navigation pipelines, though performance is limited by detection uncertainty, depth-based localization error, and incomplete exploration coverage. These findings highlight both the feasibility and current limitations of deploying vision-language grounded navigation systems using lightweight, CPU-only architectures.",
+      "authors": [
+        "Ravindran Vasoor Saravanan",
+        "Chittin Varunav Ravi",
+        "Madhumita Singh",
+        "Thirulok Sundar Mohan Rasu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-11-16 05:38:50+00:00",
+      "link": "https://arxiv.org/pdf/2611.20558v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "open-vocabulary object detection with Grounding DINO for robot vision and semantic navigation",
+      "llm_evidence_cn": "用Grounding DINO进行开放词汇目标检测的机器人视觉导航",
+      "llm_evidence": "用Grounding DINO进行开放词汇目标检测的机器人视觉导航",
+      "canonical_evidence": "用Grounding DINO进行开放词汇目标检测的机器人视觉导航",
+      "llm_tldr_en": "Language-guided navigation requires open-vocabulary perception integrated with mapping and planning. This ROS2 system combines frontier exploration, Grounding DINO object detection, depth-based 3D localization and semantic mapping for end-to-end vision-language grounded navigation.",
+      "llm_tldr_cn": "语言引导导航要求机器人理解自然语言指令并在非结构化环境中定位目标，但开放词汇视觉感知与经典建图导航流程的整合仍具挑战。作者构建完整的 ROS2 系统，融合前沿探索、基于 Grounding DINO 的开放词汇目标检测、深度三维定位与语义建图，实现端到端的视觉-语言接地导航。仿真实验表明系统能按指令检测目标并规划路径，为机器人视觉感知与场景理解提供了实用集成方案。",
+      "llm_tldr": "语言引导导航要求机器人理解自然语言指令并在非结构化环境中定位目标，但开放词汇视觉感知与经典建图导航流程的整合仍具挑战。作者构建完整的 ROS2 系统，融合前沿探索、基于 Grounding DINO 的开放词汇目标检测、深度三维定位与语义建图，实现端到端的视觉-语言接地导航。仿真实验表明系统能按指令检测目标并规划路径，为机器人视觉感知与场景理解提供了实用集成方案。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "object detection and recognition for robotic vision systems",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.22275v2",
+      "source": "arxiv",
+      "title": "Heave-Ho: Decentralized Long-Horizon Multi-Humanoid Collaboration",
+      "abstract": "Collaboration promises to extend humanoid capabilities beyond what individual robots can achieve. However, realizing this potential requires coordinated whole-body interactions, coherent long-horizon planning, and precise synchronization across robots. We introduce Heave-Ho, a decentralized framework for long-horizon collaborative multi-humanoid loco-manipulation. At the low level, we develop a multi-agent post-training framework that adapts a humanoid foundation tracking model to physically coupled interactions between humanoids, enabling coordinated decentralized control from local observations alone. At the high level, we train a vision-language planner and design a speech-based leader-follower coordination mechanism to synchronize decentralized execution without network communication. Trained with two identical humanoids, our system scales to teams of up to ten robots and generalizes to heterogeneous teams without retraining. To benchmark these capabilities, we introduce HH-Bench, comprising 12 tasks involving teams of 2 to 10 humanoids, including heterogeneous teams. Systematic evaluations show that Heave-Ho consistently outperforms baseline methods, while real-world experiments demonstrate robust decentralized collaboration across challenging tasks.",
+      "authors": [
+        "Ting-Hsuan Chen",
+        "Siheng Zhao",
+        "Han Jiang",
+        "Qi Pan",
+        "Louison Lu",
+        "Jiaheng Luo",
+        "Henghui Bao",
+        "Yiyu Chen",
+        "Quan Nguyen",
+        "Yue Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-11-17 06:21:03+00:00",
+      "link": "https://arxiv.org/pdf/2611.22275v2",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "decentralized multi-humanoid collaboration and coordination framework",
+      "llm_evidence_cn": "去中心化多 humanoid 协作与协调框架",
+      "llm_evidence": "去中心化多 humanoid 协作与协调框架",
+      "canonical_evidence": "去中心化多 humanoid 协作与协调框架",
+      "llm_tldr_en": "Long-horizon multi-humanoid collaboration needs coordinated whole-body interaction and synchronization. Heave-Ho uses multi-agent post-training for decentralized low-level control plus a vision-language planner and speech-based leader-follower coordination at the high level.",
+      "llm_tldr_cn": "多 humanoid 协作需要协调全身交互、长时程规划与跨机器人同步，现有单体机器人方法难以胜任。作者提出 Heave-Ho 去中心化框架：低层用多智能体后训练把 humanoid 基础跟踪模型适配到物理耦合交互，高层训练视觉-语言规划器并设计语音主导的领导者-跟随者协调机制。实验展示了多机器人长时程搬运与操作任务中的协同效果，推动了多智能体机器人系统的发展。",
+      "llm_tldr": "多 humanoid 协作需要协调全身交互、长时程规划与跨机器人同步，现有单体机器人方法难以胜任。作者提出 Heave-Ho 去中心化框架：低层用多智能体后训练把 humanoid 基础跟踪模型适配到物理耦合交互，高层训练视觉-语言规划器并设计语音主导的领导者-跟随者协调机制。实验展示了多机器人长时程搬运与操作任务中的协同效果，推动了多智能体机器人系统的发展。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.27327v1",
+      "source": "arxiv",
+      "title": "Embodied Interaction Policy: A Unified Model for Full-Duplex Human-Robot Interaction",
+      "abstract": "Real-time human-robot social interaction requires continuous coordination between speech and physical behavior. Existing systems often separate interaction agents from motion generation, complicating coordination as conversational states change. We propose \\textbf{Embodied Interaction Policy (EIP)}, a unified streaming framework that couples an Audio-Interaction expert with a motion expert through layer-wise joint attention. This allows motion generation to directly access the evolving interaction context. A chunk-wise causal mask prevents access to future context, while a vocal token encodes speaking state and the semantic emotion of the response. We construct \\textbf{Embodied Interaction Dataset (EI-Data)} from co-speech and dyadic interaction data and train our model in two stages to learn state-adaptive and emotion-conditioned behavior. Combined with the frozen interaction expert, EIP supports continuous robot motion during proactive responses and interruption-aware turn-taking. Quantitative evaluations demonstrate improved motion quality over representative gesture-generation baselines. Compared with a representative cascaded system, EIP achieves higher interaction success and reduces warm-start latency by 64\\%. Physical deployment and user studies further demonstrate improved motion naturalness and interaction comfort.",
+      "authors": [
+        "Youqiang Gui",
+        "Yunfei Liu",
+        "Lijian Lin",
+        "Ye Zhu",
+        "Jianan Wang",
+        "Cheng Peng",
+        "Yu Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-20 09:06:20+00:00",
+      "link": "https://arxiv.org/pdf/2611.27327v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "unified full-duplex human-robot social interaction policy",
+      "llm_evidence_cn": "统一的全双工人机社交交互策略",
+      "llm_evidence": "统一的全双工人机社交交互策略",
+      "canonical_evidence": "统一的全双工人机社交交互策略",
+      "llm_tldr_en": "Real-time social HRI needs tight coupling of speech and motion, but existing systems separate interaction agents from motion generation. EIP unifies an audio-interaction expert and a motion expert via joint attention, enabling streaming full-duplex behavior.",
+      "llm_tldr_cn": "实时人机社交交互要求语音与身体动作持续协调，而现有系统把交互智能体与动作生成分离，难以随对话状态变化同步。作者提出 Embodied Interaction Policy（EIP），用逐层联合注意力耦合音频交互专家与动作专家，并借助分块因果掩码与发声令牌实现流式全双工生成。论文构建了 EI-Data 数据集，验证了语音与动作协调生成的连贯性，为人机交互研究提供了统一框架。",
+      "llm_tldr": "实时人机社交交互要求语音与身体动作持续协调，而现有系统把交互智能体与动作生成分离，难以随对话状态变化同步。作者提出 Embodied Interaction Policy（EIP），用逐层联合注意力耦合音频交互专家与动作专家，并借助分块因果掩码与发声令牌实现流式全双工生成。论文构建了 EI-Data 数据集，验证了语音与动作协调生成的连贯性，为人机交互研究提供了统一框架。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "What are the challenges in human robot interaction?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.29501v1",
+      "source": "arxiv",
+      "title": "MAWAM: Joint Imagination for Collaborative Robot Manipulation with a Multi-Agent World Action Model",
+      "abstract": "World action models (WAMs) excel at robot manipulation by imagining future observations and decoding actions from them, yet remain confined to a single embodied agent. In practice, manipulation often requires multiple robots to collaborate across disjoint workspaces, coupled timing, and heterogeneous embodiments. Such coordination demands both spatiotemporal alignment of future interactions and awareness of individual embodiment and role identities, whereas existing decentralized per-robot policies, flat centralized models, and multi-robot VLAs fail to unite both. To bridge this gap, we present MAWAM, a multi-agent world action model that jointly predicts the future observations of multiple embodiments and decodes each agent's actions from them for collaborative manipulation. Through an agent-axis curriculum, MAWAM expands a single-agent WAM along an agent dimension to coordinate teams under shared weights. Within one unified causal sequence, joint self-attention spans all agents to spatiotemporally align their imagined futures, while hierarchical language, identity encodings, and embodiment masks bind each stream to its role, identity, and embodiment. We further formalize multi-agent-necessary manipulation along three axes (why, when, and who) and develop MA-Task Harness, a coding-agent pipeline where mutually constraining generators and evaluators co-evolve customizable simulation-data and evaluation packages. Using this pipeline, we build MA-Bench across all axes with seven tasks, pairing joint success rate with role and collaboration scores for fine-grained analysis. On MA-Bench, MAWAM reaches 82.7% mean joint success, 30.7% above the strongest baseline, and achieves real-time closed-loop collaboration on a real heterogeneous robot team.",
+      "authors": [
+        "Rongze Tang",
+        "Chenyu Zhou",
+        "Jianjie Fang",
+        "Ziming Liu",
+        "Zhaolu Wang",
+        "Ziyou Wang",
+        "Xvyuan Liu",
+        "Wei Wu",
+        "Chen Gao",
+        "Yong Li",
+        "Zhibo Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-11-22 14:16:55+00:00",
+      "link": "https://arxiv.org/pdf/2611.29501v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "multi-agent world action model for collaborative multi-robot manipulation coordination",
+      "llm_evidence_cn": "面向多机器人协同操作的多智能体世界动作模型",
+      "llm_evidence": "面向多机器人协同操作的多智能体世界动作模型",
+      "canonical_evidence": "面向多机器人协同操作的多智能体世界动作模型",
+      "llm_tldr_en": "MAWAM is a multi-agent world action model that jointly imagines future observations of multiple embodiments and decodes each agent's actions, enabling coordinated multi-robot manipulation across disjoint workspaces and roles.",
+      "llm_tldr_cn": "世界动作模型擅长单机器人操作，却难以应对多机器人跨工作空间、时序耦合与异构本体的协作需求。作者提出MAWAM，联合预测多个本体的未来观测并解码各智能体动作，同时建模各本体的身份与角色。该方法兼顾时空对齐与本体角色感知，为多机器人协同操作提供了统一的集中式多智能体框架。",
+      "llm_tldr": "世界动作模型擅长单机器人操作，却难以应对多机器人跨工作空间、时序耦合与异构本体的协作需求。作者提出MAWAM，联合预测多个本体的未来观测并解码各智能体动作，同时建模各本体的身份与角色。该方法兼顾时空对齐与本体角色感知，为多机器人协同操作提供了统一的集中式多智能体框架。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.29610v1",
+      "source": "arxiv",
+      "title": "Dr. Grasp-RL: Diverse and Robust Dexterous Grasping via Reinforcement Learning",
+      "abstract": "Human interaction with physical objects relies on a combination of dexterity and robustness. In robotic manipulation, dexterity requires not only flexible end effectors but also a diverse repertoire of manipulation strategies, while robustness requires closed-loop adaptation to disturbances and unexpected situations. Two prominent research directions in dexterous grasping have largely addressed these capabilities separately. Generative approaches model multimodal distributions to produce diverse grasp poses, but their reliance on open-loop execution can limit robustness. Reinforcement learning approaches learn closed-loop grasping policies, but can converge to a narrow range of successful grasping strategies, limiting behavioral diversity. We introduce a time-reversed curriculum with a coordinated reset mechanism that enables a simple MLP policy trained with PPO to capture multiple modes of the grasp-pose distribution while maintaining closed-loop control. Experiments demonstrate both diverse grasping behaviors and robust closed-loop execution. Trained on only approximately 400 objects, our policy further demonstrates strong generalization when evaluated on more than 20,000 unseen objects.",
+      "authors": [
+        "Kunqi Xu",
+        "Xiaokang Sun",
+        "Xueyan Zou"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-22 17:04:16+00:00",
+      "link": "https://arxiv.org/pdf/2611.29610v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "reinforcement learning for dexterous robotic grasping control",
+      "llm_evidence_cn": "强化学习用于灵巧机器人抓取控制",
+      "llm_evidence": "强化学习用于灵巧机器人抓取控制",
+      "canonical_evidence": "强化学习用于灵巧机器人抓取控制",
+      "llm_tldr_en": "Dexterous grasping needs both diverse strategies and robust closed-loop control, which generative and RL methods address separately. Dr. Grasp-RL combines diversity with RL-learned closed-loop policies to yield robust and varied grasping.",
+      "llm_tldr_cn": "灵巧抓取既需要多样的操作策略，又需要对扰动鲁棒闭环适应，而生成式方法与强化学习各偏一端。作者提出Dr. Grasp-RL，将多样性建模与强化学习学到的闭环抓取策略相结合，兼顾策略多样性与鲁棒性。实验表明该方法能产生多样且稳健的灵巧抓取行为，缓解强化学习收敛到单一策略的问题。这为强化学习在机器人操控控制任务中的应用提供了改进范式。",
+      "llm_tldr": "灵巧抓取既需要多样的操作策略，又需要对扰动鲁棒闭环适应，而生成式方法与强化学习各偏一端。作者提出Dr. Grasp-RL，将多样性建模与强化学习学到的闭环抓取策略相结合，兼顾策略多样性与鲁棒性。实验表明该方法能产生多样且稳健的灵巧抓取行为，缓解强化学习收敛到单一策略的问题。这为强化学习在机器人操控控制任务中的应用提供了改进范式。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.30310v1",
+      "source": "arxiv",
+      "title": "Seeing Together, Acting Apart: Shared Environmental Understanding for Multi-Robot Navigation",
+      "abstract": "Multi-robot embodied systems are typically designed to collaborate by coordinating actions, sharing trajectories, or learning joint policies. We ask a complementary question: can collaboration emerge before decision-making, by first building a shared understanding of the environment? We introduce Shared Environmental Understanding, a policy-agnostic representation that aggregates partial egocentric observations from multiple robots into a shared latent world model. This shifts collaboration from the policy space to the representation space, enabling decentralized decision-making with shared environmental context. To this end, we propose Shared Environment Encoding and Retrieval (SEER), a framework that organizes multi-robot observations into a shared memory, retrieves relevant context via spatio-temporal similarity, and encodes it using a predictive latent world model. The resulting representations are injected into downstream navigation agents as tokens. Experimental results demonstrate that SEER captures action-relevant environmental structure and consistently improves navigation performance across both specialized VLN agents and general vision-language model agents, while preserving single-agent capabilities.",
+      "authors": [
+        "Haihong Hao",
+        "Lei Chen",
+        "Mingfei Han",
+        "Chenglong Yan",
+        "Dong An",
+        "Yuqiang Yang",
+        "Changlin Li",
+        "Minghao Guo",
+        "Salman Khan",
+        "Xiaojun Chang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-11-23 08:58:12+00:00",
+      "link": "https://arxiv.org/pdf/2611.30310v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "multi-robot shared environmental understanding for coordination",
+      "llm_evidence_cn": "多机器人共享环境理解与协作",
+      "llm_evidence": "多机器人共享环境理解与协作",
+      "canonical_evidence": "多机器人共享环境理解与协作",
+      "llm_tldr_en": "Multi-robot systems usually coordinate at the policy level. This paper builds a shared latent world model from partial egocentric observations, shifting collaboration into representation space and enabling decentralized navigation with shared context.",
+      "llm_tldr_cn": "多机器人系统通常通过协调动作或联合策略来协作，难以在决策前形成统一的环境认知。作者提出共享环境理解表示与SEER框架，将各机器人局部自我中心观测聚合为共享隐式世界模型，把协作从策略空间转移到表示空间。实验表明该方法能在分散决策下利用共享环境上下文提升多机器人导航表现。这一思路为具身多智能体协作提供了新的表示层范式。",
+      "llm_tldr": "多机器人系统通常通过协调动作或联合策略来协作，难以在决策前形成统一的环境认知。作者提出共享环境理解表示与SEER框架，将各机器人局部自我中心观测聚合为共享隐式世界模型，把协作从策略空间转移到表示空间。实验表明该方法能在分散决策下利用共享环境上下文提升多机器人导航表现。这一思路为具身多智能体协作提供了新的表示层范式。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.30477v1",
+      "source": "arxiv",
+      "title": "OVOGO: Offline Value-Guided On-Policy Generative Optimization for Flow-Based Vision-Language-Action Models",
+      "abstract": "Flow-based vision-language-action models can benefit from robot experience collected during deployment, but repeatedly acquiring new physical interactions for policy improvement is costly. Offline reinforcement learning provides a natural way to reuse collected experience, while flow-based policies offer an additional opportunity because fresh generation trajectories can be cheaply resampled from the current policy at replay observations. This motivates separating offline value learning from on-policy optimization of the generative process. We propose OVOGO, an offline reinforcement learning framework that realizes this separation for flow-based VLAs. A central challenge in this formulation is to learn a critic that remains grounded in logged robot experience while providing useful value signals for newly generated actions. OVOGO introduces a Return-Anchored Ranking Critic that combines in-sample distributional value learning with guarded local ranking, improving discrimination among generated actions without assigning them artificial return targets. The frozen critic then provides group-relative value signals for selected-transition optimization of fresh action candidates sampled from the current flow policy. Experiments on RoboTwin 2.0, DexJoCo, and LIBERO, as well as a real-robot dexterous manipulation task, show that OVOGO improves the initial VLA across all four settings and achieves higher success rates than the evaluated offline adaptation and value-guided baselines. These results suggest that offline robot experience can be repeatedly reused for value learning while inexpensive generative sampling supports policy optimization, providing an effective approach to experience-based post-training of flow-based VLAs.",
+      "authors": [
+        "Rongzheng Yang",
+        "Jiaming Guo",
+        "Yuxuan Guo",
+        "Zihao Zhang",
+        "Yunkai Gao",
+        "Siming Lan",
+        "Shaohui Peng",
+        "Rui Zhang",
+        "Tianyun Ma",
+        "Xing Hu",
+        "Yunji Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-11-23 11:04:04+00:00",
+      "link": "https://arxiv.org/pdf/2611.30477v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "offline reinforcement learning for flow-based vision-language-action robot policies",
+      "llm_evidence_cn": "面向流式视觉语言动作策略的离线强化学习",
+      "llm_evidence": "面向流式视觉语言动作策略的离线强化学习",
+      "canonical_evidence": "面向流式视觉语言动作策略的离线强化学习",
+      "llm_tldr_en": "Proposes OVOGO, an offline RL framework that separates offline value learning from on-policy generative optimization to improve flow-based VLA robot policies from collected experience.",
+      "llm_tldr_cn": "流式视觉语言动作模型可利用部署中收集的经验，但反复采集物理交互代价高昂。本文提出OVOGO离线强化学习框架，将离线价值学习与生成过程的同策略优化分离，利用流式策略可从回放观测廉价重采样的特性。核心挑战是学习准确的评论家，作者据此设计方法以高效复用已收集经验改进策略，减少额外物理交互，为机器人策略的离线优化提供新途径。",
+      "llm_tldr": "流式视觉语言动作模型可利用部署中收集的经验，但反复采集物理交互代价高昂。本文提出OVOGO离线强化学习框架，将离线价值学习与生成过程的同策略优化分离，利用流式策略可从回放观测廉价重采样的特性。核心挑战是学习准确的评论家，作者据此设计方法以高效复用已收集经验改进策略，减少额外物理交互，为机器人策略的离线优化提供新途径。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How can reinforcement learning be applied to robotic control tasks?",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2611.30495v1",
+      "source": "arxiv",
+      "title": "DexDuet: Learning Contact-Preserving Bimanual Dexterity from Human Demonstrations",
+      "abstract": "Human demonstrations provide a rich source of bimanual dexterous skills, yet transferring them to robot hands remains challenging. Existing methods primarily optimize object trajectory tracking, often overlooking how human hands interact with the object. Even with accurate tracking, robots may contact incorrect object parts or slide their fingers, resulting in unstable manipulation. We present DexDuet, a framework that learns contact-preserving bimanual dexterity from a single human demonstration. DexDuet employs two interaction rewards to preserve human hand-object configurations and contacts. To enable coordinated manipulation, we factorize the bimanual policy into two weight-sharing per-hand policies that condition on each other's states. We further propose assisted reference-state initialization (A-RSI), an adaptive curriculum that adjusts object assistance and training starts across demonstration segments to overcome difficult manipulation phases. Across four benchmarks spanning three simulators and five robot embodiments, DexDuet improves object-tracking ADD-AUC by 11 to 41 points over the corresponding baselines while consistently achieving better contact preservation. Notably, among 122 paired runs with comparable object-tracking accuracy, DexDuet preserves the human's contacts better in 117 cases. Code and videos are available at https://rcl-robotics.github.io/Dexduet.io/",
+      "authors": [
+        "Haoran Zhang",
+        "Haokai Ding",
+        "Han Zhou",
+        "Zuxing Lu",
+        "Heng Zhang",
+        "Xingxing Zuo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-23 11:13:23+00:00",
+      "link": "https://arxiv.org/pdf/2611.30495v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "learning bimanual dexterous manipulation from a single human demonstration",
+      "llm_evidence_cn": "从单次人类演示学习双手灵巧操作",
+      "llm_evidence": "从单次人类演示学习双手灵巧操作",
+      "canonical_evidence": "从单次人类演示学习双手灵巧操作",
+      "llm_tldr_en": "DexDuet learns contact-preserving bimanual dexterity from a single human demonstration using interaction rewards for hand-object configuration and contact, factorizing policy into weight-sharing per-hand policies.",
+      "llm_tldr_cn": "人类演示富含双手灵巧技能，但现有方法多只优化物体轨迹跟踪，忽视手与物体的接触方式，导致接触错误部位或手指滑动而不稳定。本文提出DexDuet，从单次人类演示学习保持接触的双手灵巧操作，引入两个交互奖励保留手物构型与接触，并将策略分解为相互条件化的权重共享单手策略。方法实现了协调稳定的双手操作，提升了演示到机器人的迁移质量。",
+      "llm_tldr": "人类演示富含双手灵巧技能，但现有方法多只优化物体轨迹跟踪，忽视手与物体的接触方式，导致接触错误部位或手指滑动而不稳定。本文提出DexDuet，从单次人类演示学习保持接触的双手灵巧操作，引入两个交互奖励保留手物构型与接触，并将策略分解为相互条件化的权重共享单手策略。方法实现了协调稳定的双手操作，提升了演示到机器人的迁移质量。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2611.20100v1",
+      "source": "arxiv",
+      "title": "EgoSwarm: Learning Decentralized Robot Swarm Intelligence from Human Swarm Demonstrations",
+      "abstract": "Advancing from individual embodied intelligence to swarm embodied intelligence is a key step toward scalable, general-purpose embodied intelligence. Complex tasks often require multiple agents to divide responsibilities, coordinate handovers, and manipulate shared objects collaboratively. However, existing robot learning methods rely primarily on individual demonstrations, which provide limited supervision for modeling dependencies among agent actions, while collecting multi-robot demonstrations at scale remains difficult. Human egocentric demonstrations offer a scalable alternative, yet distributed observations from multiple participants cannot directly supervise decentralized policies. We introduce EgoSwarm, the first robot learning framework for learning decentralized multi-robot collaboration from human swarm demonstrations. EgoSwarm collects more than 50 hours of collaborative experience using a robot-free multi-person egocentric system. We introduce the Swarm Interaction Packet (SIP) and Swarm Interaction Token (SIT) to recover cross-agent interaction relations from distributed observations and transform this experience into local supervision consistent with deployment-time information constraints. We further propose SwarmVLA, which transfers knowledge of swarm behavior to decentralized policies conditioned on local observations, local history, and limited neighbor messages. SwarmVLA achieves a mean success rate of 72.2% across three categories of multi-robot collaborative tasks. Project page:https://xitong-c.github.io/EgoSwarm_Page/.",
+      "authors": [
+        "Ziqiang Liu",
+        "Xitong Chen",
+        "Min Li",
+        "Yiqun Li",
+        "Zhuoping Yin"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-15 16:19:53+00:00",
+      "link": "https://arxiv.org/pdf/2611.20100v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "decentralized multi-robot swarm coordination from human demonstrations",
+      "llm_evidence_cn": "从人类示范学习去中心化多机器人群体协同",
+      "llm_evidence": "从人类示范学习去中心化多机器人群体协同",
+      "canonical_evidence": "从人类示范学习去中心化多机器人群体协同",
+      "llm_tldr_en": "Scaling to robot swarms requires multi-agent coordination, but individual demonstrations give weak supervision. EgoSwarm learns decentralized swarm policies from human egocentric swarm demonstrations, enabling robots to divide responsibilities, coordinate handovers and manipulate shared objects.",
+      "llm_tldr_cn": "从单体具身智能迈向群体具身智能需要多智能体分工、交接与协同操作，但现有机器人学习方法主要依赖个体示范，难以监督智能体动作间的依赖关系，而大规模多机器人示范又难以采集。本文提出EgoSwarm，利用人类第一视角群体示范学习去中心化群体策略。该方法缓解了分布式观测无法直接监督去中心化策略的难题，为实现可扩展的群体机器人协同提供了新路径。",
+      "llm_tldr": "从单体具身智能迈向群体具身智能需要多智能体分工、交接与协同操作，但现有机器人学习方法主要依赖个体示范，难以监督智能体动作间的依赖关系，而大规模多机器人示范又难以采集。本文提出EgoSwarm，利用人类第一视角群体示范学习去中心化群体策略。该方法缓解了分布式观测无法直接监督去中心化策略的难题，为实现可扩展的群体机器人协同提供了新路径。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2611.20137v1",
+      "source": "arxiv",
+      "title": "Cleanly-DINO: Efficiently Learning Visual Task Spaces for Robotics",
+      "abstract": "Learning manipulation tasks from few demonstrations requires abstractions that capture the changes relevant to task completion, such as object poses in rigid-body manipulation. However, tasks such as cleaning are defined by changes in visual state rather than object pose, making the choice of task representation less clear. In this work, we propose Cleanly-DINO to learn visual task spaces from few demonstrations. Given a mask of a task-relevant region and frozen ViT features, Cleanly-DINO fits a projection to isolate a task space and fit a progression metric to it. We train the model on diverse cleaning examples and evaluate its ability to localize incomplete task regions and transfer across visual domains. We also study its utility for robot learning by using it as an observation encoder and reward signal in a reinforcement learning setting. Finally, we deploy our fitted model within a real-world robotic wiping pipeline to evaluate its use in guiding task execution.",
+      "authors": [
+        "Adrian Röfer",
+        "Melika Shekarriz",
+        "José Arce y de la Borbolla",
+        "Iman Nematollahi",
+        "Abhinav Valada"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-11-15 17:11:34+00:00",
+      "link": "https://arxiv.org/pdf/2611.20137v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "learning visual task spaces from demonstrations for robot manipulation perception",
+      "llm_evidence_cn": "从示教中学习面向机器人操作感知的视觉任务空间",
+      "llm_evidence": "从示教中学习面向机器人操作感知的视觉任务空间",
+      "canonical_evidence": "从示教中学习面向机器人操作感知的视觉任务空间",
+      "llm_tldr_en": "Cleanly-DINO learns visual task spaces from few demonstrations using frozen ViT features and a fitted projection with a progression metric, localizing incomplete task regions and transferring across visual domains for robot learning.",
+      "llm_tldr_cn": "清洁等任务由视觉状态变化而非物体位姿定义，使任务表征选择变得困难。作者提出Cleanly-DINO，在给定任务相关区域掩码与冻结ViT特征下，拟合投影以分离任务空间并学习进度度量。模型在多样清洁样本上训练，可定位未完成任务区域并跨视觉域迁移，为少示教机器人学习提供了有效的视觉任务表征。",
+      "llm_tldr": "清洁等任务由视觉状态变化而非物体位姿定义，使任务表征选择变得困难。作者提出Cleanly-DINO，在给定任务相关区域掩码与冻结ViT特征下，拟合投影以分离任务空间并学习进度度量。模型在多样清洁样本上训练，可定位未完成任务区域并跨视觉域迁移，为少示教机器人学习提供了有效的视觉任务表征。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "computer vision techniques for robot perception and scene understanding",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2611.19952v1",
+      "source": "arxiv",
+      "title": "CRAFT: A Robot-Agent Harness with Scope-Aware Adaptation",
+      "abstract": "A robot may know how to move an object yet still need to learn where it belongs. When a person rejects a placement, the robot must decide whether the correction applies only to that situation or expresses a broader rule. We study this problem in CRAFT (Contextual Requirement Adaptation with Frozen Tools), a framework for learning local requirements without retraining robot skills. It records physical success separately from whether an action meets the requirement. Our scope ladder uses memory when an action has already been judged in a nearly identical situation. Elsewhere, it combines memory, explicit rules and a learner for requirements beyond those rules, weighting their predictions by how well they predicted earlier feedback. Controlled studies show gains over correction memory alone in utility, which rewards acceptable actions and charges for mistakes and questions. In camera-grounded robot simulations, the ladder asks fewer questions than language-model agents with persistent memory, but some of those agents take fewer wrong actions and succeed more often after requirements change. All execution failures and timeouts remain in the evaluation. These results support combining specific memories with broader rules, while leaving reliable adaptation to changing requirements unresolved. All evidence comes from simulation with generated requirements and simulated feedback.",
+      "authors": [
+        "Peng Zhang",
+        "Jiawen Wang",
+        "Cheng Xue",
+        "Jochen Renz"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-15 11:48:52+00:00",
+      "link": "https://arxiv.org/pdf/2611.19952v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "robot learning local placement requirements from human corrections and feedback",
+      "llm_evidence_cn": "机器人从人类纠正反馈中学习局部放置要求",
+      "llm_evidence": "机器人从人类纠正反馈中学习局部放置要求",
+      "canonical_evidence": "机器人从人类纠正反馈中学习局部放置要求",
+      "llm_tldr_en": "When a person rejects a robot placement, the robot must decide whether the correction is situational or a broader rule. CRAFT separates physical success from requirement satisfaction and uses a scope ladder of memory, rules and a learner to adapt without retraining skills.",
+      "llm_tldr_cn": "机器人会移动物体却不知道物品该放哪里，人类拒绝某次放置后，机器人需判断该纠正只适用于当前情境还是通用规则。作者提出 CRAFT 框架，将物理成功与需求满足分开记录，并用记忆、显式规则与学习器组成的范围阶梯按预测准确性加权融合。受控实验表明该方法优于基线，可在不重训技能的前提下从人机反馈中学习局部需求，提升人机协作的适应性。",
+      "llm_tldr": "机器人会移动物体却不知道物品该放哪里，人类拒绝某次放置后，机器人需判断该纠正只适用于当前情境还是通用规则。作者提出 CRAFT 框架，将物理成功与需求满足分开记录，并用记忆、显式规则与学习器组成的范围阶梯按预测准确性加权融合。受控实验表明该方法优于基线，可在不重训技能的前提下从人机反馈中学习局部需求，提升人机协作的适应性。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "What are the challenges in human robot interaction?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2611.21059v1",
+      "source": "arxiv",
+      "title": "Multi-CONDOR: Learning Multistable Motion Primitives from Demonstration",
+      "abstract": "Dynamical-system-based motion policies provide a framework for learning reactive robot motions with stability and convergence properties. Many manipulation tasks, however, admit several distinct goals or a continuous set of acceptable outcomes, requiring motion primitives that preserve these alternatives. Accommodating both goal structures within a unified framework with continuous, autonomous dynamics remains an open challenge. We propose a CONDOR-based framework, multi-CONDOR, for learning motion primitives with either multiple discrete attractors or a continuous attracting goal contour. The approach combines imitation learning with losses that encourage agreement between the learned task dynamics and latent reference systems encoding the desired attraction structure. We provide a Lyapunov-based analysis of the convergence properties of the learned motion dynamics. We evaluate the framework on simulated benchmarks with discrete goals, qualitative examples with continuous goal contours, and robotic grasping experiments. In simulation, multi-CONDOR reduces trajectory RMSE by approximately 72% compared with separately learned single-goal motion primitives selected by a state machine. For tasks with two and three goals, respectively, it reduces the fraction of evaluated initial states ending outside the goal tolerance from StableNODE's 0.31% and 7.29% to 0% in both settings. Experiments with a Franka Emika robot arm demonstrate successful grasping of a container by either of its two handles using motions learned from demonstrations. Together, these results show multi-CONDOR combines motion reproduction with the flexibility to converge to alternative valid outcomes.",
+      "authors": [
+        "Gabriele Giuseppe Di Marzo",
+        "Mariano Ramírez Montero",
+        "Maximilian Stölzle",
+        "Rodrigo Pérez-Dattari",
+        "Cosimo Della Santina"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-11-16 13:11:36+00:00",
+      "link": "https://arxiv.org/pdf/2611.21059v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "learning motion primitives from demonstration via imitation",
+      "llm_evidence_cn": "通过模仿从演示学习运动基元",
+      "llm_evidence": "通过模仿从演示学习运动基元",
+      "canonical_evidence": "通过模仿从演示学习运动基元",
+      "llm_tldr_en": "Manipulation tasks often admit multiple or continuous goals, which dynamical-system motion policies struggle to preserve. Multi-CONDOR combines imitation learning with latent reference systems to learn multistable motion primitives.",
+      "llm_tldr_cn": "基于动力系统的运动策略能保证稳定收敛，但许多操控任务存在多个目标或连续可接受结果，难以统一表达。作者提出multi-CONDOR框架，将模仿学习与潜参考系统结合，学习具有多个离散吸引子或连续吸引目标轮廓的运动基元。该方法在统一连续自治动力学下同时容纳两种目标结构。这为机器人从演示学习多样化且稳定的运动技能提供了新工具。",
+      "llm_tldr": "基于动力系统的运动策略能保证稳定收敛，但许多操控任务存在多个目标或连续可接受结果，难以统一表达。作者提出multi-CONDOR框架，将模仿学习与潜参考系统结合，学习具有多个离散吸引子或连续吸引目标轮廓的运动基元。该方法在统一连续自治动力学下同时容纳两种目标结构。这为机器人从演示学习多样化且稳定的运动技能提供了新工具。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2611.22077v1",
+      "source": "arxiv",
+      "title": "ReLAP: Latent Action Pretraining through Recurrent Video Prediction in JEPA Space",
+      "abstract": "Videos provide a rich source of physical interaction for learning robot behavior without action annotations, yet effective latent actions must capture not only local transitions but also how those transitions evolve over time. We introduce ReLAP, a latent-action pretraining framework that couples local transition learning with recurrent multi-step prediction in a frozen JEPA representation space. A shared inverse dynamics model infers compact continuous latent actions from adjacent observations, while a latent world model recurrently predicts the future JEPA features. Because each predicted feature becomes the context for the next transition, errors at later steps backpropagate through the rollout to earlier latent actions, encouraging temporally coherent dynamics beyond pairwise reconstruction. We transfer this representation to a vision-language model using two complementary objectives: latent distillation from the frozen inverse teacher and recurrent future-feature prediction through the frozen latent world model. The resulting policy is then adapted to robot demonstrations with action flow matching. At deployment, the explicit latent-action and world-model branches are removed, and the fine-tuned VLM predicts physical actions directly, reducing inference complexity. With only 11M pretraining samples and 1.06B trainable parameters, ReLAP achieves 97.9% on standard LIBERO and 70.0% over zero-shot LIBERO-Plus perturbations. On the LARY latent-action benchmark, ReLAP ranks second in both mean regression error and mean classification accuracy among the compared methods. These results demonstrate that recurrent action-free latent action pretraining can learn compact, temporally structured, and transferable representations for downstream robot control.",
+      "authors": [
+        "R. Gnana Praveen",
+        "Ali Rouzbayani",
+        "Zhiying Jiang",
+        "Bidhan Roy"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-17 01:56:39+00:00",
+      "link": "https://arxiv.org/pdf/2611.22077v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "latent action pretraining and video prediction for robot behavior learning",
+      "llm_evidence_cn": "面向机器人行为学习的潜在动作预训练",
+      "llm_evidence": "面向机器人行为学习的潜在动作预训练",
+      "canonical_evidence": "面向机器人行为学习的潜在动作预训练",
+      "llm_tldr_en": "Introduces ReLAP, a latent-action pretraining framework coupling local inverse dynamics with recurrent multi-step prediction in a frozen JEPA space to learn robot behavior from unlabeled videos.",
+      "llm_tldr_cn": "视频蕴含丰富物理交互信息，但缺乏动作标注，且潜在动作需刻画随时间的演化。本文提出ReLAP框架，在冻结的JEPA表示空间中结合局部逆动力学学习与循环多步预测，由共享逆动力学模型推断紧凑的连续潜在动作，并用潜在世界模型递归预测未来特征。通过让后续误差回传到早期动作，模型学到时序一致的潜在动作表示，为无动作标注的机器人行为学习提供可迁移的预训练方法。",
+      "llm_tldr": "视频蕴含丰富物理交互信息，但缺乏动作标注，且潜在动作需刻画随时间的演化。本文提出ReLAP框架，在冻结的JEPA表示空间中结合局部逆动力学学习与循环多步预测，由共享逆动力学模型推断紧凑的连续潜在动作，并用潜在世界模型递归预测未来特征。通过让后续误差回传到早期动作，模型学到时序一致的潜在动作表示，为无动作标注的机器人行为学习提供可迁移的预训练方法。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "deep learning architectures for robotics applications",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2611.22174v1",
+      "source": "arxiv",
+      "title": "Reconfiguring Procedural Knowledge for Compositional Robot Skill Adaptation",
+      "abstract": "General-purpose behavior models increasingly internalize broad procedural knowledge during training, making their adaptation to new goals and skill interfaces less a problem of learning entirely new behaviors than of reconfiguring existing competence. We study this capability as reconfigurability, the ability to realize new behaviors by cost-efficiently restructuring existing components and relations under sparse governing information, where task specifications provide high-level goals and procedure specifications expose a limited set of reusable factors, leaving the concrete bindings and compositions required for execution underdetermined. We propose RecPo, a framework that represents skills task-agnostically through multiple procedure views and materializes executable skill sequences by composing stored transitions to realize task-specific changes. RecPo maintains a procedure knowledge base of skill-induced transitions, with each view exposing a reusable factor and preserving local skill connectivity. At deployment, it interprets task specifications through the same views and resolves the resulting compositional queries over the stored relations to bind skills for execution. On long-horizon tasks in an extended Franka Kitchen benchmark, RecPo achieves 91.9% ordered completion with 1.0 ms of task inference per episode across varying procedure support and task-record sparsity. Real-robot studies further demonstrate adaptation through local memory edits without task-specific retraining.",
+      "authors": [
+        "Daehee Lee",
+        "Dongsu Lee",
+        "Sanghyun Ahn",
+        "Minjong Yoo",
+        "Honguk Woo"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-11-17 04:09:02+00:00",
+      "link": "https://arxiv.org/pdf/2611.22174v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "reconfiguring procedural knowledge for robot skill adaptation",
+      "llm_evidence_cn": "重构程序性知识实现机器人技能适配",
+      "llm_evidence": "重构程序性知识实现机器人技能适配",
+      "canonical_evidence": "重构程序性知识实现机器人技能适配",
+      "llm_tldr_en": "General behavior models internalize procedural knowledge, making adaptation a problem of reconfiguring existing competence. RecPo represents skills task-agnostically through multiple procedure views to restructure components and bindings for new goals.",
+      "llm_tldr_cn": "通用行为模型在训练中已内化大量程序性知识，因此适配新目标更多是重构已有能力而非学习全新行为。作者提出RecPo框架，以多种过程视图任务无关地表示技能，并在稀疏的高层目标与过程规范下重构组件及其绑定关系。该方法旨在以低成本实现组合式技能适配。这为机器人复用既有能力完成新任务提供了可重构的技能表示思路。",
+      "llm_tldr": "通用行为模型在训练中已内化大量程序性知识，因此适配新目标更多是重构已有能力而非学习全新行为。作者提出RecPo框架，以多种过程视图任务无关地表示技能，并在稀疏的高层目标与过程规范下重构组件及其绑定关系。该方法旨在以低成本实现组合式技能适配。这为机器人复用既有能力完成新任务提供了可重构的技能表示思路。",
+      "llm_tags": [
+        "query:robotics-ai:composite"
+      ],
+      "matched_query_tag": "query:robotics-ai:composite",
+      "matched_query_text": "Papers central to 机器人与人工智能, especially work that connects or combines: computer vision techniques for robot perception and scene understanding; deep learning architectures for robotics applications; object detection and recognition for robotic vision systems; multi-agent systems and coordination in robotics; How can reinforcement learning be applied to robotic control tasks?; How do robots learn from human demonstrations?; What are the challenges in human robot interaction?.",
+      "matched_requirement_id": "req-composite-robotics-ai",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2611.21198v1",
+      "source": "arxiv",
+      "title": "Cooperative Mobile Manipulation using Learned Dynamical Systems",
+      "abstract": "Cooperative mobile manipulation requires robots to coordinate their motions while ensuring whole-body collision avoidance and preserving task-relevant behaviors. We propose CALDS (Cooperative Adaptation of Learned Dynamical Systems), a framework that enables mobile manipulators to adapt learned single-agent behaviors for coordinated execution. Building on individual dynamical systems (DSs) learned from demonstrations, CALDS enables cooperative adaptation through two key components: Cooperative Policy Selection, which identifies compatible combinations of learned policies, and Temporal Adaptation, which ensures collision-free cooperation while preserving the spatial structure and convergence properties of the original behaviors. We evaluate CALDS across three diverse scenarios: assistive dressing, restaurant cleaning and serving, and drawer opening and object placement. Quantitative results demonstrate its effectiveness in improving task success and enabling safe, coordinated simultaneous execution while maintaining fidelity to demonstrated behaviors.",
+      "authors": [
+        "Saray Bakker",
+        "Wendelin Böhmer",
+        "Javier Alonso-Mora"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-16 14:52:49+00:00",
+      "link": "https://arxiv.org/pdf/2611.21198v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "cooperative adaptation of learned policies for multi-robot coordinated manipulation",
+      "llm_evidence_cn": "多机器人协同的自适应学习动力学系统",
+      "llm_evidence": "多机器人协同的自适应学习动力学系统",
+      "canonical_evidence": "多机器人协同的自适应学习动力学系统",
+      "llm_tldr_en": "CALDS adapts single-agent dynamical systems learned from demonstrations into cooperative multi-robot manipulation, adding policy selection and temporal adaptation to guarantee collision-free, convergent coordinated execution.",
+      "llm_tldr_cn": "现有单机器人示教学习的动力学系统难以直接用于多机协同，易出现碰撞并破坏原有行为结构。本文提出CALDS框架，通过协同策略选择与时间自适应两个组件，将单智能体行为组合为无碰撞的协同执行。实验表明该方法在保持原行为收敛性的同时实现协调作业，为多移动操作臂协同提供了可复用的适配方案。",
+      "llm_tldr": "现有单机器人示教学习的动力学系统难以直接用于多机协同，易出现碰撞并破坏原有行为结构。本文提出CALDS框架，通过协同策略选择与时间自适应两个组件，将单智能体行为组合为无碰撞的协同执行。实验表明该方法在保持原行为收敛性的同时实现协调作业，为多移动操作臂协同提供了可复用的适配方案。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "multi-agent systems and coordination in robotics",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2611.22388v1",
+      "source": "arxiv",
+      "title": "Hidden Variables Behind Real-Robot Data Quality: Lessons from Hundreds of Thousands of Hours",
+      "abstract": "As real-robot data collection scales, collection-system design shapes both operator efficiency and the behaviors learned by robot policies. Workspace limitations, control-interface friction, and latency can introduce pauses, detours, and corrective motions into otherwise successful demonstrations. We investigate these effects across embodiment, teleoperation control, and data consistency, combining a kinematic study of 25 dual-arm robots, controlled teleoperation experiments, and real-robot evaluation of fine-tuned $π_{0.5}$ policies. The embodiment study shows that positional reachability overstates orientation-aware task coverage and that modest shoulder motion can substantially expand the effective workspace. Teleoperation experiments show that parallelizing body-part control reduces task completion time by 43-53%, while compliant control improves success and reduces peak contact forces on constrained and contact-rich tasks. Policy-learning experiments show that demonstrations must capture the visual information underlying action choices: active-search demonstrations improve arm-selection accuracy from chance (50%) to 100%. Calibration experiments reveal that mixed-calibration training data remain usable in our tested configurations when an inference-aligned subset is retained, whereas inference-time miscalibration causes all 30 trials to fail. Policies also retain approximately 90% of the extra path length in detour-contaminated demonstrations, showing how inefficient operator motions persist in learned behavior. Together, these findings connect collection-system design to demonstration quality and downstream policy execution. They motivate evaluating effective workspace, control efficiency, observation completeness, calibration alignment, and motion quality before scaling collection, and addressing system-induced compensations at their source.",
+      "authors": [
+        "Maniformer Real-World Manipulation Team",
+        "Che Tsang Calvin",
+        "Xingyu Chen",
+        "Bowen Jiang",
+        "Naixiang Gao",
+        "Xiongfeng Cai",
+        "Enlin Gu",
+        "Ruiying Li",
+        "Peize Li",
+        "Mianrui Zhu",
+        "Haomiao Zhang",
+        "Xin He",
+        "Minhui Yu",
+        "Jun Zhao",
+        "Zihao Zhu",
+        "Yang Chen",
+        "Jingmei Jin",
+        "Keru Zhou",
+        "Chen Wang",
+        "Chang Zhou",
+        "Zhiwen Hou",
+        "Di Yang",
+        "Wenjun Sun",
+        "Fan Yang",
+        "Liyan Zhang",
+        "Yi Lu",
+        "Haojun Ma",
+        "Jun Zhu",
+        "Pengxin Zha",
+        "Zhaosheng Wang",
+        "Xin Zhao",
+        "Xindong He",
+        "Chiming Liu",
+        "Jianheng Song",
+        "Jiayao Ma",
+        "Maoqing Yao",
+        "Guanghui Ren",
+        "Qian Wang",
+        "Wei Shan",
+        "Yang Yang",
+        "Li Liu",
+        "Wenhao Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-17 08:38:45+00:00",
+      "link": "https://arxiv.org/pdf/2611.22388v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "real-robot demonstration data quality shaped by teleoperation and embodiment",
+      "llm_evidence_cn": "遥操作与本体设计影响真实机器人演示数据质量",
+      "llm_evidence": "遥操作与本体设计影响真实机器人演示数据质量",
+      "canonical_evidence": "遥操作与本体设计影响真实机器人演示数据质量",
+      "llm_tldr_en": "This study analyzes how embodiment, teleoperation control, and data consistency inject pauses and corrective motions into robot demonstrations, drawing on kinematic studies of 25 dual-arm robots and fine-tuned policy evaluation.",
+      "llm_tldr_cn": "随着真实机器人数据采集规模化，采集系统设计会影响操作效率与策略所学行为，工作空间、控制接口摩擦与延迟会在演示中引入停顿和纠错动作。本文结合25台双臂机器人的运动学分析、受控遥操作实验与微调策略评估，考察本体、遥操作控制与数据一致性的影响。研究揭示位置可达性高估了朝向相关任务覆盖，并给出改进数据质量的实践启示。",
+      "llm_tldr": "随着真实机器人数据采集规模化，采集系统设计会影响操作效率与策略所学行为，工作空间、控制接口摩擦与延迟会在演示中引入停顿和纠错动作。本文结合25台双臂机器人的运动学分析、受控遥操作实验与微调策略评估，考察本体、遥操作控制与数据一致性的影响。研究揭示位置可达性高估了朝向相关任务覆盖，并给出改进数据质量的实践启示。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2611.24100v1",
+      "source": "arxiv",
+      "title": "Lost Between Mind, Model Collaboration, and Motion: Understanding and Measuring Cross-Model Action Misalignment in Commercial Robots",
+      "abstract": "Embodied robots increasingly rely on large language models (LLMs) to interpret user intent and coordinate with robot-specific action models for physical interaction. This multi-model pipeline creates a critical semantic boundary across mind, model collaboration, and motion: semantic consistency may break between what the large model understands, how the small action model translates that understanding into executable commands, and what physical actions the robot ultimately performs. As a security consequence, commercial robots may execute unintended physical actions even when user inputs contain no explicit action commands. To measure this problem, we develop TARS, a black-box framework that explores the command-reasoning-action pipeline and automatically discovers and validates unintended physical behaviors. We evaluate TARS on four commercial robots across 44 experimental settings, conducting 133,400 executions. TARS uncovers widespread cross-model action misalignment and achieves up to 94% verified action coverage.",
+      "authors": [
+        "Yuhang Huang",
+        "Junchao Li",
+        "Boyang Ma",
+        "Minghui Xu",
+        "Kaidi Xu",
+        "Pengfei Hu",
+        "Xiuzhen Cheng",
+        "Yue Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-18 09:22:20+00:00",
+      "link": "https://arxiv.org/pdf/2611.24100v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "cross-model action misalignment between user intent and physical robot actions",
+      "llm_evidence_cn": "用户意图与机器人动作间的跨模型错位",
+      "llm_evidence": "用户意图与机器人动作间的跨模型错位",
+      "canonical_evidence": "用户意图与机器人动作间的跨模型错位",
+      "llm_tldr_en": "The paper studies semantic misalignment across LLM intent understanding, action-model translation, and physical motion in commercial robots, proposing the black-box TARS framework to measure unintended actions.",
+      "llm_tldr_cn": "商用机器人依赖大语言模型理解用户意图并与动作模型协作，多模型流水线在理解、翻译与执行之间形成语义边界，可能导致执行未预期的动作。本文聚焦这一跨模型动作错位问题，提出黑盒框架TARS来度量该安全风险。研究揭示了即便输入无明确动作指令也可能触发错误动作，为人机交互中具身机器人的安全评估提供了新的度量手段。",
+      "llm_tldr": "商用机器人依赖大语言模型理解用户意图并与动作模型协作，多模型流水线在理解、翻译与执行之间形成语义边界，可能导致执行未预期的动作。本文聚焦这一跨模型动作错位问题，提出黑盒框架TARS来度量该安全风险。研究揭示了即便输入无明确动作指令也可能触发错误动作，为人机交互中具身机器人的安全评估提供了新的度量手段。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "What are the challenges in human robot interaction?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2611.21908v1",
+      "source": "arxiv",
+      "title": "From Human Videos to Bimanual Dexterous Manipulation Data: Confidence-Guided RL Refinement of Video Priors",
+      "abstract": "Collecting demonstrations for bimanual dexterous manipulation is costly, motivating the use of human videos as a source of robot training data. However, uncertainty in video-derived motion estimates and differences between human and robot embodiments make direct motion transfer challenging. In this work, we introduce PriDex, a framework that transforms human-video Priors into executable robot Dexterous manipulation demonstrations through reinforcement learning in simulation. PriDex preserves task-relevant interaction structure while allowing embodiment-specific behavior to be regenerated for the robot. Human-object interactions provide affordance cues for selecting task-relevant, robot-specific grasps from geometry-based candidates. For motion refinement, object trajectories provide a task-level reference, while relative bimanual wrist trajectories offer complementary guidance for coordinated motion. Since object-motion estimates can become unreliable under occlusion or visual ambiguity, PriDex uses object-motion confidence to adaptively balance these two priors, emphasizing object-level guidance when confidence is high and increasing the contribution of wrist-level guidance as confidence decreases. Reinforcement learning refines these video-derived priors under the robot's kinematic and physical constraints, and the resulting policies are rolled out to generate robot demonstrations for training a vision-based diffusion policy. We evaluate PriDex on four bimanual dexterous manipulation tasks, including pouring, sweeping into a dustpan, bottle-cap unscrewing, and plate cleaning, assessing both simulation-based robot data generation and downstream visuomotor policy learning.",
+      "authors": [
+        "Yanghong Liu",
+        "Yang Chen",
+        "Kailang Xu",
+        "Bang Du",
+        "Feiyang Yang",
+        "Jiawei Xia",
+        "Zhengtao Yao",
+        "Yubiao Zhang",
+        "Masayoshi Tomizuka",
+        "Ruihai Wu",
+        "Wei Zhan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-16 21:23:58+00:00",
+      "link": "https://arxiv.org/pdf/2611.21908v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "learns robot manipulation from human video demonstrations via RL",
+      "llm_evidence_cn": "利用强化学习从人类视频示范学习机器人操作",
+      "llm_evidence": "利用强化学习从人类视频示范学习机器人操作",
+      "canonical_evidence": "利用强化学习从人类视频示范学习机器人操作",
+      "llm_tldr_en": "Bimanual dexterous demonstrations are costly, so human videos are used as priors. PriDex converts noisy human-video motion into executable robot demonstrations via confidence-guided reinforcement learning in simulation, preserving interaction structure while adapting to the robot embodiment.",
+      "llm_tldr_cn": "为双臂灵巧操作采集示范数据成本高昂，因此人们尝试用人类视频作为机器人训练数据来源，但视频运动估计的不确定性与人机本体差异使直接迁移十分困难。本文提出PriDex框架，在仿真中利用置信度引导的强化学习，将人类视频先验转化为可执行的机器人灵巧操作示范。方法在保留任务相关交互结构的同时，为机器人重新生成符合其本体的行为，从而提升数据可用性。",
+      "llm_tldr": "为双臂灵巧操作采集示范数据成本高昂，因此人们尝试用人类视频作为机器人训练数据来源，但视频运动估计的不确定性与人机本体差异使直接迁移十分困难。本文提出PriDex框架，在仿真中利用置信度引导的强化学习，将人类视频先验转化为可执行的机器人灵巧操作示范。方法在保留任务相关交互结构的同时，为机器人重新生成符合其本体的行为，从而提升数据可用性。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2611.22797v1",
+      "source": "arxiv",
+      "title": "Zero-Shot Compositional Generalization for Embodied Manipulation",
+      "abstract": "Robot demonstrations are collected on different embodiments, leaving many robot-skill combinations unobserved. Pooling these data shares visual knowledge, while joint labels remain tied to the demonstrating kinematic chain. We propose a geometry-supervised training framework for zero-shot composition of familiar robots and skills. The central insight is that a demonstrated command provides a tool-space target for every robot that can realize it. Calibrated forward kinematics supplies this supervision to foreign native action interfaces without their joint labels for that skill. Native reconstruction retains demonstrated configurations, and positive reachability checks select targets for cross-robot supervision. A visual policy learns to predict shared actions and executes through the target robot's native decoder. During policy learning, one prediction receives geometric supervision through both source and foreign native realizations. Matched supervision controls, repeated policy training and evaluations across three backbones and two simulators demonstrate improved transfer to missing robot-task combinations.",
+      "authors": [
+        "Baicheng Li",
+        "Wenkang Qin",
+        "Youqi Pan",
+        "Dongxiao Mao",
+        "Yukun Zhou",
+        "Chuanfu Shen",
+        "Dong Wu",
+        "Shunkai Zhou",
+        "Zike Yan",
+        "Wei Sui",
+        "Hongbin Zha"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-11-17 13:56:55+00:00",
+      "link": "https://arxiv.org/pdf/2611.22797v1",
+      "tags": [
+        "keyword:robotics-ai",
+        "query:robotics-ai"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "zero-shot compositional generalization from pooled robot demonstrations across embodiments",
+      "llm_evidence_cn": "跨本体机器人演示数据的零样本组合泛化",
+      "llm_evidence": "跨本体机器人演示数据的零样本组合泛化",
+      "canonical_evidence": "跨本体机器人演示数据的零样本组合泛化",
+      "llm_tldr_en": "Robot demonstrations across embodiments leave many robot-skill pairs unobserved. The paper proposes geometry-supervised training using calibrated forward kinematics as tool-space targets, enabling zero-shot composition of familiar robots and skills.",
+      "llm_tldr_cn": "机器人演示数据采集于不同本体，导致许多机器人与技能组合未被观测到，难以直接复用。作者提出几何监督训练框架，利用标定后的正运动学为异构机器人提供工具空间目标监督，并结合可达性检查筛选跨机器人监督信号。基于此学习到的视觉策略可预测共享动作表示，实现已知机器人与技能的零样本组合泛化，提升了演示数据的跨本体利用效率。",
+      "llm_tldr": "机器人演示数据采集于不同本体，导致许多机器人与技能组合未被观测到，难以直接复用。作者提出几何监督训练框架，利用标定后的正运动学为异构机器人提供工具空间目标监督，并结合可达性检查筛选跨机器人监督信号。基于此学习到的视觉策略可预测共享动作表示，实现已知机器人与技能的零样本组合泛化，提升了演示数据的跨本体利用效率。",
+      "llm_tags": [
+        "query:robotics-ai"
+      ],
+      "matched_query_tag": "query:robotics-ai",
+      "matched_query_text": "How do robots learn from human demonstrations?",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

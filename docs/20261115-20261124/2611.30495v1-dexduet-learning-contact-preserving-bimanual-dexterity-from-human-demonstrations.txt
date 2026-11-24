@@ -1,0 +1,4516 @@
+DexDuet: Learning Contact-Preserving Bimanual Dexterity from Human
+Demonstrations
+Haoran Zhang1
+Haokai Ding1
+Han Zhou1
+Zuxing Lu1
+Heng Zhang2
+Xingxing Zuo1,∗
+1Mohamed bin Zayed University of Artificial Intelligence
+2Motphys
+∗Corresponding author
+Preserving the human’s contacts
+With different robot hands and objects
+Figure 1. DexDuet preserves the human’s hand-object contacts. From one human demonstration of opening a ketchup bottle and
+handing it over (top left), DexDuet learns a policy for two cooperating robot hands (bottom left) that hold the same parts of the bottle as
+the human’s hands, shown as soft patches for the left hand (teal) and the right hand (violet). DexDuet does the same with other robot hands
+and objects, including a humanoid with dexterous hands (right).
+Abstract
+Human demonstrations provide a rich source of bimanual
+dexterous skills, yet transferring them to robot hands re-
+mains challenging.
+Existing methods primarily optimize
+object trajectory tracking, often overlooking how human
+hands interact with the object. Even with accurate tracking,
+robots may contact incorrect object parts or slide their fin-
+gers, resulting in unstable manipulation. We present Dex-
+Duet, a framework that learns contact-preserving biman-
+ual dexterity from a single human demonstration.
+Dex-
+Duet employs two interaction rewards to preserve human
+hand-object configurations and contacts.
+To enable co-
+ordinated manipulation, we factorize the bimanual pol-
+icy into two weight-sharing per-hand policies that condi-
+tion on each other’s states. We further propose assisted
+reference-state initialization (A-RSI), an adaptive curricu-
+lum that adjusts object assistance and training starts across
+demonstration segments to overcome difficult manipulation
+phases.
+Across four benchmarks spanning three simula-
+tors and five robot embodiments, DexDuet improves object-
+tracking ADD-AUC by 11–41 points over the correspond-
+ing baselines while consistently achieving better contact
+preservation. Notably, among 122 paired runs with compa-
+rable object-tracking accuracy, DexDuet preserves the hu-
+man’s contacts better in 117 cases. Code and videos are
+available on our project page.
+1. Introduction
+People routinely manipulate objects with both hands, such
+as holding a bottle while opening its lid. Learning such
+dexterous skills from human demonstrations offers a nat-
+ural approach to robotic manipulation [5, 36, 37, 46]. How-
+ever, differences between human and robot hands prevent
+demonstrations from being directly replayed on robots. Re-
+cent methods bridge this gap by retargeting human motions
+to robot hands and training policies in simulation to track
+1
+arXiv:2611.30495v1  [cs.RO]  23 Nov 2026
+
+
+demonstrated object trajectories [21, 30, 63]. Nevertheless,
+a fundamental limitation of these methods is their reliance
+on object trajectory tracking as the primary learning ob-
+jective. Even when a robot accurately tracks the demon-
+strated trajectory, its hands may contact the wrong object
+parts or slide on the object, resulting in unstable manipula-
+tion. Faithful bimanual manipulation requires not only re-
+producing where the object moves, but also preserving how
+the hands interact with it.
+However, achieving contact-preserving bimanual ma-
+nipulation presents three key challenges.
+First, biman-
+ual manipulation requires coordinated yet role-specific con-
+trol. Existing methods either control both hands through a
+unified policy [30, 63] or train separate policies indepen-
+dently [62], limiting explicit coordination or shared learn-
+ing between hands. Second, preserving human hand-object
+contacts across different embodiments remains difficult.
+Although existing methods incorporate contact-related re-
+wards [22, 30, 63], robot hands can still contact the object
+differently from human hands, particularly in which hand
+holds an object part and whether the contact is maintained.
+Third, learning complex demonstrations is hindered by dif-
+ficult manipulation phases. To make training tractable, prior
+methods assist the object early in training, with a virtual ob-
+ject controller (VOC), a proportional-derivative (PD) con-
+troller that pulls the object toward its demonstrated trajec-
+tory [30, 63], or with relaxed physics [21], and gradually
+withdraw this assistance. However, the assistance is typi-
+cally reduced uniformly across the demonstration, allowing
+a difficult phase, such as a handover, to stall the entire train-
+ing process.
+To address these challenges, we introduce DexDuet, a
+framework for learning contact-preserving bimanual dex-
+terity from a single human demonstration (Fig. 1). To co-
+ordinate the two hands, DexDuet factorizes the bimanual
+policy into two per-hand policies that share network param-
+eters while observing each other’s states. This allows each
+hand to perform its own role, adapt to its partner, and bene-
+fit from shared learning. To preserve human hand-object
+interactions, DexDuet introduces two complementary in-
+teraction rewards.
+The first encourages each robot hand
+to match the orientation and finger configuration of its hu-
+man counterpart relative to the object. The second encour-
+ages each hand region, such as the palm or a finger, to con-
+tact the object where the corresponding human region does.
+Together, these rewards guide the robot to reproduce the
+demonstrated contacts rather than merely track object mo-
+tion. Furthermore, to facilitate learning through difficult
+manipulation phases, we propose assisted reference-state
+initialization (A-RSI), an adaptive curriculum that adjusts
+VOC assistance separately for each demonstration segment
+based on its learning progress. It also initializes episodes
+from previously reached states and prioritizes failing seg-
+ments, enabling the policy to learn complex demonstrations
+without assistance. In summary, our contributions are:
+• We present DexDuet, a framework for learning contact-
+preserving bimanual dexterity from human demonstra-
+tions through factorized, weight-sharing per-hand poli-
+cies that enable role-specific control and partner-aware
+coordination.
+• We introduce two complementary interaction rewards
+that preserve human hand-object interactions by aligning
+object-relative hand configurations and region-level con-
+tacts across different robot embodiments.
+• We propose assisted reference-state initialization (A-
+RSI), an adaptive curriculum that combines segment-
+specific VOC assistance, initialization from previously
+reached states, and failure-aware sampling to improve
+learning through difficult manipulation phases.
+• We evaluate DexDuet on four benchmarks spanning three
+simulators and five robot embodiments, demonstrating
+consistent improvements in object tracking and contact
+preservation, with additional demonstrations on two real
+robot systems.
+2. Related Work
+Learning dexterous manipulation from human demon-
+strations.
+Human demonstrations are a natural source of
+dexterous skills, because people handle everyday objects
+with both hands skillfully. Many works therefore collect
+demonstrations of hand-object interaction.
+They capture
+them in motion-capture and multi-camera studios [2, 6, 43]
+or with wearable gloves, exoskeletons and headsets [1,
+44, 46, 51], reconstruct them from monocular or egocen-
+tric videos [7, 33, 36, 59], or generate them with models
+trained on such data [58]. These efforts have produced large
+datasets of hand-object interaction [9, 16, 26, 60]. How-
+ever, these demonstrations cannot be replayed directly on
+a robot, because robot hands differ from human hands in
+size, kinematics and actuation. For humanoid robots and
+physics-based characters, a common solution to this gap
+maps the human motion onto the target body and trains a
+policy in physics simulation to track it [14, 23, 47, 52]. Re-
+cent methods apply the same idea to dexterous hands. They
+train policies that move the object along its demonstrated
+trajectory, guided by the retargeted hand motion [5, 8, 21,
+22, 25, 27, 30, 38, 53, 63], or optimize the control sequence
+directly [24, 34]. These methods are primarily driven by
+an object-tracking reward. Some of them also compare the
+robot’s contacts with the human’s frame by frame, either
+by their locations [19, 22, 30] or by the forces and torques
+they can exert on the object [63]. These terms act on indi-
+vidual contacts in each frame, and none of them considers
+whether a contact stays fixed on the object over time. The
+robot can therefore still move the object along its trajectory
+with different contacts, for example with the other hand or
+2
+
+
+with sliding fingers, which makes the manipulation unsta-
+ble. DexDuet instead trains each robot hand to preserve the
+human’s contacts, so that it stays on the part that the hu-
+man’s hand holds without sliding.
+Bimanual manipulation.
+Two hands that manipulate one
+object must coordinate, because each performs its own part
+of the task and the task fails as soon as either one fails.
+Imitation-learning policies for two robot arms build this co-
+ordination into their architecture, for example with per-arm
+modules that exchange information or predict a shared fu-
+ture state [3, 12, 17, 20, 31, 49, 50, 56]. In reinforcement
+learning of bimanual dexterous tasks, coordination has been
+eased by treating each hand as a separate agent [4], by giv-
+ing the two hands complementary roles [54], or by training
+one hand before both [61]. Methods that transfer human
+demonstrations to two dexterous hands have not used these
+ideas. They either drive both hands with one policy, pos-
+sibly on top of per-hand imitators [21, 30, 63], or learn an
+independent policy for each hand [62]. With a single policy,
+the learning of one hand is tied to that of the other, whereas
+independent policies do not share what one hand learns with
+the other. DexDuet lies between these two designs, inspired
+by cooperative multi-agent reinforcement learning [55] and
+by decentralized agents that reason about their partner [13].
+Each hand has its own policy, which observes the other
+hand, and the two policies share one network, so that both
+coordination and experience sharing are built into the pol-
+icy.
+Curricula for dexterous manipulation.
+Learning dex-
+terous manipulation from complex demonstrations is hard,
+because a policy that starts at the first frame rarely reaches
+the later phases.
+Tracking methods therefore also start
+episodes at later frames of the demonstration, either from
+reference states [63] or from states the policy has already
+reached [22, 52, 53], and some sample the start frames
+more often where the policy fails [23].
+A second tech-
+nique assists the object, with a VOC [30, 63] or with relaxed
+physics [21, 24], and reduces this assistance over training.
+However, the assistance is reduced uniformly across the en-
+tire demonstration, even though the difficulty usually lies in
+only a few phases, so that progress on the whole demon-
+stration is limited by its hardest phase. A-RSI instead sets
+the assistance separately for each segment of the demonstra-
+tion, lowering it when the episodes that start there succeed
+and raising it when they fail, and starts episodes preferen-
+tially in segments with high failure rates. A hard phase thus
+keeps its assistance and receives more practice, and training
+on the rest of the demonstration proceeds independently of
+it.
+3. Method
+3.1. Problem Formulation
+Given a human demonstration of a bimanual manipula-
+tion, we aim to learn a policy π with which two dexterous
+robot hands reproduce it (Fig. 2). The demonstration has T
+frames. Frame t contains the poses of the two human hands
+i ∈{L, R} and the object state xt, which comprises the
+pose Xm
+t ∈SE(3) of each object part m.
+Reproducing the demonstration involves two require-
+ments. First, the object must follow its demonstrated states.
+Second, the robot hands must preserve the human’s hand-
+object contacts. We say that a hand holds a part when it
+touches the part and its contact points do not move on the
+part. Contact preservation requires that, whenever a human
+hand holds a part, the corresponding robot hand holds the
+same part. We formalize the two requirements as
+π⋆= arg min
+π
+Eπ
+h PT −1
+t=1 errobj(ˆxt, xt)
+i
+s.t. Eπ
+ˆδw
+
+≤δmax
+∀w ∈W,
+(1)
+with the object error
+errobj(ˆxt, xt) =
+X
+m
+1
+|Sm|
+X
+s∈Sm
+( ˆXm
+t −Xm
+t ) s
+,
+(2)
+where ˆxt is the object state reached by the robot and Sm is a
+set of points on part m, expressed in the coordinate frame of
+the part. The constraint uses the contact drift of a window
+w = (i, m, t), which measures how far the contact points of
+hand i on part m at frame t move relative to the part within
+the next ∆frames,
+δw =
+1
+|Cw|
+X
+k∈Cw
+vk,t+∆−vk,t
+,
+(3)
+where Cw is the set of points of hand i that touch part m
+at frame t and vk,t is the position of point k at frame t,
+expressed in the coordinate frame of the part. We write ˆδw
+for the drift of the robot and ˜δw for that of the human. A
+hand holds a part during w if its drift is below a threshold
+δmax. The set W contains the hold windows, in which the
+human hand holds the part (Sec. C).
+3.2. Factorized Per-Hand Policy
+Prior methods control both hands with one unified policy
+that maps the full observation to the concatenated action
+of both hands [30, 63]. Such a policy does not exploit the
+structure of bimanual manipulation, in which two mirror-
+symmetric hands act on a shared object and each must act
+precisely on its own while accounting for the other. In-
+spired by decentralized cooperative control, where agents
+act on their own observations while reasoning about their
+3
+
+
+(a) Factorized per-hand policy
+demonstration
+object
+hands
+retargeted
+next pose
+policy
+action
+observation
+imitate
+(b) Interaction rewards
+hand graph
+human
+robot
+hand–object contact
+human
+robot
+(c) Assisted reference-state initialization (A-RSI)
+hard segment
+fails
+Per-segment assistance
+Starting where the policy fails
+uniform
+Starting from
+reached states
+reference state
+from retargeting
+keyframe
+reached by the policy
+with the VOC on
+reference motion
+inside
+Figure 2. Overview of DexDuet. (a) A human demonstration provides the object trajectory, which gives the policy πθ the next object
+pose, and the hand motion, which is retargeted to a reference motion that the robot hands imitate. Inside πθ, two per-hand policies share
+one network, and each maps its own observation o and the partner observation z to an action a. (b) Two interaction rewards compare each
+robot hand with the human hand relative to the object. The hand graph reward compares the palm and finger directions and the fingertip
+gaps, and the hand-object contact reward compares the distance and the closest point of each hand region to the object. (c) A-RSI gives
+each segment b of the demonstration its own assistance level hb, which it lowers (green) or raises (red), never above a ceiling ¯h(u) that
+decreases over the updates u. Episodes start from states that the policy has reached, and their start segment is drawn from p(b), which
+favors the segments with a high failure rate fb.
+partner [13], we factorize the bimanual policy into two per-
+hand policies that share one network and observe each other
+(Fig. 2a). Each hand i receives a local observation oi
+t and
+a partner observation z−i
+t . The local observation contains
+the hand’s joint state, wrist pose and keypoints, the object’s
+state and its error to its next demonstrated state, and the
+hand’s previous action. The keypoints are points on the
+hand, such as the wrist and the base and tip of each fin-
+ger. The partner observation contains the state and previous
+action of the other hand −i (Sec. A.1). The policy over the
+joint action at = (aL
+t , aR
+t ) is
+πθ(at | ot) =
+Y
+i∈{L,R}
+N
+ ai
+t; µθ(
+oi
+t
+|{z}
+own hand
+, z−i
+t
+|{z}
+partner
+), Σi
+, (4)
+where ot collects the observations of both hands, ai
+t is the
+action of hand i, which sets its joint position targets, µθ
+is the actor network shared by the two hands, and Σi is a
+learned diagonal covariance (Sec. A.2). We denote the pol-
+icy of hand i, which is the corresponding factor of Eq. (4),
+by πi
+θ.
+Per-hand clipping.
+We train the policy with PPO [42],
+which keeps each update small by clipping the probability
+ratio between the updated and the previous policy. For a
+unified policy, this is the ratio of the joint action of both
+hands, so a sample on which the policy of one hand has
+changed too much is clipped for both hands and no longer
+updates the other hand. We instead clip the ratio of each
+hand separately (Fig. 2a) and maximize
+Et
+h P
+i min
+ ρi
+tAi
+t, clipϵ(ρi
+t) Ai
+t
+i
+,
+ρi
+t = πi
+θ(ai
+t | ot) / πi
+θold(ai
+t | ot),
+(5)
+where ρi
+t is the probability ratio of hand i, θold are the pa-
+rameters before the update, clipϵ clips a ratio to [1−ϵ, 1+ϵ],
+and Ai
+t is the advantage of hand i, estimated by its own
+value head of a centralized critic (Sec. A.3).
+3.3. Interaction Rewards
+We build on the rewards commonly used in prior work [30,
+63], which track the object and imitate a reference motion
+obtained by retargeting the human hands to the robot hands,
+and denote their sum by rbase (Sec. A.4). To preserve the
+human’s hand-object contacts, we add two dense terms that
+compare each robot hand with the human hand itself, rela-
+4
+
+
+tive to the object (Fig. 2b),
+rt = rbase + λhg rhg + λhoc rhoc,
+(6)
+with weights λhg and λhoc (Tab. S2). They are inspired by
+the contact-graph rewards for physics-based human-object
+interaction [47].
+Hand graph reward.
+This term aligns the palm and fin-
+gers of each robot hand with those of the human hand, in
+their orientation and opening around the object. We build
+a graph on the keypoints of each hand. Its edges E are unit
+vectors and consist of the palm normal n, the palm direc-
+tion e0 from the wrist to the base of the middle finger, and
+the direction ej of each finger j from its base to its tip. The
+edges of the human hand are taken relative to the demon-
+strated object, and those of the robot hand relative to the
+reached object. Two errors compare the robot hand with the
+human hand,
+errdir =
+X
+e∈E
+ωe
+ 1 −ˆe⊤˜e
+
+,
+errgap =
+1
+|P|
+X
+(j,j′)∈P
+∥ˆyj −ˆyj′∥−κ ∥˜yj −˜yj′∥
+,
+(7)
+The direction error compares how the palm and each finger
+are oriented. In it, ˆe and ˜e denote the same edge of the robot
+hand and of the human hand, and the weights ωe sum to
+one. The gap error compares how far the fingers are spread.
+In it, ˆyj and ˜yj are the positions of the tip of finger j, P
+contains the pairs of the thumb with each other finger and of
+neighboring fingers, and κ scales the human hand to the size
+of the robot hand (Sec. A.4). With scales βdir and βgap, the
+reward combines the two errors of each hand i and averages
+over the hands,
+rhg = 1
+2
+P
+i e−βdir erri
+dir−βgap erri
+gap.
+(8)
+Hand-object contact reward.
+This term encourages each
+region of the robot hand to approach and contact the object
+where the corresponding region of the human hand does.
+We divide each hand into the palm, the thumb and each of
+the other fingers, and index these regions by g. For a hand
+with fewer fingers than the human’s, both rewards use only
+the fingers that the retargeting matches (Fig. S1). For each
+region g and object part m, we compute the distance dg,m
+from the region to the part and the point pg,m on the part
+that is closest to the region. We compute both quantities
+for the human hand, ˜dg,m and ˜pg,m, and for the robot hand,
+ˆdg,m and ˆpg,m (Sec. A.4). For each hand, the reward com-
+pares the robot with the human region by region,
+errg,m =
+ min( ˆdg,m, dmax) −min( ˜dg,m, dmax)
+
++ 1[ ˜dg,m < dmax] ∥ˆpg,m −˜pg,m∥,
+ri
+hoc = P
+g,m ωg,m e−βhoc max(0, errg,m−dtol),
+(9)
+where dmax caps the distances, dtol is a tolerance, βhoc is
+a scale, and the weights ωg,m sum to one and emphasize
+the pairs of a region and a part that are in or near contact
+(Sec. A.4). The hand index i is omitted on the right-hand
+sides, and rhoc is the mean of ri
+hoc over the two hands. The
+first term of the error compares how close each region is to
+the part, and the cap makes all far regions count as equally
+far. The second term compares where the region touches
+the part and applies only where the human region is close
+to the part. The reward thus guides each region toward the
+part before contact is made, and it penalizes contacts that
+the human does not make.
+3.4. Assisted Reference-State Initialization
+Learning a complex bimanual demonstration is a hard ex-
+ploration problem, because episodes rarely progress beyond
+a difficult phase in the middle, such as a handover between
+the hands. In motion imitation, reference-state initializa-
+tion (RSI) [35] addresses this problem by starting episodes
+from states sampled uniformly along the reference motion,
+so that every phase is practiced. In dexterous retargeting, a
+reference state consists of the hand configurations of the ref-
+erence motion and the demonstrated object state of a frame.
+RSI then faces two problems.
+First, a reference state is
+usually not physically valid, because the retargeted fingers
+often leave a gap to the object or penetrate it. Without a
+valid grasp, an object that starts in the air falls or is pushed
+away before the policy can act. Second, uniform sampling
+spends most episodes on phases that the policy has already
+solved instead of on the difficult one. Assisted reference-
+state initialization (A-RSI, Fig. 2c and Fig. S2) addresses
+the first problem by assisting the object, which makes refer-
+ence states usable, and by starting episodes from states that
+the policy has reached. In addition, it addresses the second
+problem by starting episodes more often where the policy
+fails.
+Per-segment assistance.
+To make reference states usable,
+we assist the object with the VOC [30], which pulls the ob-
+ject toward its next demonstrated state xt+1 with a strength
+set by its gains. Prior work [30, 63] uses one gain level for
+the whole demonstration and lowers it only once the policy
+succeeds over all of it, so a single hard phase stalls the cur-
+riculum. We instead divide the demonstration into B seg-
+ments of equal length, indexed by b, and give each segment
+its own assistance level hb. This level sets the VOC gains of
+every episode that starts in segment b, for the whole episode.
+An episode succeeds if it reaches the end of the demonstra-
+tion and fails if it is terminated early because its tracking
+reward falls below a threshold. Each hb starts at a maxi-
+mum hmax and is updated during training according to the
+success rate sb of the recent episodes that started in segment
+5
+
+
+b,
+hb ←
+
+
+
+
+
+α hb
+if sb ≥shi,
+hb/α
+if sb < slo and hb/α ≤¯h(u),
+hb
+otherwise,
+(10)
+where α < 1 is a decay factor, slo < shi are thresholds,
+and ¯h(u) is a ceiling on all levels that decreases with the in-
+dex u of the PPO update, from hmax to zero. Assistance is
+thus withdrawn from the segments that the policy has mas-
+tered and restored where it fails. The ceiling guarantees
+that every level reaches zero, so the final policy runs with-
+out assistance. Training stops once every segment has been
+unassisted for a fixed number of updates, or at an update cap
+(Algorithm S1 and Sec. A.5).
+Starting from reached states.
+Under full assistance, an
+episode can start from a reference state, because the VOC
+keeps the object on its trajectory even though the hands do
+not yet hold it. As the assistance of a segment is lowered,
+this is no longer reliable, and the object may be lost at the
+start of the episode. A-RSI therefore starts episodes from
+keyframes, which are states that the policy itself has reached
+and which are therefore physically valid. During training,
+a state is stored as a keyframe of its segment if its episode
+subsequently reaches the end of the demonstration, and the
+episodes that start in this segment are then initialized from
+its keyframes instead of reference states. A keyframe is
+used only while the assistance of its segment is at least as
+high as the level under which it was reached (Sec. A.5).
+Starting where the policy fails.
+Inspired by the adap-
+tive sampling of BeyondMimic [23], A-RSI starts episodes
+more often in the segments where the policy fails.
+An
+episode starts in segment b with probability
+Pstart(b) = λ0 1[b = 0] + (1 −λ0) p(b),
+p(b) = λu
+B + (1 −λu)
+Fb
+F0 + · · · + FB−1
+,
+Fb = PB−1−b
+k=0
+γ k
+seg fb+k,
+(11)
+where the segments are indexed from 0 to B −1 and Fb
+is the failure score of segment b. The first term of Pstart
+accounts for the episodes that start at the first frame, with
+probability λ0, and run through the whole demonstration,
+as the final policy does. The remaining episodes draw their
+start segment from p(b), which mixes a uniform distribution
+over the B segments, with weight λu, and a distribution pro-
+portional to the failure scores Fb. Here fb is the failure rate
+of the recent episodes that started in segment b, and Fb adds
+to it the failure rates of the segments after b with a discount
+γseg, so that the segments leading up to a failing phase are
+also practiced.
+4. Experiments
+Our experiments address four questions:
+Q1 Does DexDuet track the object better than the com-
+pared baselines for different benchmarks?
+Q2 Does it preserve the human’s hand-object contacts?
+Q3 Can the learned motions be executed on real robot
+hands?
+Q4 What do the per-hand policy, A-RSI and the interaction
+rewards contribute, and at what training cost?
+4.1. Experimental Setup
+Benchmarks and baselines.
+We evaluate on three dexter-
+ous manipulation benchmarks and on a humanoid manipu-
+lation challenge, each in the simulator of its baseline. The
+DexMachina [30] and SPIDER [34] suites each have their
+own seven ARCTIC [6] demonstrations in Genesis [10].
+We evaluate DexMachina’s released checkpoints for all four
+hands and rerun SPIDER’s official code, which optimizes
+an open-loop control sequence instead of a policy. The Ma-
+nipTrans suite [21] has ten OakInk2 [60] demonstrations in
+Isaac Gym [29], and we retrain ManipTrans with its offi-
+cial protocol. The V2D challenge [32] has 30 humanoid
+episodes in MuJoCo Warp [11, 45], and we retrain its base-
+line CHORD [63] with the challenge’s official PPO and
+FlashSAC [18] recipes at the same budget of environment
+steps as DexDuet (Sec. B).
+Metrics.
+We report the following four object-tracking
+metrics: ADD-AUC [15, 30, 48], the mean per-point er-
+ror of the object (MPPE), and the success rates SP-SR and
+MP-SR. SP-SR uses the thresholds of SPIDER, and MP-SR
+those of ManipTrans. These metrics evaluate only the first
+requirement of Sec. 3.1, how closely the object follows its
+demonstrated states. They do not reveal whether the robot
+hands preserve the human’s hand-object contacts. We there-
+fore introduce a further metric, Contact-AUC, which mea-
+sures how well the constraint of Eq. (1) is met. For every
+hold window w ∈W, it takes the contact drift ˆδw of the
+corresponding robot hand and, as ADD-AUC does for the
+object’s error, scores the share of thresholds τ between τmin
+and τmax that the drift stays below,
+Contact-AUC =
+1
+|W|
+X
+w∈W
+AUCw,
+AUCw =
+1
+τmax−τmin
+R τmax
+τmin 1
+ˆδw < τ
+
+dτ,
+(12)
+averaged over rollouts. A window scores 0 if the robot hand
+does not touch the part or if the object is lost. The window
+length and all thresholds are given in Sec. C.
+4.2. Comparison with Prior Work
+Q1: Object tracking.
+DexDuet tracks the object better
+than the baseline of every benchmark and with every robot
+6
+
+
+Table 1. Comparison with prior methods. All metrics are in % except MPPE (cm). Each entry is the mean over demonstrations ± the
+std over seeds, with five seeds on the DexMachina and SPIDER suites and three on the ManipTrans suite. On V2D, each method is trained
+with one seed, and each entry is the mean over the 30 episodes of four runs of the challenge’s official evaluator ± the std over these four
+runs. Numbers are not comparable across benchmarks.
+Robot
+Method
+ADD-AUC↑
+SP-SR↑
+MP-SR↑
+MPPE↓
+Contact-AUC↑
+DexMachina suite [30]
+Inspire
+DexMachina
+52.5±10.2
+53.7±11.8
+53.7±11.8
+40.7±15.6
+33.6±7.8
+DexDuet
+88.7±2.3
+94.3±7.8
+94.3±7.8
+1.50±0.22
+79.6±2.6
+Allegro
+DexMachina
+65.8±14.4
+67.9±18.4
+67.9±18.4
+23.4±15.4
+35.8±8.3
+DexDuet
+94.8±0.9
+100.0±0.0
+100.0±0.0
+1.02±0.09
+68.0±1.9
+XHand
+DexMachina
+60.7±5.0
+62.3±7.7
+62.2±7.7
+28.7±6.1
+38.2±4.4
+DexDuet
+93.6±2.1
+100.0±0.0
+97.1±6.4
+1.09±0.19
+79.5±3.5
+Schunk
+DexMachina
+73.7±8.7
+79.2±16.2
+76.4±16.1
+12.1±11.6
+45.2±6.5
+DexDuet
+94.1±0.3
+100.0±0.0
+100.0±0.0
+1.06±0.02
+80.4±2.2
+SPIDER suite [34]
+Inspire
+SPIDER
+47.5±2.9
+34.3±7.8
+31.4±6.4
+44.33±3.40
+36.5±2.2
+DexDuet
+88.5±4.5
+97.1±6.4
+94.3±7.8
+3.61±5.39
+76.9±4.8
+ManipTrans suite [21]
+Inspire
+ManipTrans
+87.0±4.1
+87.1±4.2
+84.9±4.2
+4.68±1.31
+72.6±5.7
+DexDuet
+98.4±0.4
+99.9±0.1
+99.9±0.1
+0.44±0.02
+82.7±1.1
+V2D challenge [32]
+G1 + Dex3
+CHORD (PPO) [63]
+39.8±0.3
+53.3±0.0
+15.8±5.0
+14.85±1.29
+16.0±1.1
+CHORD (FlashSAC) [63]
+32.0±0.3
+35.0±3.3
+12.5±1.7
+37.77±2.07
+13.0±0.4
+DexDuet
+77.4±0.9
+85.0±1.9
+75.8±3.2
+12.19±0.93
+72.6±0.8
+Inspire
+XHand
+Allegro
+Schunk
+G1 + Dex3
+G1 + Dex3
+Human
+Baseline
+DexDuet
+Figure 3. Qualitative comparison with the baselines. The robot is named above each column. The first four columns are Box-200,
+Ketchup-100, Mixer-170 and Notebook-300 from the DexMachina suite. Each pairs a DexMachina [30] checkpoint with a DexDuet run
+whose ADD-AUC differs by at most 3 points. The last two columns are the spray bottle and basket episodes of V2D, where the baseline is
+CHORD [63]. Soft patches mark where the left (teal) and right (violet) hand touch the object.
+hand (Tab. 1). The gain is largest on Ketchup-300 with In-
+spire hands (4.9 to 86.9, Tab. S10), and on the V2D hu-
+manoid DexDuet nearly doubles the retrained CHORD’s
+ADD-AUC (Fig. 3, last two columns).
+Q2: Contact preservation.
+DexDuet reaches a higher
+Contact-AUC than the baseline of every benchmark
+(Tab. 1). This advantage remains where a baseline tracks
+the object equally well. Among the pairs of a DexDuet
+and a DexMachina run with ADD-AUCs within 3 points,
+DexDuet has the higher Contact-AUC in 117 of 122, and
+7
+
+
+0.3 s
+3.7 s
+5.4 s
+8.2 s
+(a) Box placement
+0.0 s
+5.8 s
+19.0 s
+(b) Bimanual object reorientation
+0.0 s
+14.7 s
+23.0 s
+(c) Bimanual object placement
+Figure 4. Real-world demonstrations. DexDuet’s simulated rollouts replayed on real robots. (a) A Unitree G1 with Inspire hands places
+a box on the floor. (b) Two Franka arms with Allegro hands reorient a bottle and (c) place a gamepad on a block.
+Table 2. Contact preservation at equal tracking and holding
+after the last frame (DexMachina suite). Equal tracking: pairs of
+a DexDuet and a baseline run on the same hand and demonstration
+whose ADD-AUCs differ by at most 3 points. Higher: pairs in
+which DexDuet has the higher Contact-AUC, of all pairs. Gain:
+median difference in Contact-AUC, in points. Hold rate: share of
+rollouts that keep the object within 5 cm of its final pose for 3 s
+after the last frame, with every reference frozen, in %, mean ± std
+over training seeds. Details are in Secs. C.4 and D.3.
+Equal tracking
+Hold rate
+Hand
+Higher
+Gain
+DexMachina
+DexDuet
+Inspire
+28 / 28
++22.4
+17.0±11.8
+37.1±16.3
+Allegro
+41 / 42
++20.0
+14.1±10.0
+22.9±12.8
+XHand
+19 / 20
++12.4
+5.7±7.7
+25.7±15.6
+Schunk
+29 / 32
++16.8
+25.5±11.8
+42.9±10.1
+All
+117 / 122
++17.9
+15.6±3.2
+32.1±7.1
+in at least 90% of the pairs of each hand (Tab. 2). In these
+pairs, the baseline’s hand often leaves the part that the hu-
+man’s hand holds, or its fingers slide on it (Fig. 3, first four
+columns, and Fig. S4). In a perceptual study on 24 pairs of
+runs that track equally well and differ by at least 10 points of
+Contact-AUC, eleven raters judged the run with the higher
+Contact-AUC to handle the object more like the human in
+251 of 264 judgments (Sec. C.5).
+DexDuet also holds the object more often after the
+demonstration ends, with every hand (Tab. 2). The baseline
+ends the demonstration more than 3 cm from the final pose
+in 62 of its 140 runs, against 11 for DexDuet (Sec. D.3).
+4.3. Real-World Demonstrations
+Q3: Real robot hands.
+We replay DexDuet’s simulated
+rollouts open-loop on two real setups (Fig. 4).
+On two
+Franka arms with Allegro hands, both hands hold a bot-
+tle above the table and reorient it, following a demonstra-
+tion from OakInk2 [60], and place a gamepad, held by both
+hands, on a block. On a Unitree G1 humanoid with In-
+spire hands, the robot lowers a box to the floor, puts down
+a bag and pushes an office chair while walking, following
+human demonstrations reconstructed from video with Do
+as I Do [33]. Its locomotion is handled by a whole-body
+controller in the style of SONIC [28], deployed with Robo-
+Table 3.
+Ablations on the DexMachina suite (Inspire, seven
+demonstrations, three seeds): ADD-AUC and Contact-AUC in %,
+mean ± std over seeds, and mean PPO updates until training stops.
+Per-hand
+A-RSI
+rhg
+rhoc
+ADD↑
+Contact↑
+Updates↓
+(a)
+✓
+✓
+✓
+✓
+89.7±2.1
+80.5±3.2
+5,524
+(b)
+✓
+✓
+✓
+87.5±1.1
+71.5±1.6
+6,721
+(c)
+✓
+✓
+✓
+86.4±3.9
+65.4±4.5
+5,836
+(d)
+✓
+✓
+76.7±8.8
+49.0±5.1
+6,745
+(e)
+✓
+✓
+✓
+74.1±1.7
+62.1±2.6
+6,255
+(f)
+✓
+79.4±5.9
+47.6±4.5
+6,845
+(g)
+✓
+✓
+✓
+88.4±1.6
+74.2±3.2
+6,608
+JuDo [64]. Section D.5 shows every replay frame by frame,
+with videos in the supplementary material.
+4.4. Ablation Studies
+Q4: Contribution of each component.
+Each component
+prevents a different failure (Tab. 3 and Sec. D.4). With-
+out the per-hand policy (e), tracking is less precise in 20
+of the 21 runs paired by demonstration and seed. Replac-
+ing A-RSI with a single-level VOC curriculum (g) lowers
+Contact-AUC by 6.3 points and requires 20% more updates
+until training stops (Fig. S3 and Tab. S20). Removing either
+interaction reward (b, c) lowers Contact-AUC much more
+than ADD-AUC, and most of this loss lies on windows in
+which the object stays on track, so it comes from the con-
+tacts (Tab. S7). Without both rewards (d), six of the 21 runs
+fail.
+5. Conclusion
+Prior methods that learn bimanual dexterity from human
+demonstrations mainly reward object tracking, and their
+policies often track the object without preserving the hu-
+man’s hand-object contacts. We presented DexDuet, which
+preserves these contacts with two interaction rewards that
+compare each robot hand with the human hand relative to
+the object. To track complex demonstrations, DexDuet also
+coordinates the two hands with per-hand policies and learns
+the hard phases with its A-RSI curriculum. Across four
+benchmarks and five robot embodiments, DexDuet tracks
+the object and preserves the human’s contacts better than
+prior methods, and its motions are executed on two real
+8
+
+
+robot systems.
+References
+[1] Prithviraj Banerjee,
+Sindi
+Shkodrani,
+Pierre
+Moulon,
+Shreyas Hampali, Shangchen Han, Fan Zhang, Linguang
+Zhang, Jade Fountain, Edward Miller, Selen Basol, Richard
+Newcombe, Robert Wang, Jakob Julian Engel, and Tomas
+Hodan. HOT3D: Hand and object tracking in 3D from ego-
+centric multi-view videos. In CVPR, 2025. 2
+[2] Yu-Wei Chao, Wei Yang, Yu Xiang, Pavlo Molchanov,
+Ankur Handa, Jonathan Tremblay, Yashraj S. Narang,
+Karl Van Wyk, Umar Iqbal, Stan Birchfield, Jan Kautz, and
+Dieter Fox.
+DexYCB: A benchmark for capturing hand
+grasping of objects. In CVPR, 2021. 2
+[3] Haonan Chen, Jiaming Xu, Lily Sheng, Tianchen Ji, Shuijing
+Liu, Yunzhu Li, and Katherine Driggs-Campbell. Learning
+coordinated bimanual manipulation policies using state dif-
+fusion and inverse dynamics models. In ICRA, 2025. 3
+[4] Yuanpei Chen, Tianhao Wu, Shengjie Wang, Xidong Feng,
+Jiechuan Jiang, Zongqing Lu, Stephen Marcus McAleer, Hao
+Dong, Song-Chun Zhu, and Yaodong Yang. Towards human-
+level bimanual dexterous manipulation with reinforcement
+learning. In NeurIPS, 2022. Datasets and Benchmarks Track.
+3
+[5] Yuanpei Chen, Chen Wang, Yaodong Yang, and C. Karen
+Liu. Object-centric dexterous manipulation from human mo-
+tion data. In CoRL, 2024. 1, 2
+[6] Zicong Fan, Omid Taheri, Dimitrios Tzionas, Muhammed
+Kocabas, Manuel Kaufmann, Michael J. Black, and Otmar
+Hilliges. ARCTIC: A dataset for dexterous bimanual hand-
+object manipulation. In CVPR, 2023. 2, 6
+[7] Zicong Fan, Maria Parelli, Maria Eleni Kadoglou, Xu Chen,
+Muhammed Kocabas, Michael J. Black, and Otmar Hilliges.
+HOLD: Category-agnostic 3D reconstruction of interacting
+hands and objects from video. In CVPR, 2024. 2
+[8] Yunhai Feng, Natalie Leung, Jiaxuan Wang, Lujie Yang,
+Haozhi Qi,
+and Preston Culbertson.
+A minimalist
+retargeting-guided reinforcement learning recipe for dexter-
+ous manipulation. arXiv preprint arXiv:2607.11874, 2026.
+2
+[9] Rao Fu, Dingxi Zhang, Alex Jiang, Wanjia Fu, Austin Funk,
+Daniel Ritchie, and Srinath Sridhar.
+GigaHands: A mas-
+sive annotated dataset of bimanual hand activities. In CVPR,
+2025. 2
+[10] Genesis Authors.
+Genesis:
+A generative and universal
+physics engine for robotics and beyond.
+https://
+github.com/Genesis- Embodied- AI/Genesis,
+2024. 6
+[11] Google
+DeepMind
+and
+NVIDIA.
+MuJoCo
+Warp
+(MJWarp).
+https : / / github . com / google -
+deepmind/mujoco_warp, 2025. 6
+[12] Jennifer Grannen, Yilin Wu, Brandon Vu, and Dorsa Sadigh.
+Stabilize to act: Learning to coordinate for bimanual manip-
+ulation. In CoRL, 2023. 3
+[13] Chengyang He, Gadiel Sznaier Camps, Xu Liu, Mac Schwa-
+ger, and Guillaume Sartoretti. Latent theory of mind: A de-
+centralized diffusion architecture for cooperative manipula-
+tion. In CoRL, 2025. 3, 4
+[14] Tairan He, Zhengyi Luo, Wenli Xiao, Chong Zhang, Kris
+Kitani, Changliu Liu, and Guanya Shi.
+Learning human-
+to-humanoid real-time whole-body teleoperation. In IROS,
+2024. 2
+[15] Stefan Hinterstoisser, Vincent Lepetit, Slobodan Ilic, Ste-
+fan Holzer, Gary Bradski, Kurt Konolige, and Nassir Navab.
+Model based training, detection and pose estimation of
+texture-less 3D objects in heavily cluttered scenes. In ACCV,
+2012. 6
+[16] Ryan Hoque, Peide Huang, David J. Yoon, Mouli Sivapu-
+rapu, and Jian Zhang. EgoDex: Learning dexterous manip-
+ulation from large-scale egocentric video. In ICLR, 2026.
+2
+[17] Jian-Jian Jiang, Xiao-Ming Wu, Yi-Xiang He, Ling-An
+Zeng, Yi-Lin Wei, Dandan Zhang, and Wei-Shi Zheng. Re-
+thinking bimanual robotic manipulation: Learning with de-
+coupled interaction framework. In ICCV, 2025. 3
+[18] Donghu Kim, Youngdo Lee, Minho Park, Kinam Kim,
+I Made Aswin Nahendra, Takuma Seno, Sehee Min, Daniel
+Palenicek, Florian Vogt, Danica Kragic, Jan Peters, Jaegul
+Choo, and Hojoon Lee. FlashSAC: Fast and stable off-policy
+reinforcement learning for high-dimensional robot control.
+arXiv preprint arXiv:2604.04539, 2026. 6
+[19] Arjun S. Lakshmipathy, Jessica K. Hodgins, and Nancy S.
+Pollard.
+Kinematic motion retargeting for contact-
+rich anthropomorphic manipulations.
+arXiv preprint
+arXiv:2402.04820, 2024. 2
+[20] Andrew Choong-Won Lee, Ian Chuang, Ling-Yuan Chen,
+and Iman Soltani. InterACT: Inter-dependency aware action
+chunking with hierarchical attention transformers for biman-
+ual manipulation. In CoRL, 2024. 3
+[21] Kailin Li, Puhao Li, Tengyu Liu, Yuyang Li, and Siyuan
+Huang. ManipTrans: Efficient dexterous bimanual manip-
+ulation transfer via residual learning. In CVPR, 2025. 2, 3,
+6, 7
+[22] Yutong Liang, Quanquan Peng, Ri-Zhao Qiu, and Xiao-
+long Wang.
+ConTrack: Constrained hand motion track-
+ing with adaptive trade-off control.
+In ECCV, 2026.
+arXiv:2606.03177. 2, 3
+[23] Qiayuan Liao, Takara E. Truong, Xiaoyu Huang, Yuman
+Gao, Guy Tevet, Koushil Sreenath, and C. Karen Liu. Be-
+yondMimic: From motion tracking to versatile humanoid
+control via guided diffusion.
+Science Robotics, 11(117):
+eadx8924, 2026. 2, 3, 6
+[24] Xueyi Liu, Kangbo Lyu, Jieqiong Zhang, Tao Du, and Li
+Yi. Parameterized quasi-physical simulators for dexterous
+manipulations transfer. In ECCV, 2024. 2, 3
+[25] Xueyi Liu, Jianibieke Adalibieke, Qianwei Han, Yuzhe Qin,
+and Li Yi. DexTrack: Towards generalizable neural tracking
+control for dexterous manipulation from human references.
+In ICLR, 2025. 2
+[26] Yun Liu, Haolin Yang, Xu Si, Ling Liu, Zipeng Li, Yuxiang
+Zhang, Yebin Liu, and Li Yi. TACO: Benchmarking gen-
+eralizable bimanual Tool-ACtion-Object understanding. In
+CVPR, 2024. 2
+9
+
+
+[27] Tyler Ga Wei Lum, Olivia Y. Lee, C. Karen Liu, and Jean-
+nette Bohg. Crossing the human-robot embodiment gap with
+sim-to-real RL using one human demonstration. In CoRL,
+2025. 2
+[28] Zhengyi Luo, Ye Yuan, Tingwu Wang, Chenran Li, Fernando
+Casta˜neda, Sirui Chen, Zi-Ang Cao, Jiefeng Li, David Mi-
+nor, Qingwei Ben, Jinhyung Park, David Sami, Zi Wang,
+Xingye Da, Runyu Ding, Cyrus Hogg, Lina Song, Edy Lim,
+Eugene Jeong, Tairan He, Haoru Xue, Wenli Xiao, Simon
+Yuen, Jan Kautz, Yan Chang, Umar Iqbal, Linxi Fan, and
+Yuke Zhu. SONIC: Supersizing motion tracking for natural
+humanoid whole-body control. Science Robotics, 11(117):
+eaed4592, 2026. 8
+[29] Viktor Makoviychuk, Lukasz Wawrzyniak, Yunrong Guo,
+Michelle Lu, Kier Storey, Miles Macklin, David Hoeller,
+Nikita Rudin, Arthur Allshire, Ankur Handa, and Gavriel
+State. Isaac Gym: High performance GPU-based physics
+simulation for robot learning. In NeurIPS, 2021. Datasets
+and Benchmarks Track. 6
+[30] Zhao Mandi, Yifan Hou, Dieter Fox, Yashraj Narang, Ajay
+Mandlekar, and Shuran Song. DexMachina: Functional re-
+targeting for bimanual dexterous manipulation.
+In ICML,
+2026. arXiv:2505.24853. 2, 3, 4, 5, 6, 7
+[31] Tomohiro Motoda, Ryo Hanai, Ryoichi Nakajo, Masaki
+Murooka, Floris Erich, and Yukiyasu Domae. Learning bi-
+manual manipulation via action chunking and inter-arm co-
+ordination with transformers. In CASE, 2025. 3
+[32] NVIDIA.
+Video to data (V2D) challenge.
+https:
+//nvidia-isaac.github.io/video_to_data/
+v2d_challenge/, 2026. 6, 7
+[33] Bhawna Paliwal, Haritheja Etukuru, William Liang, Pieter
+Abbeel, Nur Muhammad Mahi Shafiullah, and Jitendra Ma-
+lik. Do as I do: Dexterous manipulation data from everyday
+human videos. arXiv preprint arXiv:2606.19333, 2026. 2, 8
+[34] Chaoyi Pan, Changhao Wang, Haozhi Qi, Julen Urain, Zixi
+Liu, Homanga Bharadhwaj, Akash Sharma, Tingfan Wu,
+Guanya Shi, Jitendra Malik, and Francois Hogan. SPIDER:
+Scalable physics-informed dexterous retargeting.
+arXiv
+preprint arXiv:2511.09484, 2025. 2, 6, 7
+[35] Xue Bin Peng, Pieter Abbeel, Sergey Levine, and Michiel
+van de Panne. DeepMimic: Example-guided deep reinforce-
+ment learning of physics-based character skills. ACM TOG,
+37(4), 2018. 5
+[36] Yuzhe Qin, Yueh-Hua Wu, Shaowei Liu, Hanwen Jiang, Rui-
+han Yang, Yang Fu, and Xiaolong Wang. DexMV: Imitation
+learning for dexterous manipulation from human videos. In
+ECCV, 2022. 1, 2
+[37] Aravind Rajeswaran, Vikash Kumar, Abhishek Gupta, Giu-
+lia Vezzani, John Schulman, Emanuel Todorov, and Sergey
+Levine. Learning complex dexterous manipulation with deep
+reinforcement learning and demonstrations. In RSS, 2018. 1
+[38] Jie Ren, Zhehao Jiang, Yinhong Yang, Haorui Jia, Han Jiang,
+Ben Li, Yao Yao, Cheng Lin, Qiu Shen, Zhenshan Bing,
+Xiao-Xiao Long, and Xun Cao. C2Dex: Contact-consistent
+reconstruction and retargeting for dexterous manipulation
+from monocular video.
+arXiv preprint arXiv:2608.07045,
+2026. 2
+[39] Javier Romero, Dimitrios Tzionas, and Michael J. Black.
+Embodied hands: Modeling and capturing hands and bod-
+ies together. ACM TOG, 36(6), 2017.
+[40] Jun Saito, Jiefeng Li, Michael de Ruyter, Miguel Guer-
+rero, Edy Lim, Ehsan Hassani, Roger Blanco Ribera, Hye-
+jin Moon, Magdalena Dadela, Marco Di Lucca, Qiao Wang,
+Xueting Li, Jan Kautz, Simon Yuen, and Umar Iqbal.
+SOMA: Unifying parametric human body models.
+arXiv
+preprint arXiv:2603.16858, 2026.
+[41] John Schulman, Philipp Moritz, Sergey Levine, Michael Jor-
+dan, and Pieter Abbeel. High-dimensional continuous con-
+trol using generalized advantage estimation. In ICLR, 2016.
+[42] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Rad-
+ford, and Oleg Klimov. Proximal policy optimization algo-
+rithms. arXiv preprint arXiv:1707.06347, 2017. 4
+[43] Omid Taheri, Nima Ghorbani, Michael J. Black, and Dim-
+itrios Tzionas.
+GRAB: A dataset of whole-body human
+grasping of objects. In ECCV, 2020. 2
+[44] Tony Tao, Mohan Kumar Srirama, Jason Jingzhou Liu, Ken-
+neth Shaw, and Deepak Pathak. DexWild: Dexterous human
+interactions for in-the-wild robot policies. In RSS, 2025. 2
+[45] Emanuel Todorov, Tom Erez, and Yuval Tassa.
+MuJoCo:
+A physics engine for model-based control. In IROS, pages
+5026–5033, 2012. 6
+[46] Chen Wang, Haochen Shi, Weizhuo Wang, Ruohan Zhang,
+Li Fei-Fei, and C. Karen Liu. DexCap: Scalable and portable
+mocap data collection system for dexterous manipulation. In
+RSS, 2024. 1, 2
+[47] Yinhuai Wang, Jing Lin, Ailing Zeng, Zhengyi Luo, Jian
+Zhang, and Lei Zhang.
+PhysHOI: Physics-based imita-
+tion of dynamic human-object interaction.
+arXiv preprint
+arXiv:2312.04393, 2023. 2, 5
+[48] Yu Xiang, Tanner Schmidt, Venkatraman Narayanan, and
+Dieter Fox. PoseCNN: A convolutional neural network for
+6D object pose estimation in cluttered scenes. In RSS, 2018.
+6
+[49] Huilin Xu, Jian Ding, Jiakun Xu, Ruixiang Wang, Jun Chen,
+Jinjie Mai, Yanwei Fu, Bernard Ghanem, Feng Xu, and Mo-
+hamed Elhoseiny. Diffusion-based imaginative coordination
+for bimanual manipulation. In ICCV, 2025. 3
+[50] Hang Xu, Yizhou Chen, Dongjie Yu, Yi Ren, and Jia
+Pan. BiKC+: Bimanual hierarchical imitation with keypose-
+conditioned coordination-aware consistency policies. IEEE
+Trans. Autom. Sci. Eng., 23:1064–1079, 2026. 3
+[51] Mengda Xu, Han Zhang, Yifan Hou, Zhenjia Xu, Linxi Fan,
+Manuela Veloso, and Shuran Song. DexUMI: Using human
+hand as the universal manipulation interface for dexterous
+manipulation. In CoRL, 2025. 2
+[52] Sirui Xu, Hung Yu Ling, Yu-Xiong Wang, and Liang-Yan
+Gui. InterMimic: Towards universal whole-body control for
+physics-based human-object interactions. In CVPR, 2025. 2,
+3
+[53] Yucheng Xu, Xiaofeng Mao, Elle Miller, Xinyu Yi, Yang Li,
+Zhibin Li, and Robert B. Fisher. DemoBot: Efficient learning
+of bimanual manipulation with dexterous hands from third-
+person human videos. In ICRA, 2026. 2, 3
+10
+
+
+[54] Zhaodong Yang, Yunhai Han, Ai-Ping Hu, and Harish
+Ravichandar.
+AsymDex: Asymmetry and relative coor-
+dinates for RL-based bimanual dexterity.
+arXiv preprint
+arXiv:2411.13020, 2024. 3
+[55] Chao Yu, Akash Velu, Eugene Vinitsky, Jiaxuan Gao, Yu
+Wang, Alexandre Bayen, and Yi Wu.
+The surprising ef-
+fectiveness of PPO in cooperative multi-agent games.
+In
+NeurIPS, 2022. Datasets and Benchmarks Track. 3
+[56] Dongjie Yu, Hang Xu, Yizhou Chen, Yi Ren, and Jia Pan.
+BiKC: Keypose-conditioned consistency policy for bimanual
+robotic manipulation. In WAFR, 2024. 3
+[57] Manzil Zaheer, Satwik Kottur, Siamak Ravanbakhsh, Barn-
+abas Poczos, Ruslan Salakhutdinov, and Alexander Smola.
+Deep sets. In NeurIPS, 2017.
+[58] Huajian Zeng, Lingyun Chen, Jiaqi Yang, Yuantai Zhang,
+Fan Shi, Peidong Liu, and Xingxing Zuo. FlowHOI: Flow-
+based semantics-grounded generation of hand-object inter-
+actions for dexterous robot manipulation. In NeurIPS, 2026.
+2
+[59] Huajian Zeng, Chaohua Yao, Yuantai Zhang, Jiaqi Yang,
+Rolandos Alexandros Potamias, and Xingxing Zuo. Stable-
+Hand: Quality-aware flow matching for world-space dual-
+hand motion estimation from egocentric video. In NeurIPS,
+2026. 2
+[60] Xinyu Zhan, Lixin Yang, Yifei Zhao, Kangrui Mao, Hanlin
+Xu, Zenan Lin, Kailin Li, and Cewu Lu.
+OAKINK2: A
+dataset of bimanual hands-object manipulation in complex
+task completion. In CVPR, 2024. 2, 6, 8
+[61] Hui Zhang, Sammy Christen, Zicong Fan, Luocheng Zheng,
+Jemin Hwangbo, Jie Song, and Otmar Hilliges. ArtiGrasp:
+Physically plausible synthesis of bi-manual dexterous grasp-
+ing and articulation. In 3DV, 2024. 3
+[62] Bohan Zhou, Haoqi Yuan, Yuhui Fu, and Zongqing Lu.
+Learning diverse bimanual dexterous manipulation skills
+from human demonstrations. In AAAI, pages 28919–28927,
+2026. 2, 3
+[63] Xinghao Zhu, Zixi Liu, Shalin Jain, Chenran Li, Milad
+Noori, Michael Andres Lin, Huihua Zhao, John Welsh,
+Mrinal Verghese, Wei Liu, Tingwu Wang, Xingye Da,
+Zhengyi Luo, Vishal Kulkarni, Naema Bhatti, Yuke Zhu,
+Linxi Fan, Bowen Wen, Danfei Xu, Soha Pouya, and Yan
+Chang.
+Learning dexterous manipulation using contact
+wrench guidance from human demonstration.
+In CoRL,
+2026. arXiv:2607.00033. 2, 3, 4, 5, 6, 7
+[64] Zihan Zhuang, Yi Dong, and Peng Li.
+RoboJuDo:
+A
+plug-and-play deploy framework for robots.
+https://
+github.com/HansZ8/RoboJuDo, 2025. 8
+11
+
+
+DexDuet: Learning Contact-Preserving Bimanual Dexterity from Human
+Demonstrations
+Supplementary Material
+A. Additional Method Details
+Unless stated otherwise, the settings of this section apply to
+two Inspire hands on ARCTIC demonstrations in Genesis.
+The Allegro, XHand and Schunk hands keep the curricu-
+lum of Tabs. S4 and S5 and the weights λhg and λhoc, and
+Tab. S3 lists the settings that depend on the hand. Their
+PD gains are those of DexMachina’s configuration of each
+hand, and every reward term that averages over keypoints,
+joints, links or action entries averages over those of the
+hand. On the demonstrations of group A (Tab. S2), their re-
+ward weights are those of DexMachina’s released runs with
+the same hand, except that our Schunk runs keep the Inspire
+value λbc = 0.3 instead of 0.2; no weight was tuned per
+hand.
+A.1. Observations and Actions
+Object state.
+The ARCTIC objects consist of two rigid
+parts connected by a revolute joint.
+As in ARCTIC [6]
+and DexMachina [30], we parametrize their state xt =
+(pt, Rt, ϕt) by the position pt ∈R3 and orientation Rt ∈
+SO(3) of the base part and the joint angle ϕt.
+Hands.
+Each hand sits on a floating wrist with three pris-
+matic and three revolute joints, and its action has one di-
+mension for each wrist joint and each independent finger
+joint. The Inspire hand has 12 finger joints, 6 of which are
+mimic joints that copy a parent joint through a fixed ratio.
+Its configuration qi ∈R18 therefore has 12 independent
+DoFs, and each hand has a 12-dimensional action, for 24
+in total. The Allegro, XHand and Schunk hands have 16,
+12 and 20 finger joints, of which only the Schunk hand has
+mimic joints (11), so their actions have 22, 18 and 15 di-
+mensions per hand (Tab. S3). On the V2D challenge, the
+Dex3 hands of the G1 humanoid are positioned by its arms
+(Sec. B.2).
+Observations.
+Table S1 lists the observation blocks. The
+critic is used only during training. It receives every block in
+its 499-dimensional input, including the contact forces and
+hand-object distances that the actor does not observe. The
+actor of hand i receives a 157-dimensional local observa-
+tion oi
+t, which holds its own hand, the object and phase and
+its own previous action, and a 56-dimensional partner ob-
+servation z−i
+t , which holds the partner’s state (43), its pre-
+vious action (12) and a constant flag (Eq. (4)). All obser-
+vations are clipped to [−5, 5] without further normalization.
+The previous-action block holds the action ai
+t−2 applied two
+control steps earlier, and is zero at the start of an episode.
+The only explicit reference in the actor’s input is the object’s
+error to its next demonstrated state. The actor observes no
+further future reference.
+Actions.
+Following DexMachina’s hybrid action, each ai
+t
+is clipped to [−1, 1] and mapped to PD targets. The wrist
+targets are residuals around the reference wrist joints, and
+the finger targets are absolute positions within the joint lim-
+its [qmin, qmax],
+qi,tgt
+t,wrist = qi
+t,wrist + swrist ⊙ai
+t,wrist,
+qi,tgt
+t,finger = qmin + 1
+2(qmax −qmin) ⊙(ai
+t,finger + 1).
+(S1)
+Here ⊙is the elementwise product, and the wrist residual
+scales swrist are 0.1 m for translation and 1.0 rad for rotation.
+Mimic joints receive their parent’s target multiplied by the
+coupling ratio and all targets are clamped to the joint limits.
+The wrist limits are the range of the reference, widened by
+±0.2 m and ±0.5 rad. The PD gains (kp / kv / force limit)
+of the Inspire hands are 20 / 1 / 50 for the fingers, 80 / 5 /
+50 for wrist rotation and 350 / 12 / 50 for wrist translation,
+with a hand gravity compensation of 0.8, and Tab. S3 gives
+those of the other hands.
+A.2. Network Architecture
+All layers use ELU activations.
+• Actor (shared by both hands, 111,948 parameters). Its
+mean is µθ(oi
+t, z−i
+t ) = Φθ
+ Eθ(oi
+t), Mθ(z−i
+t )
+
+(Eq. (4)),
+with a local encoder Eθ, a partner encoder Mθ and a trunk
+Φθ. The local encoder Eθ maps 157 →128. The partner
+encoder Mθ is a Deep-Sets encoder [57] over the partners
+of a hand. With two hands, each hand has one partner.
+A per-partner encoder (56 →64) is applied to each part-
+ner, its outputs are summed over the partners and concate-
+nated with their count, and an aggregator (65 →64) fol-
+lows. At every step the actor is evaluated once per hand,
+with the roles of own and partner hand swapped. Fin-
+ger actions mean the same for both hands, because each
+maps [−1, 1] onto the joint limits (Eq. (S1)) and the left
+and right hands have the same limits. The separate stan-
+dard deviations below let the two hands explore differ-
+ently when they take different roles. The trunk Φθ maps
+192 →256 →128, followed by a linear head 128 →12.
+The standard deviations σi ∈R12 are learned, state-
+independent, separate for each hand, and initialized to
+12
+
+
+Table S1. Observation blocks. Dimensions are per hand unless the block covers both hands.
+Block
+Dim.
+Content
+Actor i
+Critic
+Own hand (in oi
+t)
+115
+PD target minus joint position (18); joint position normalized to
+[−1, 1] by the limits (18); joint velocity ×0.1 (18); world positions
+of the 18 keypoints (54); wrist position and quaternion (7)
+own hand
+both hands
+Object and phase (in oi
+t)
+30
+poses of the two parts (14); joint angle (1); error to the next demon-
+strated state xt+1 −ˆxt (8, quaternions subtracted componentwise);
+base angular velocity ×0.25 (3); base linear velocity ×2 (3); phase
+2t/T −1 (1)
+yes
+yes
+Previous action (in oi
+t, z−i
+t )
+12
+ai
+t−2
+own; partner’s via Mθ
+both
+Partner state (in z−i
+t )
+43
+partner wrist position and orientation in the object frame (3+4); nor-
+malized joint positions (18); joint velocities ×0.1 (18)
+via Mθ
+yes
+Keypoint-to-object distance
+72
+for each hand, keypoint and part, the minimum distance to 300 sam-
+pled mesh vertices
+no
+yes
+Contact-force magnitudes
+52
+∥ˆf∥× 0.01 for each (object part, robot link) pair
+no
+yes
+Hand-presence channels
+5
+constant with two hands (all 1); kept so that the layout extends to more
+limbs; one enters z−i
+t
+yes
+yes
+log σi = 0, which gives the covariance Σi = diag(σi)2
+of Eq. (4).
+• Critic (683,138 parameters): 499 →512 →512 →
+256 →128 →2, one value head per hand.
+A.3. PPO Details
+The policy loss Lπ is the negative batch mean of the per-
+hand surrogate of Eq. (5) [42].
+Rewards are scaled by
+0.1. For each hand, the advantage Ai
+t is computed with
+GAE [41] (γ = 0.99, λGAE = 0.95) from that hand’s value
+head, and each hand’s advantages are normalized over the
+whole batch. Both value heads regress the same shared re-
+turn. The value loss is PPO’s clipped value loss on nor-
+malized returns, averaged over samples and over the two
+heads. The total loss is L = Lπ + 1
+2cV LV + cbndLbnd with
+cV = 4 and cbnd = 10−4, where the bound loss Lbnd pe-
+nalizes action means outside [−1.1, 1.1]. There is no en-
+tropy bonus. The clip range is ϵ = 0.2 for both the ratios
+and the values. We use Adam with an initial learning rate
+of 3 × 10−4. The rate is adapted after each pass over the
+batch to keep the KL divergence near 0.008. It is divided by
+1.5 when the KL exceeds 0.016 and multiplied by 1.5 when
+the KL falls below 0.004, and it stays within [10−6, 10−2].
+Gradients are clipped to norm 1. Each update collects 32
+steps from 12,000 parallel environments (384,000 transi-
+tions), and then makes 14 passes over the batch with mini-
+batches of 96,000 transitions.
+A.4. Reward Terms
+This section defines every term of the shared reward in
+Eq. (6). Its base reward is
+rbase = rtask + λimirimi + λbcrbc + λconrcon −rpen,
+(S2)
+where rtask rewards tracking the object, rimi, rbc and the
+contact matching term rcon keep the keypoints, joint tar-
+gets and contacts close to the retargeted reference (yi
+t, qi
+t,
+Table S2. Reward weights. Group A: Ketchup-300, Waffleiron-
+300 and Notebook-300; group B: the other four demonstrations.
+Group
+λimi
+λcon
+λbc
+λhg
+λhoc
+A
+0.3
+3.0
+0.3
+0.5
+1.0
+B
+0.2
+2.0
+0.2
+0.5
+1.0
+ci
+t), and rpen penalizes large contact forces and actions, all
+as in DexMachina [30]. The retargeting runs a per-frame
+kinematic optimization and then a physical replay with the
+object held fixed. All terms are computed after the physics
+step on the state reached by at and are compared with frame
+t + 1 of the demonstration (clamped to T −1). The excep-
+tion is rbc, which compares the PD target issued by at with
+qt. An episode whose simulation state becomes NaN re-
+ceives rt = −1 and is reset. For two orientations R and R′,
+drot(R, R′) = arccos
+ (tr(R⊤R′) −1)/2
+
+is the angle of
+the rotation between them. Table S2 lists the weights.
+Object tracking [30].
+rtask = exp
+ −10 ∥ˆp −p∥
+
+· exp
+ −drot( ˆR, R)
+
+· exp
+ −2.5 (ˆϕ −ϕ)2
+.
+(S3)
+For an object without joints, the last factor is omitted. For
+several objects, the factors are computed for each object and
+multiplied.
+Motion imitation [30].
+Let (ˆpi
+wr, ˆRi
+wr) and (pi
+wr, Ri
+wr)
+be the wrist poses of the robot and of the reference motion,
+and ˆyi
+k and yi
+k the corresponding positions of the 18 key-
+points. The imitation term is
+rimi = 1
+8
+P
+i
+ e−3drot( ˆRi
+wr,Ri
+wr) + e−10∥ˆpi
+wr−pi
+wr∥
++ 1
+72
+P
+i
+P18
+k=1 e−20∥ˆyi
+k−yi
+k∥.
+(S4)
+13
+
+
+Behavior cloning [30].
+Let ∆qj be the range of joint j.
+Over all 36 joints of the two hands,
+rbc =
+1
+36
+P
+j exp
+ −500 (qtgt
+t,j −qt,j)2/(2 ∆qj)
+
+.
+(S5)
+Contact matching [30].
+For each hand i, part m and
+robot collision link l (13 per hand), ˆci
+ml is the robot’s force-
+weighted contact point, taken relative to the base pose of the
+reached object, and ci
+ml is the retargeted contact location,
+taken relative to the base pose of the demonstrated object.
+The distance di
+ml is ∥ˆci
+ml −ci
+ml∥when both the robot link
+and the reference link touch part m, and 1 m otherwise. The
+term is
+rcon = 1
+4
+P
+i
+P
+m
+1
+13
+P
+l exp
+ −10 di
+ml
+
+.
+(S6)
+Hand graph reward.
+The definitions below are given for
+five-fingered hands. For a hand with fewer fingers, each
+robot finger is matched to the human finger it is retargeted
+from (the thumb, index, middle and ring fingers for Allegro,
+and the thumb, index and middle fingers for Dex3). The
+edges, fingertip gaps and contact regions of human fingers
+without a robot counterpart are left out, and Fig. S1 shows
+how the palm normal is adapted. In the direction and gap er-
+rors of Eq. (7), the edges are built in the same way from the
+robot keypoints (ˆe) and from the MANO [39] joints (˜e), and
+on a five-fingered hand the edge set is E = {n, e0, . . . , e5}.
+For keypoint positions y, the palm normal n is the unit vec-
+tor along (yindex base −ywrist) × (ylittle base −ywrist), the palm
+direction e0 is the unit vector from the wrist to the base of
+the middle finger, or to the midpoint of the index and mid-
+dle bases on a hand without ring and little fingers, and the
+direction ej of finger j is the unit vector from its base to
+its tip. In errgap, ˆyj and ˜yj denote the tip of finger j. The
+human edges are stored in the frame of the demonstrated
+object and rotated by the base orientation of the reached
+object. In errdir, the palm (n, e0) and the fingers share the
+weight equally. Among the fingers, the thumb has weight
+0.5/4.5 and each other finger 1/4.5, or 0.5/(J −0.5) and
+1/(J −0.5) on a hand with J matched fingers. In errgap,
+the pairs in P, seven on a five-fingered hand, are the thumb
+with each other finger and each pair of neighboring fingers.
+The human fingertip distances are scaled by the retargeting
+scale κ of the hand, for example 1.2 for Inspire hands and
+1.7 for Allegro hands. We use βdir = 5 and βgap = 20.
+Hand-object contact reward.
+On the human hand, a
+MANO vertex belongs to the region of its dominant skin-
+ning joint. We compute ˜dg,m and ˜pg,m from the region’s
+closest vertex, both in the frame of the part. On the robot,
+the palm region is the palm link (256 surface points), the
+thumb region is the two distal thumb links (64 points),
+and each other finger’s region is its distal link (48 points).
+The other hands use the same point counts on the links
+of Tab. S3, where the Allegro regions include the finger-
+tip links and the Schunk palm consists of two links. The
+robot’s distances ˆdg,m and closest points ˆpg,m are read from
+precomputed distance fields of the object parts, in the frame
+of each part, which have 3 mm resolution and a 6 cm mar-
+gin. When the simulator reports that one of the region’s
+links touches the part, ˆdg,m = 0 and ˆpg,m is the contact
+point of the most distal touching link. In Eq. (9) we use
+dmax = 5 cm, dtol = 1 cm and βhoc = 50 m−1, i.e. a scale
+of 2 cm. Before normalization, the weight ωg,m is 1 if the
+robot or the human region is within 1 cm of the part, 0.5
+if either is within 5 cm, and 0 otherwise. A hand with all
+weights zero scores 1.
+Penalties [30].
+rpen = 0.1 ·
+1
+52
+P
+(m,l) max(0, ∥ˆfml∥−
+500 N) + 0.01 · 1
+24∥at∥2, over all (object part m, robot link
+l) pairs, where ˆfml is their contact force.
+A.5. A-RSI Details
+Virtual object controller.
+As in DexMachina [30], for
+each of the 7 object DoFs (base position, base rotation and
+joint angle), the VOC applies
+f voc = clip
+ kvoc
+p
+∆xt −kvoc
+v
+˙ˆxt, −fmax, fmax
+
+,
+(S7)
+where ∆xt is the error to the next demonstrated state, the
+difference in position and the joint angle and the rotation
+vector of Rt+1 ˆR⊤
+t for the orientation. At reset, an episode
+that starts in segment b draws the gains of each DoF as
+kvoc
+p
+= η hb with η ∼U[ηmin, 1], and sets kvoc
+v
+= kvoc
+p /16
+and fmax = 50 · 1[hb > 0].
+Segments.
+Segment
+b
+covers
+the
+frames
+Tb
+=
+[15b, min(15(b + 1), T −10)) for b = 0, . . . , B −1,
+with B = ⌈(T −10)/15⌉.
+Reference-state starts lie in
+frames 0, . . . , T −11 and keyframe starts at most at frame
+T −10, so every episode has at least 10 steps. This gives
+20 segments for the 300-frame demonstrations, 13 for
+Box-200, 11 for Mixer-170 and 6 for Ketchup-100.
+Success and failure.
+An episode succeeds if it reaches the
+end of the demonstration, and fails if it is terminated early or
+its state becomes NaN. Losing the object does not by itself
+end an episode, so success means that the tracking thresh-
+old of Eq. (S9) was met until the end of the demonstration.
+When N episodes that started in segment b end at the same
+step, the moving-average failure rate fb moves toward their
+failure share with weight 1−(1−0.02)N. This weight gives
+the batch the same total weight as N per-episode moving-
+average steps of size 0.02.
+14
+
+
+part m
+contact radius
+Five fingers
+Allegro: thumb, index, middle, ring
+Dex3: thumb, index, middle
+(c) Contact-AUC: no finger matching
+(a) Hand graph
+(b) Contact regions
+e1
+~
+e2
+~
+e3
+~
+e4
+~
+e5
+~
+e0
+~
+n~
+e1
+~
+e2
+~
+e3
+~
+e4
+~
+e0
+~
+n~
+e1
+^
+e2
+^
+e3
+^
+e4
+^
+e0
+^
+n^
+e1
+~
+e2
+~
+e3
+~
+e0
+~
+n~
+e1
+^
+e2
+^
+e3
+^
+e0
+^
+n^
+human
+human
+Allegro
+human
+Dex3
+human
+human
+Allegro
+human
+Dex3
+palm
+thumb
+index
+middle
+ring
+little
+no robot finger: left out
+fingertip gap
+human
+mesh vertices
+within 5 mm
+Allegro
+keypoints
+within 1.5 cm
+Dex3 (V2D)
+surface points
+within 5 mm
+^Cw
+contact points of hand i on part m, any finger
+^±w
+their mean drift in the frame of m over ¢
+~±w
+the human's drift, below 1 cm in all windows
+Figure S1. Interaction rewards and Contact-AUC on hands with fewer fingers. Each robot finger is matched to the human finger it is
+retargeted from, and the human fingers without a robot counterpart (grey) are left out of both rewards. (a) The hand graph keeps the edges
+ej and the fingertip gaps (dashed) of the matched fingers. On the human and the robot hand, the palm normal n is spanned by the index
+base and the outermost finger base that the robot hand has (orange lines). Dex3 has no finger base beyond the middle finger, so its normal
+is a fixed axis of the palm link, calibrated once per episode to the human normal, which keeps the little base. For Dex3, the human and
+robot palm directions e0 point to the midpoint of the index and middle bases. (b) The hand-object contact reward compares the palm and
+the outer segments of the matched fingers. (c) Contact-AUC needs no finger matching. Its contact points ˆCw are all points of the robot
+hand near the part, from any finger, which are the keypoints within 1.5 cm on the DexMachina suite and the surface points within 5 mm on
+V2D. Their drift ˆδw is scored on the windows in which the human hand holds the part with a drift ˜δw below 1 cm. A tilde marks the human
+hand and a hat the robot hand.
+Table S3. Settings that depend on the hand (DexMachina suite). PD gains are kp / kv / force limit. Contact regions give the number of
+robot links in the palm region, the thumb region and each other finger’s region. The weights are those of group A (Tab. S2); group B uses
+0.2 / 2.0 / 0.2 with every hand.
+Inspire
+Allegro
+XHand
+Schunk
+Fingers (fingertip gaps)
+5 (7)
+4 (5)
+5 (7)
+5 (7)
+Finger joints (mimic)
+12 (6)
+16 (0)
+12 (0)
+20 (11)
+Action
+12
+22
+18
+15
+Keypoints (distinct links)
+18
+25 (21)
+18
+33 (28)
+Collision links
+13
+21
+13
+23
+Local part oi
+t
+157
+200
+163
+229
+Partner part z−i
+t
+56
+74
+62
+75
+Critic input
+499
+661
+511
+775
+PD gains, fingers
+20 / 1 / 50
+30 / 2 / 100
+20 / 1.5 / 100
+80 / 4.5 / 80
+wrist rotation
+80 / 5 / 50
+60 / 5 / 100
+60 / 3 / 100
+80 / 5 / 100
+wrist translation
+350 / 12 / 50
+350 / 20 / 100
+350 / 15 / 100
+350 / 8 / 100
+Retargeting scale
+1.2
+1.7
+1.4
+1.3
+Contact regions (links)
+1 / 2 / 1
+1 / 3 / 3
+1 / 2 / 1
+2 / 2 / 2
+λimi / λcon / λbc
+0.3 / 3.0 / 0.3
+0.2 / 2.0 / 0.2
+0.2 / 2.0 / 0.2
+0.2 / 2.0 / 0.3
+15
+
+
+hard segment
+RSI
+VOC curriculum
+trapped
+A-RSI (ours)
+uniform
+fails
+starts
+assistance
+deadline ceiling
+episode:
+goes on to the end
+is terminated
+starts from:
+first frame
+reference state
+keyframes
+b
+¯h(u)
+¯h(u)
+fb
+p(b)
+Figure S2. How RSI, a VOC curriculum and A-RSI handle a hard segment (illustration). Each line is an episode, drawn from the state
+it starts from (card). RSI [35] starts from reference states. The hands of these states do not hold the object, so the episodes end at once,
+and only the episodes that start at the first frame learn. A VOC curriculum [30, 63] holds the object with one level and lowers it only when
+episodes reach the end. Once episodes are stopped at the hard segment, the level stalls, and so does training (Fig. S3). A-RSI gives each
+segment its own level under a deadline ceiling ¯h(u). It starts episodes from keyframes, which are states reached in earlier episodes, and
+starts most of them where the policy fails, with probability p(b) computed from the failure rates fb (Eq. (11)).
+Assistance updates.
+A segment is updated at PPO update
+u when u ≥u0, it has at least 64 finished episodes since
+its last update, and at least 40 updates have passed since its
+assistance last changed. Its episode counts are reset each
+time it is updated. A level that decays below the smallest
+nonzero level hmin is set to zero. Restoring assistance from
+zero sets hb = hmin, and assistance never exceeds hmax.
+The deadline ceiling is
+¯h(u) =
+(
+hmax (hmin/hmax)u/D
+u < D,
+hmin max
+ 0, 1 −(u −D)/(U −D)
+
+u ≥D.
+(S8)
+When ¯h(u) > 0, any segment with hb > ¯h(u)/α is set
+to ¯h(u), so a level stays at most one decay step above the
+ceiling. When ¯h(u) = 0, every segment is set to zero.
+Keyframes.
+Each segment b > 0 keeps a ring buffer of
+up to 256 keyframes. A keyframe holds the hands’ and the
+object’s joint positions and velocities, the hands’ PD tar-
+gets, the last action, and the assistance under which it was
+reached. At a given step, an episode is a capture candidate if
+it started at frame 0 or from a keyframe, is at least 15 steps
+in, and is at least 10 frames before the end of the demonstra-
+tion in a segment b > 0. Its tracking reward must also be at
+least 0.3 at this step, and its mean tracking reward over the
+episode at least 0.5. A candidate state is picked with prob-
+ability 0.002 per step. It is stored only if its episode then
+reaches the end of the demonstration with a mean tracking
+reward of at least 0.5 from the pick onward. Storing states
+only from episodes that go on to the end prevents the mo-
+ments just before a failure from becoming restart points that
+reproduce it. A keyframe is usable while its recorded assis-
+tance is at most hb. When segment b > 0 holds at least 32
+usable keyframes, a start in b restores one of them, chosen
+uniformly. The episode’s assistance is still the segment’s
+current hb.
+Termination, stopping and checkpoint.
+Following Dex-
+Machina, an episode that starts at frame t0 is terminated
+at step n once its accumulated tracking reward falls below
+rmin per step,
+P
+j<n rtask,j + G 1[t0 > 0] < rmin n,
+(S9)
+where the grace credit G covers the first steps of mid-
+sequence starts. These episodes begin in a state that they did
+not produce, and without the credit, many of them would be
+terminated before they could recover. We use rmin = 0.5
+and G = 8, and the test is applied every 5 steps. There is
+no early termination at evaluation. Training stops at the up-
+date cap of the demonstration, or once every segment has
+been unassisted for a cumulative 1,500 updates, whichever
+comes first.
+Both conditions are checked every 10 up-
+dates. The checkpoint score is the tracking return P
+t rtask,t
+of an episode, averaged over the last 100 finished training
+episodes. A new best must beat the previous one by more
+than 1.0 and can only be set from update 10 on. The best-
+score record and the 100-episode window are reset when-
+ever the assistance of any segment changes.
+Algorithm S1 summarizes the procedure, Tab. S4 lists
+its hyperparameters, and Tab. S5 lists the settings of each
+demonstration.
+Comparison with DexMachina’s schedule.
+Both use the
+same VOC, gain magnitudes and early-termination rule.
+16
+
+
+Box-200
+Ketchup-100
+Ketchup-300
+Mixer-170
+Mixer-300
+Notebook-300
+Waffleiron-300
+0
+5k
+10k
+PPO updates until training stops
+A-RSI
+single-level VOC
+one seed
+seed stopped by the cap
+update cap
+0
+0.5
+1
+failure rate
+update 1
+0
+0.1
+1
+10
+100
+assistance
+0
+19
+0.0
+0.1
+0.2
+episode starts
+update 1,000
+0
+19
+update 2,500
+0
+19
+update 3,700
+(end of logged run)
+0
+19
+(a) Training length on the seven demonstrations
+segment
+(b) A-RSI per segment on Ketchup-300 (logged run)
+ceiling
+uniform starts
+Figure S3. Training length and per-segment assistance. (a) PPO updates until training stops on the DexMachina suite, for DexDuet
+with A-RSI and with DexMachina’s single-level VOC curriculum in its place (rows (a) and (g) of Tab. 3, with the same policy, rewards
+and stopping rule). A-RSI trains much shorter on Ketchup-300, where the single level stalls. (b) Failure rate fb of each segment b (top),
+its assistance hb under the ceiling ¯h(u) (middle) and the probability p(b) that an episode starts in it (bottom), in a separate Ketchup-300
+run with the configuration of row (a). A-RSI first lowers the assistance of all segments together and then segment by segment, lowering it
+where segments succeed and raising it again where they fail, and episodes start more often in and just before the segments that fail.
+Table S4. A-RSI hyperparameters, shared by all demonstrations
+unless listed in Tab. S5.
+Setting
+Value
+Max. assistance hmax; kvoc
+v /kvoc
+p ; force
+limit fmax
+80; 1/16; 50
+Lower gain bound ηmin
+Tab. S5
+Assistance step α; snap to zero hmin
+0.9; 0.05
+Success thresholds shi / slo
+0.8 / 0.4
+Episodes per update; updates between
+changes
+64; 40
+Wait u0; deadline D; zero point U
+Tab. S5
+Segment length; end margin
+15; 10 frames
+Uniform share λu; backward credit γseg;
+failure-rate step
+0.3; 0.75; 0.02
+Probability of a forced start at frame 0,
+λ0
+0.25
+Keyframes: capacity; capture prob.; min.
+usable
+256; 0.002; 32
+Grace credit G; threshold rmin; check
+grid
+8; 0.5; 5 steps
+Unassisted updates before stopping
+1,500 (cumulative)
+DexMachina keeps one assistance level for all episodes.
+The level falls when every episode-reward average exceeds
+its threshold and the mean episode length is close to T. At
+every decrease, DexMachina redraws the gains of all envi-
+ronments in the middle of their episodes. Every episode
+starts at frame 0.
+A-RSI keeps one level per segment,
+and this level falls or rises with the segment’s success rate
+under the deadline ceiling. Its gains are drawn once per
+episode, and its starts are spread over the demonstration.
+DexMachina reaches zero assistance through a hard stop
+near the end of the update budget, whereas A-RSI gradually
+reduces assistance throughout training. On the DexMachina
+suite, A-RSI reaches zero assistance by update U ≈0.77×
+the cap.
+B. Benchmarks and Evaluation
+The four benchmarks differ in their demonstrations, hands
+and simulators, and on each benchmark all methods run in
+the same simulator.
+B.1. Benchmarks
+DexMachina suite.
+The suite consists of seven ARC-
+TIC demonstrations of five articulated objects, namely Box-
+200, Ketchup-100, Ketchup-300, Mixer-170, Mixer-300,
+Notebook-300 and Waffleiron-300, where the number is the
+length in frames. Each demonstration is performed by two
+Inspire, Allegro, XHand or Schunk hands. The simulator
+is Genesis [10], rigid-body, with a time step of 1/60 s (one
+control step per demonstration frame), 2 substeps, the New-
+ton solver, gravity and self-collision groups.
+SPIDER suite.
+The suite consists of the seven ARC-
+TIC demonstrations on which SPIDER is compared with
+DexMachina, namely Box, Ketchup-1, Ketchup-2, Laptop,
+17
+
+
+Table S5. Settings of each demonstration on the DexMachina suite. T is the length in frames and B the number of segments. Assistance
+is zero in every segment by update U. Two groups of settings are used, one for Ketchup-300, Waffleiron-300 and Notebook-300 and one for
+the other four demonstrations. On the SPIDER and ManipTrans suites, one setting is used for all demonstrations (Sec. B.4). The groups,
+with their reward weights, lower gain bounds ηmin and waits u0, and the update caps are those of DexMachina’s released Inspire runs on
+the same demonstrations.
+Demonstration (ARCTIC sequence, frames)
+T
+B
+Update cap
+ηmin
+u0
+D
+U
+λimi / λcon / λbc
+Ketchup-300 (s01 u02, 40–340)
+300
+20
+13,000
+0.5
+100
+9,000
+10,000
+0.3 / 3.0 / 0.3
+Waffleiron-300 (s01 u01, 40–340)
+300
+20
+13,000
+0.5
+100
+9,000
+10,000
+0.3 / 3.0 / 0.3
+Notebook-300 (s02 u02, 40–340)
+300
+20
+13,000
+0.5
+100
+9,000
+10,000
+0.3 / 3.0 / 0.3
+Mixer-300 (s01 u01, 40–340)
+300
+20
+10,000
+0.6
+200
+6,920
+7,690
+0.2 / 2.0 / 0.2
+Ketchup-100 (s01 u01, 30–130)
+100
+6
+5,000
+0.6
+200
+3,460
+3,840
+0.2 / 2.0 / 0.2
+Mixer-170 (s01 u01, 30–200)
+170
+11
+5,000
+0.6
+200
+3,460
+3,840
+0.2 / 2.0 / 0.2
+Box-200 (s01 u01, 30–230)
+200
+13
+5,000
+0.6
+200
+3,460
+3,840
+0.2 / 2.0 / 0.2
+Algorithm S1 Assisted reference-state initialization (A-
+RSI), one demonstration
+1: hb ←hmax, fb ←0, keyframes Kb ←∅for all b; Z ←0
+(updates with all hb = 0)
+2: for update u = 1, 2, . . . do
+3:
+if u ≥u0 then
+4:
+for each ready segment b with success rate sb do
+5:
+update hb by Eq. (10)
+6:
+end for
+7:
+end if
+8:
+lower every segment with hb > ¯h(u)/α to ¯h(u)
+9:
+if all hb = 0 then Z ←Z + 1
+10:
+if any hb changed then reset the checkpoint record
+11:
+for each environment that resets do
+12:
+score the finished episode against its start segment; up-
+date fb
+13:
+draw b ∼p (Eq. (11)); with probability λ0, b ←0
+14:
+if b = 0 then
+15:
+start at frame 0
+16:
+else if Kb holds ≥32 usable keyframes then
+17:
+restore a uniformly chosen usable keyframe
+18:
+else
+19:
+reference-state start at t0 ∼U(Tb)
+20:
+end if
+21:
+draw the VOC gains from hb
+22:
+end for
+23:
+collect rollouts; terminate by Eq. (S9); capture and store
+keyframes
+24:
+per-hand PPO update (Eq. (5))
+25:
+save the checkpoint if its training score is a new best
+26:
+if u reaches the cap or Z > 1500 then stop
+27: end for
+Mixer, Notebook and Waffleiron (subject s01, use 01 or
+use 02, frames 30–230). It uses two Inspire hands in Gene-
+sis.
+ManipTrans suite.
+The suite consists of the ten OakInk2
+demonstrations of Tab. S6, in ManipTrans’s simulator Isaac
+Table S6. Demonstrations of the ManipTrans suite (OakInk2
+validation set, sequence@primitive). Each is the 200-frame win-
+dow on which both methods are trained and evaluated.
+Name
+Sequence
+Frames
+Gate-a
+d78fa@0
+7–207
+Gate-b
+e76b2@8
+46–246
+Gate-c
+e76b2@12
+165–365
+Gate-d
+e76b2@14
+15–215
+Gate-e
+99f9d@0
+2–202
+Gate-f
+99f9d@2
+49–249
+Gate-g
+99f9d@7
+0–200
+Laptop
+25281@0
+101–301
+Paste-a
+f9335@0
+0–200
+Paste-b
+f9335@4
+0–200
+Gym [29] and its bimanual scene with a time step of 1/60 s
+and 2 substeps. This scene models each articulated object as
+two free rigid bodies. We connect the two by a revolute joint
+at the calibrated pivot and axis, without damping or friction
+and with limits 5◦beyond the range of the demonstration,
+and train both ManipTrans and DexDuet in this scene with
+4,096 parallel environments. The hands are ManipTrans’s
+Inspire models with free root bodies, gravity off and a linear
+and angular damping of 20. Their finger joints are position-
+driven with a stiffness of 500 and a damping of 30. PhysX
+uses the TGS solver with 8 position and 1 velocity itera-
+tions, a contact offset of 5 mm and a rest offset of 0. The
+friction coefficient is 4.0 on the hands, 2.0 on the object
+parts and 0.1 on the table. The mass of each part is capped
+at 0.5 kg. ManipTrans moves each wrist by applying a force
+of at most 8.33 N and a torque of at most 0.333 N m per axis
+to the hand’s root. DexDuet keeps its own PD law on its
+six virtual wrist joints, applies the result as a force and a
+torque on the root, and caps them at the same values. Isaac
+Gym’s GPU pipeline reports only the net contact force on
+each body. DexDuet therefore attributes the force on a hand
+link to the object part whose surface lies within 1.5 cm of
+the link, and uses this attribution in its contact observations
+18
+
+
+and rewards in place of Genesis’s per-pair contacts. Manip-
+Trans keeps the schedule on gravity and object friction that
+it uses during training.
+V2D challenge.
+The challenge [32] uses 30 episodes from
+the challenge dataset and its official evaluator. The episodes
+are simulated in MuJoCo Warp [11, 45] at 200 Hz with con-
+trol at 50 Hz. Section B.2 describes how DexDuet is adapted
+to this humanoid.
+B.2. DexDuet on the V2D Challenge
+On the V2D challenge [32], a Unitree G1 humanoid repro-
+duces a person moving an object, so its Dex3 hands are car-
+ried by arms and by a body that has to stay balanced. Dex-
+Duet keeps its three components on this robot and adapts
+each of them to the whole body.
+The observations stay
+those of the challenge’s recipe, because the evaluator re-
+quires their layout, and we also keep its termination and
+PPO settings.
+Policy.
+The challenge’s recipe acts through a pre-trained
+whole-body motion tracker [28], which turns the reference
+motion into targets for the 29 joints of the legs, waist and
+arms. The policy adds a correction to each of these targets
+and to the reference targets of the 14 finger joints. Because
+the arms position the hands, each per-hand policy controls
+one arm and its hand, which makes 14 joints, and a third
+policy controls the 15 joints of the legs and waist. The two
+per-hand policies share their parameters. Unlike the floating
+wrists on the tabletop, the arms of the G1 are mirror-image
+joint chains on a common torso, and the challenge’s obser-
+vations are expressed in the pelvis frame. We therefore re-
+flect the right arm and hand across the sagittal plane of the
+pelvis: positions, orientations and joint angles of its inputs
+and outputs are mapped with the joint signs derived from
+the URDF, so that the shared policy sees both sides in the
+convention of the left. As the two hands do in Sec. 3.2, each
+of the three policies observes the state and the latest joint
+targets of the other two. As in Sec. 3.2, each has its own
+probability ratio and value head, and all three receive the
+same reward. The evaluator accepts a single fully connected
+network, so after training we convert the three policies into
+one network of that format and verify that it produces the
+same actions.
+Curriculum.
+A-RSI replaces the challenge’s curriculum
+and scales the challenge’s virtual object controller per seg-
+ment, with segments of 25 frames.
+An iteration of the
+challenge’s PPO recipe collects 98,304 samples, against
+384,000 for an update on the DexMachina suite, so we mul-
+tiply A-RSI’s update counts by 3.9 to give each segment
+the same number of samples between decisions. Keyframes
+store the full simulator state of the humanoid and the ob-
+ject, and a keyframe requires a mean tracking reward of at
+least 0.6, against 0.5 on the DexMachina suite. Episodes
+that start from a reference state in the middle of the demon-
+stration keep the recipe’s 50-step settling phase, at the end
+of which the assistance decays to the level of the segment,
+while keyframe and first-frame starts begin at once. Train-
+ing is capped at 20,000 iterations, the budget of the retrained
+CHORD. DexDuet stops earlier on 10 of the 30 episodes,
+a fixed number of iterations after its curriculum has with-
+drawn all assistance.
+Rewards.
+We
+add
+two
+interaction
+rewards,
+whose
+weights keep their ratio to the object-tracking reward from
+the DexMachina suite. The human targets come from the
+SOMA [40] hands of the demonstration and are computed
+once per episode, and the hand-object contact reward treats
+each object as one part. Both interaction rewards use the
+three fingers of the Dex3 hand as in Sec. A.4 and Fig. S1,
+and the fingertip gaps of the human are scaled by 1.5, the
+retargeting scale of this hand.
+B.3. Baselines
+DexMachina is evaluated with the authors’ released
+checkpoints.
+SPIDER is rerun from its official code in our Genesis
+scene with five seeds per demonstration. SPIDER optimizes
+each demonstration separately. One run over the 200 frames
+of a demonstration takes 1.4–19.9 min (median 7.9 min) on
+one GPU, and the 35 runs take 5.8 h in total.
+ManipTrans is retrained from scratch with its official
+protocol in the scene with joints.
+This protocol trains a
+residual policy per demonstration on top of the released per-
+hand imitators, with 4,096 environments, at most 10,000
+iterations and early stopping after 1,000 iterations without
+improvement. To check our ManipTrans setup, we repro-
+duce its evaluation on the 77 OakInk2 validation sequences
+with the Inspire hand, following the evaluation that the au-
+thors describe in their code repository. We obtain success
+rates of 57.8% on the 38 single-hand sequences and 32.9%
+on the 39 bimanual ones, against 58.1% and 39.5% in the
+paper [21]. On successful rollouts, our errors are within
+0.06 cm and 0.3◦of the reported ones.
+On the V2D challenge, we retrain CHORD with the chal-
+lenge’s official code and both of its recipes for G1 + Dex3.
+The PPO recipe keeps its settings and runs for 20,000 iter-
+ations of 4,096 environments and 24 steps, or 1.97 billion
+environment steps per episode. On episode 7, the simulator
+occasionally returns a non-finite state that would end learn-
+ing, so for this episode we reset the affected environment,
+as our implementation does. The FlashSAC recipe is set for
+0.35 billion environment steps, so we scale its settings that
+depend on the budget, namely the total number of steps, the
+19
+
+
+stage boundaries of its curriculum and the checkpoint inter-
+val, to the same 1.97 billion steps and keep everything else.
+The challenge’s leaderboard also lists an entry of CHORD,
+whose training budget is not published and whose policy is
+not released (Tab. S16).
+ConTrack [22] is rerun from its official code on the Dex-
+Machina suite with XHand hands. We port its environment
+to the scenes of DexMachina’s released XHand runs, with
+the object not actuated, and keep its rewards, constraint han-
+dling, PPO settings and network. It is trained with five seeds
+per demonstration and DexDuet’s budget, namely 12,000
+environments, 32 steps per update and the same maximum
+number of updates per demonstration, without early stop-
+ping, and, as in ConTrack, we evaluate its final checkpoint.
+B.4. Training and Evaluation
+Seeds and stopping.
+On the DexMachina suite, DexDuet
+is trained with five seeds per demonstration (15, 24, 42, 66
+and 113), and the ablations of Tab. 3 with three (15, 42 and
+113). On the SPIDER suite, the five seeds are 15, 24, 42,
+43 and 66. On the ManipTrans suite, DexDuet and Ma-
+nipTrans are both trained with three seeds (42, 24 and 66).
+On V2D, every method is trained with one seed. On the
+SPIDER suite, training uses 12,000 parallel environments.
+On the SPIDER and ManipTrans suites, training takes at
+most 15,000 updates, the assistance ceiling reaches zero at
+update 10,000 (a deadline of 9,000 updates plus a 1,000-
+update ramp), and training stops 1,500 updates after all as-
+sistance is gone. All DexDuet runs that we train in Genesis,
+including the ablations, use this stopping rule.
+Evaluation.
+Every method is evaluated from the first
+frame of each demonstration, without assistance and with
+deterministic actions. In Genesis, each policy is evaluated
+on 100 parallel rollouts, with the first observation read from
+the simulator after the reset. On the ManipTrans suite, ev-
+ery policy is evaluated on 256 rollouts per demonstration,
+which are the last two episodes of 128 environments. Ev-
+ery rollout of both methods starts at the first frame of the
+200-frame window, whereas ManipTrans’s own evaluation
+starts up to 165 frames earlier on seven demonstrations.
+ManipTrans’s evaluation is stochastic, so we fix its evalu-
+ation seed, and over three evaluation seeds the standard de-
+viation of its mean ADD-AUC and success rates is at most
+0.8 points. On the V2D challenge, the official evaluator runs
+one rollout per episode from the first frame. It is not deter-
+ministic, so we report the mean of four runs.
+Compute.
+DexDuet trains each policy for 4,350–11,500
+PPO updates, which are 1.67–4.42 B transitions on the Dex-
+Machina and SPIDER suites and 0.58–1.51 B on the Manip-
+Trans suite, and the ablation rows (b)–(g) stop after at most
+13,000 updates (4.99 B transitions). On the DexMachina
+suite, a typical run takes about one day on one GPU (me-
+dian 21.7 h). ManipTrans trains only a residual policy on
+top of its released, pre-trained per-hand imitators and stops
+early, so its 2.1–4.9 h per run on the ManipTrans suite ex-
+clude the training of the imitators.
+B.5. Tracking Metrics
+ADD-AUC.
+We use DexMachina’s released code un-
+changed. For each part, it samples 500 mesh vertices with
+a fixed seed. For each rollout and frame, it computes the
+mean distance between these vertices at the reached and at
+the demonstrated pose. The accuracy at a threshold is the
+share of (rollout, frame) pairs with an error below it, for
+thresholds of 1, 2, . . . , 9 cm. The AUC is the trapezoidal
+area under this accuracy curve, and the reported score is the
+mean of the two parts’ AUCs. Following the released evalu-
+ator, the state after step t is compared with frame t−1 of the
+demonstration. On the SPIDER suite, we apply the same
+definition to the saved object states of every method. We
+sample 500 vertices per part with seed 42, use thresholds of
+1, 2, . . . , 9 cm and average the AUCs of the two parts. The
+moving part is placed by the joint angle. As in SPIDER’s
+comparison with DexMachina, the state after each step is
+compared with the frame of the demonstration that this step
+tracks. On SPIDER’s released trajectories, this gives scores
+close to those SPIDER reports (Sec. D). On the ManipTrans
+suite, ADD-AUC is computed over each 200-frame win-
+dow.
+Success rates and MPPE.
+In Tab. 1, SP-SR, MP-SR and
+MPPE are computed with the evaluation code of the V2D
+challenge on every benchmark. For each rollout, this code
+averages the position error and the geodesic rotation error of
+each object part over all frames, with the frame alignment
+of ADD-AUC. SP-SR counts a rollout as a success if the
+errors averaged over the parts are at most 10 cm and 0.5 rad,
+which are the thresholds of SPIDER [34]. MP-SR counts it
+as a success if the errors of every part are below 3 cm and
+30◦, which are the object thresholds of ManipTrans [21].
+MPPE places six points 5 cm from the origin of each part
+along its axes and averages their distance over frames, parts
+and rollouts. On the ManipTrans suite, rollouts that Manip-
+Trans’s environment terminates early count as failures. For
+MPPE, these rollouts keep their last pose, and those termi-
+nated before the first recorded frame are left out (3 of 7,680
+rollouts). The original criteria differ. SPIDER’s criterion
+uses only the root part of the object. ManipTrans’s crite-
+rion tests its object thresholds at every frame from frame
+8 on. We report these original object criteria on their own
+benchmarks (Sec. D).
+20
+
+
+C. Contact-AUC
+Contact-AUC measures whether each robot hand stays on
+the part that the human’s hand holds, without sliding on
+it. DexDuet’s advantage in Contact-AUC remains between
+runs that track the object equally well (Sec. C.4), and
+Contact-AUC agrees with the judgments of human raters
+(Sec. C.5).
+C.1. Definition
+In the contact drift of Eq. (3), vk,t = (Xm
+t )−1yk,t ex-
+presses the world position yk,t of point k in the frame of
+the part (in homogeneous coordinates). For the human, ˜δw
+uses the vertices ˜Cw of the hand mesh in contact at t and the
+demonstrated part pose. For the robot, ˆδw uses its points ˆCw
+in contact and the reached part pose ˆXm
+t , and is infinite if
+no point touches. The hold windows are
+W =
+
+w : ˜Cw̸ = ∅, ˜Cw+̸ = ∅, ˜δw < δmax
+	
+,
+(S10)
+where w+ = (i, m, t + ∆), so the human hand touches the
+part at both ends of a window, and Contact-AUC scores ˆδw
+on them. We use ∆= 6 frames and δmax = 1 cm, and a
+MANO vertex of hand i is in contact with part m when it
+is within 5 mm of the part. Each human contact is assigned
+to the nearest part. The frame of the top part is that of the
+bottom part rotated by Rz(−ˆϕ). The drift ˆδw is also set
+to infinity when the object is lost or the simulation state
+is invalid. The object counts as lost when its mean ADD
+point error over both parts exceeds 5 cm at t or t + ∆. Each
+window is scored by the area under 1[ˆδw < τ] between
+τmin = 0.5 cm and τmax = 5 cm, computed on a 0.5 cm grid
+with the same rule as ADD-AUC. Contact-AUC is the mean
+score over all windows and rollouts. Unlike ADD-AUC,
+Contact-AUC compares the state after step t with frame t.
+C.2. Contact Points on Each Benchmark
+On the DexMachina suite, the robot contacts ˆCw are the key-
+points of hand i within 1.5 cm of part m at t that are closer
+to m than to the other part. The keypoints of the Inspire
+hand are its 18 tracked link frames, which are its 5 finger-
+tips and 13 collision links (Tab. S3 for the other hands). For
+SPIDER and ManipTrans, we set the recorded hand and ob-
+ject states of their rollouts in our Genesis scene frame by
+frame and read the keypoints there.
+On the V2D challenge, the windows, the human contact
+rule and the scoring stay the same. Each object is one rigid
+part, and the human hands are SOMA meshes with 2,847
+vertices per hand instead of MANO meshes. The links of
+the Dex3 hand are 1.6 to 2.8 cm thick, and their origins lie
+up to 2 cm from their surfaces. We therefore use 64 points
+on the surface of each of its eight collision links, and the
+robot contacts are the points within 5 mm of the object, the
+distance at which a human contact is counted. The evaluator
+saves no hand states, so we record them in four runs of it per
+episode. Contact-AUC is averaged over the 29 episodes in
+which the human hands touch the object. In the remaining
+episode, the human hands never come within 5 mm of the
+object. As on the other suites, contacts of the forearms, the
+torso and the legs are not counted.
+C.3. Where Contact-AUC Is Lost
+Each window of W falls into one of three classes. A win-
+dow is lost if the object is lost at t or t+∆. It has no contact
+if the object is on track but hand i has no contact point on
+part m at t. Otherwise it is touching, and its drift decides its
+score. A run’s Contact-AUC is therefore the share of touch-
+ing windows times the mean score over them. It is also the
+share of windows with the object on track times the on-track
+Contact-AUC, which is the mean score over these windows.
+Table S7 gives this split for the ablations.
+C.4. Contact-AUC at Matched Tracking
+At equal tracking, DexDuet preserves the human’s contacts
+better than DexMachina and than its ablation without both
+interaction rewards. To separate the contacts from tracking,
+we compare runs that track the object equally well. A pair
+consists of two runs on the same hand and demonstration.
+It is either one of DexDuet’s five seeds and one of Dex-
+Machina’s five released checkpoints, or DexDuet (a) and an
+ablation row with the same training seed. A pair is matched
+if the two ADD-AUCs differ by at most 3 points. Table S8
+lists the matched pairs, and Fig. S4 shows two of them.
+On the DexMachina suite, both methods track the ob-
+ject at about 94 ADD-AUC in the matched pairs. In the
+median over pairs, DexDuet’s Contact-AUC is higher in ev-
+ery hand and demonstration that has a matched pair. The
+matched gap comes both from windows in which Dex-
+Machina’s hand is not on the part that the human holds and
+from windows in which its hand touches the part but its con-
+tacts slide.
+The ablation pairs keep the training seed and the demon-
+stration fixed.
+At matched tracking, removing the hand
+graph reward (b) lowers Contact-AUC in 10 of 13 pairs, and
+removing both rewards (d) lowers it in all 9.
+C.5. Perceptual Study
+We test whether people see the difference that Contact-AUC
+measures, on pairs of runs that track the object equally well.
+Each rater watches 26 videos on a web page. A video
+shows the human demonstration above two robot rollouts,
+labelled A and B, over the full demonstration at real-time
+speed, and the rater answers “Which robot handles the ob-
+ject the way the human does?” All robots are drawn with
+the same materials and without method names. A and B are
+assigned at random for each video, and each rater sees the
+videos in one fixed random order or its reverse. Taking part
+21
+
+
+Table S7. Where Contact-AUC is lost in the ablations (DexMachina suite, Inspire), in %. The three classes of windows are defined in
+Sec. C.3, and their shares add up to 100. Score when touching is the mean score over the touching windows, and on-track Contact-AUC
+scores all windows that are not lost. Mean over runs ± std over training-seed means, as in Tab. 3. Bold marks the best value in each
+column.
+Share of windows
+Score when
+On-track
+Method
+Runs
+Contact-AUC↑
+Lost↓
+No contact↓
+Touching↑
+touching↑
+Contact-AUC↑
+Ablation (DexMachina suite, Inspire, seeds 15, 42 and 113)
+(a)
+DexDuet
+21
+80.5±3.2
+5.7±4.2
+3.9±0.6
+90.4±3.7
+88.8±0.3
+85.1±0.2
+(b)
+λhg = 0
+21
+71.5±1.6
+7.6±1.7
+8.6±1.3
+83.7±2.1
+85.4±1.4
+76.5±1.3
+(c)
+λhoc = 0
+21
+65.4±4.5
+14.4±6.2
+10.0±2.5
+75.7±4.6
+82.3±3.6
+71.7±3.1
+(d)
+λhg = λhoc = 0
+21
+49.0±5.1
+24.9±9.1
+14.5±2.0
+60.6±7.4
+76.9±3.8
+58.5±2.9
+(e)
+unified policy
+21
+62.1±2.6
+21.8±3.7
+5.5±0.8
+72.7±3.4
+85.2±0.8
+78.8±1.2
+(f)
+(d) with single-level VOC
+21
+47.6±4.5
+21.4±7.5
+16.8±3.3
+61.8±4.6
+69.1±4.7
+52.8±3.8
+(g)
+single-level VOC, no A-RSI
+21
+74.2±3.2
+7.8±0.5
+5.8±2.8
+86.4±2.6
+85.7±1.4
+80.0±3.7
+(a)
+fingers slide
+hand leaves the part
+fingers slide
+Human
+DexMachina
+ADD-AUC 95.0
+Contact-AUC 67.2
+DexDuet
+ADD-AUC 94.4
+Contact-AUC 91.5
+(b)
+fingers slide, hand leaves the part
+hand leaves the part
+hand leaves the part
+Human
+DexMachina
+ADD-AUC 89.9
+Contact-AUC 52.7
+DexDuet
+ADD-AUC 90.9
+Contact-AUC 82.4
+Figure S4. Runs that track the object equally well can differ in contact preservation. (a) Mixer-170 and (b) Notebook-300 with Inspire
+hands, each a released DexMachina [30] checkpoint and a DexDuet run with almost the same ADD-AUC. In the marked frames, both
+objects are within 2 cm of the demonstration and DexDuet preserves the human’s contact, whereas DexMachina’s fingers slide on the part
+that the human holds or its hand leaves that part (dashed circles).
+22
+
+
+Table S8. Contact-AUC at matched tracking (DexMachina suite). Pairs and matching are defined in Sec. C.4, and rows are named by the
+hand or the ablation row. ADD-AUC and Contact-AUC are differences, the first method minus the second, in points, as medians over pairs,
+and Contact-AUC has a 95% bootstrap interval over demonstrations. Pairs: number of pairs, with the number of hand and demonstration
+cells. Higher: pairs in which the first / second method has the higher Contact-AUC. Bold marks the Contact-AUC differences whose
+interval excludes zero.
+Comparison
+Pairs
+ADD-AUC
+Contact-AUC [95% CI]
+Higher
+Inspire
+28 (5)
++0.9
++22.4 [17.6, 26.1]
+28 / 0
+Allegro
+42 (5)
++0.9
++20.0 [10.4, 27.1]
+41 / 1
+XHand
+20 (3)
++1.4
++12.4 [1.2, 23.0]
+19 / 1
+Schunk
+32 (3)
++0.9
++16.8 [9.7, 32.6]
+29 / 3
+All four hands
+122 (16)
++1.0
++17.9 [13.4, 23.0]
+117 / 5
+(a) vs. (b)
+13 (6)
++1.0
++7.0 [−1.0, 10.5]
+10 / 3
+(a) vs. (c)
+8 (6)
+−1.1
++10.7 [−0.6, 16.0]
+6 / 2
+(a) vs. (d)
+9 (5)
+−2.1
++18.9 [16.3, 24.8]
+9 / 0
+(a) vs. (f)
+8 (5)
+−1.0
++20.4 [16.4, 38.9]
+8 / 0
+is voluntary and anonymous. The first page tells each rater
+that no name or email is collected, that they may stop at any
+time and that the answers are used in aggregate in a research
+paper, and the videos start only after the rater confirms be-
+ing at least 18 years old and agreeing to take part. None of
+the raters is involved in this work, and no personal data are
+collected.
+Twenty-four videos show pairs of runs on the same hand
+and demonstration whose ADD-AUCs differ by at most
+3 points and whose Contact-AUCs differ by at least 10
+points. They are drawn with a fixed seed from the pairs
+of Sec. C.4. Sixteen are pairs of DexDuet and DexMachina,
+four per hand, and eight are pairs of DexDuet (a) and abla-
+tion row (b), (c) or (d) with Inspire hands. In every pair, the
+run with the higher Contact-AUC is DexDuet or row (a). In
+the eight ablation pairs, both runs are DexDuet policies with
+the same architecture and curriculum that differ only in the
+interaction rewards. The two remaining videos are attention
+checks in which one robot loses the object, and raters who
+choose that robot are excluded.
+None of the eleven raters failed an attention check. The
+raters chose the run with the higher Contact-AUC in 251
+of 264 judgments (95.1%, with a 95% interval of 88.6%
+to 99.2% from resampling raters and videos), and in each
+of the 24 videos most raters chose it (Tab. S9). In a lo-
+gistic regression of the choice on both differences, each
+standardized, Contact-AUC has a large positive coefficient
+(3.79, standard error 0.45) and ADD-AUC a small negative
+one (−0.61, standard error 0.27). Contact-AUC therefore
+agrees with how people judge whether a robot handles the
+object the way the human does.
+Table S9. Perceptual study. Each video is a pair of runs that track
+the object about equally well. |∆ADD| and ∆Contact: median
+differences between the two runs of a pair, in points. Chosen:
+share of judgments that pick the run with the higher Contact-AUC,
+in %. Majority: videos in which more than half of the raters pick
+this run. Rows (b), (c) and (d) are those of Tab. 3, with Inspire
+hands. Bold marks the overall result.
+Pairs
+Videos |∆ADD| ∆Contact Chosen Majority
+DexDuet vs DexMachina
+Inspire
+4
+1.45
+18.1
+100.0
+4 / 4
+Allegro
+4
+0.90
+15.5
+97.7
+4 / 4
+XHand
+4
+1.99
+16.1
+95.5
+4 / 4
+Schunk
+4
+1.07
+17.2
+95.5
+4 / 4
+All
+16
+1.39
+17.8
+97.2
+16 / 16
+DexDuet (a) vs ablation rows
+(b)
+3
+2.68
+16.2
+87.9
+3 / 3
+(c)
+3
+1.20
+16.0
+87.9
+3 / 3
+(d)
+2
+2.31
+18.9
+100.0
+2 / 2
+All
+8
+1.83
+16.1
+90.9
+8 / 8
+All pairs
+24
+1.46
+17.3
+95.1
+24 / 24
+D. Additional Experimental Results
+This section gives the per-demonstration results behind
+Tab. 1, the test of holding after the last frame, the ablations
+of Tab. 3 and the real-world replays of Sec. 4.3.
+D.1. Qualitative Results
+Figure 3 compares the baselines and DexDuet on four pairs
+of runs of the DexMachina suite that track the object equally
+well and on two V2D episodes, and Fig. S4 follows two
+such pairs over a demonstration. Figure S5 shows DexDuet
+with all four hands on the seven demonstrations of the Dex-
+Machina suite, and Fig. S6 compares CHORD and DexDuet
+on six V2D episodes.
+23
+
+
+Human
+Inspire
+Allegro
+XHand
+Schunk
+Figure S5. DexDuet on the DexMachina suite. Columns, from left, are Box-200, Ketchup-100, Ketchup-300, Mixer-170, Mixer-300,
+Notebook-300 and Waffleiron-300, and rows show the human demonstration and DexDuet with Inspire, Allegro, XHand and Schunk hands.
+Each robot row is the seed with the median Contact-AUC, each column is shown at the human hold with both hands closest to the middle
+of the demonstration from one camera, and soft patches mark where the left (teal) and right (violet) hand touch the object.
+D.2. Results per Benchmark
+DexMachina
+suite.
+Table
+S10
+gives
+the
+per-
+demonstration results with Inspire hands.
+DexDuet
+has the higher Contact-AUC on all seven demonstrations
+and the higher mean ADD-AUC over them (88.7 against
+52.5). Section C.4 compares the runs of the two methods
+that track the object equally well. Tables S11 to S13 give
+the same results for the other three hands. With each of
+them, DexDuet has the higher Contact-AUC on all seven
+demonstrations and the higher mean ADD-AUC. With
+XHand hands, ConTrack [22] reaches a mean ADD-AUC
+of 30.7 and a mean Contact-AUC of 14.4, against 60.7 and
+38.2 for DexMachina and 93.6 and 79.5 for DexDuet.
+SPIDER suite.
+Table S14 gives the per-demonstration re-
+sults. To check our evaluation, we score the trajectories re-
+leased by SPIDER, using the states that the authors saved.
+They reach an ADD-AUC of 44.2, against the 43.6 that SPI-
+DER reports for the same seven demonstrations [34], and
+succeed in 15 of 35 runs. The challenge’s evaluation code
+(Tab. 1) also tests the moving part, so SPIDER’s SP-SR
+falls from 51.4% to 34.3% with it. Most of the difference
+comes from the lid of Laptop, whose rotation error of about
+1.3 rad on average now counts. SPIDER fails on Ketchup-1,
+Ketchup-2 and Notebook with all five seeds. On these three
+demonstrations, it tracks the object poorly and its Contact-
+AUC is close to zero. It succeeds on Waffleiron with three
+of the five seeds.
+ManipTrans
+suite.
+Table
+S15
+gives
+the
+per-
+demonstration ADD-AUC and success rates with the
+original criteria. DexDuet meets SPIDER’s criterion in at
+least 99.5% of the rollouts of every demonstration, whereas
+ManipTrans succeeds in 34.0% of its rollouts on Paste-b
+and 68.2% on Laptop.
+24
+
+
+Human
+CHORD
+DexDuet
+Figure S6. CHORD and DexDuet on V2D with the Unitree G1 and its Dex3 hands. Columns, from left, are episodes 3 (mug), 5 (box),
+14 (round table), 16 (spray bottle), 27 (basket) and 28 (squeegee), and rows show the human with SOMA hands, CHORD [63] trained
+with PPO and DexDuet, each in its first scored rollout at the same training budget. Each column is shown at the human hold closest to the
+middle of the episode from one camera, and at that moment CHORD has lost the object in every column except the box.
+Table S10. Per-demonstration results on the DexMachina suite (ARCTIC, two Inspire hands, Genesis), in %, and MPPE in cm. ADD-
+AUC and Contact-AUC: mean ± std over five training seeds (DexDuet) or the five released checkpoints (DexMachina). SP-SR, MP-SR
+and MPPE (evaluation code of the challenge): means. Bold marks the best value of each metric in each column.
+Method
+Box-200
+Ketchup-100 Ketchup-300 Mixer-170
+Mixer-300 Notebook-300 Waffleiron-300 Mean
+ADD-AUC
+DexMachina
+88.4±4.6
+70.3±25.4
+4.9±1.8
+93.1±2.3
+62.6±31.6
+38.3±46.7
+10.0±7.0
+52.5
+DexDuet
+95.6±1.4
+84.1±12.6
+86.9±2.1
+86.8±18.3
+92.1±3.9
+84.5±4.8
+90.9±1.4
+88.7
+Contact-AUC DexMachina 58.3±14.4
+39.4±19.4
+0.5±0.3
+60.3±11.1 48.0±26.7
+23.3±30.1
+5.4±2.1
+33.6
+DexDuet
+92.1±1.8
+70.8±20.0
+78.4±4.6
+79.3±16.2
+86.1±7.7
+77.3±7.0
+73.0±1.1
+79.6
+SP-SR
+DexMachina
+99.0
+79.2
+0.0
+99.0
+59.4
+39.6
+0.0
+53.7
+DexDuet
+100.0
+80.0
+100.0
+80.0
+100.0
+100.0
+100.0
+94.3
+MP-SR
+DexMachina
+99.0
+79.2
+0.0
+99.0
+59.4
+39.6
+0.0
+53.7
+DexDuet
+100.0
+80.0
+100.0
+80.0
+100.0
+100.0
+100.0
+94.3
+MPPE
+DexMachina
+1.06
+14.81
+112.96
+1.06
+25.33
+50.81
+78.59
+40.66
+DexDuet
+0.81
+2.39
+1.65
+1.54
+1.06
+1.74
+1.33
+1.50
+Table S11. Per-demonstration results on the DexMachina suite with Allegro hands, as in Tab. S10.
+Method
+Box-200
+Ketchup-100 Ketchup-300 Mixer-170
+Mixer-300 Notebook-300 Waffleiron-300 Mean
+ADD-AUC
+DexMachina 91.0±2.9
+81.2±29.3
+71.9±33.5
+80.0±32.3 72.0±31.9
+24.9±35.7
+39.7±43.9
+65.8
+DexDuet
+97.5±0.5
+93.1±2.5
+92.6±1.7
+96.7±1.9
+98.2±0.8
+89.7±1.0
+95.7±0.3
+94.8
+Contact-AUC DexMachina 38.1±1.5
+49.3±25.3
+51.6±25.3
+47.9±27.8 45.0±23.9
+7.0±10.1
+12.0±13.8
+35.8
+DexDuet
+43.9±4.5
+82.4±4.9
+79.9±2.5
+72.6±5.6
+71.0±3.1
+55.8±6.0
+70.1±3.9
+68.0
+SP-SR
+DexMachina
+99.0
+79.2
+79.2
+79.2
+79.2
+19.8
+39.6
+67.9
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+MP-SR
+DexMachina
+99.0
+79.2
+79.2
+79.2
+79.2
+19.8
+39.6
+67.9
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+MPPE
+DexMachina
+0.94
+4.79
+19.79
+2.46
+19.33
+56.64
+59.67
+23.37
+DexDuet
+0.68
+1.43
+1.31
+0.71
+0.55
+1.40
+1.06
+1.02
+25
+
+
+Table S12. Per-demonstration results on the DexMachina suite with XHand hands, as in Tab. S10, with ConTrack [22] trained with
+five seeds (Sec. B.3).
+Method
+Box-200
+Ketchup-100 Ketchup-300 Mixer-170 Mixer-300 Notebook-300 Waffleiron-300 Mean
+ADD-AUC
+DexMachina
+88.7±3.3
+61.6±43.9
+33.2±34.2
+93.4±1.3
+79.4±3.6
+14.7±7.8
+53.9±41.3
+60.7
+ConTrack
+50.7±15.2
+15.2±0.2
+4.0±0.1
+41.4±2.5
+25.5±2.1
+57.4±13.4
+20.5±12.6
+30.7
+DexDuet
+96.3±0.6
+94.4±1.3
+91.4±2.3
+98.4±0.6
+89.8±17.7
+89.3±2.3
+95.8±1.4
+93.6
+Contact-AUC
+DexMachina
+45.7±8.4
+38.9±35.5
+17.1±20.0
+70.3±7.7
+52.8±3.9
+7.4±3.2
+35.1±29.9
+38.2
+ConTrack
+13.8±9.0
+0.9±0.4
+1.8±0.1
+23.6±7.2
+17.9±5.0
+35.6±12.2
+6.9±6.3
+14.4
+DexDuet
+67.8±5.6
+75.7±2.0
+83.7±2.4
+85.4±4.3
+79.2±20.8
+85.6±4.4
+78.9±2.2
+79.5
+SP-SR
+DexMachina
+99.0
+59.4
+19.8
+99.2
+99.0
+0.0
+59.4
+62.3
+ConTrack
+80.0
+0.0
+0.0
+0.0
+0.0
+60.0
+0.0
+20.0
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+MP-SR
+DexMachina
+99.0
+59.4
+19.8
+99.0
+99.0
+0.0
+59.4
+62.2
+ConTrack
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+DexDuet
+100.0
+100.0
+100.0
+100.0
+80.0
+100.0
+100.0
+97.1
+MPPE
+DexMachina
+1.04
+15.63
+74.57
+0.98
+2.00
+67.74
+38.83
+28.68
+ConTrack
+9.59
+15.45
+96.47
+11.15
+50.66
+11.08
+50.47
+34.98
+DexDuet
+0.67
+1.24
+1.38
+0.58
+1.30
+1.42
+1.07
+1.09
+Table S13. Per-demonstration results on the DexMachina suite with Schunk hands, as in Tab. S10.
+Method
+Box-200
+Ketchup-100 Ketchup-300 Mixer-170 Mixer-300 Notebook-300 Waffleiron-300 Mean
+ADD-AUC
+DexMachina 88.3±1.5
+92.8±2.0
+76.3±14.0
+93.9±2.7
+46.2±34.4
+76.2±25.6
+42.3±38.0
+73.7
+DexDuet
+94.9±0.9
+93.0±2.7
+94.1±1.6
+99.0±0.3
+96.2±2.3
+87.3±4.2
+94.2±1.3
+94.1
+Contact-AUC DexMachina 45.5±5.0
+63.9±7.3
+54.8±11.0
+70.3±4.7
+23.5±21.1
+35.7±15.5
+22.6±23.2
+45.2
+DexDuet
+76.1±6.8
+74.4±4.4
+87.7±2.5
+89.1±1.1
+89.2±3.5
+73.0±9.0
+73.5±3.2
+80.4
+SP-SR
+DexMachina
+99.2
+99.0
+79.2
+99.0
+59.4
+79.2
+39.6
+79.2
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+MP-SR
+DexMachina
+99.0
+99.0
+59.4
+99.0
+59.4
+79.2
+39.6
+76.4
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+MPPE
+DexMachina
+1.10
+1.42
+3.98
+0.95
+33.38
+9.37
+34.66
+12.12
+DexDuet
+0.77
+1.38
+1.15
+0.54
+0.79
+1.64
+1.16
+1.06
+Table S14. Per-demonstration results on the SPIDER suite (ARCTIC, subject s01, frames 30–230; two Inspire hands, Genesis), in %.
+Released: trajectories released with SPIDER [34], scored from the saved states. All other rows are evaluated with a limit of 400 collision
+pairs. SPIDER (rerun, open-loop) and DexDuet (five seeds): mean ± std over seeds, and the mean alone for SPIDER’s Contact-AUC. SR:
+solved runs under SPIDER’s own criterion. Bold marks the best value of each metric in each column.
+Method
+Box
+Ketchup-1 Ketchup-2
+Laptop
+Mixer
+Notebook
+Waffleiron Mean
+SR
+ADD-AUC
+SPIDER (released)
+80.8
+15.0
+21.1
+60.3
+84.3
+9.4
+38.3
+44.2
+15/35
+SPIDER (rerun)
+85.2±5.2
+15.8±3.8
+18.8±1.0
+50.8±1.5 89.9±0.5
+9.5±0.2
+62.5±18.6
+47.5
+18/35
+DexDuet (five seeds)
+93.2±6.0
+81.6±8.1
+88.5±1.7
+97.6±0.6 93.5±2.4 72.3±27.4
+92.5±1.8
+88.5
+34/35
+Contact-AUC SPIDER (rerun)
+64.3
+3.5
+4.5
+57.1
+79.5
+2.8
+43.6
+36.5
+–
+DexDuet (five seeds) 87.4±12.2
+70.9±6.6
+75.7±2.2
+94.2±1.6 85.1±4.2 50.7±20.6
+74.5±2.4
+76.9
+–
+26
+
+
+V2D challenge.
+DexDuet exceeds CHORD’s leaderboard
+entry and both retrained CHORD runs on all four tracking
+metrics (Tab. S16). The two interaction rewards add 6.0
+points of Contact-AUC at a similar ADD-AUC (Tab. S16).
+DexDuet reaches a higher ADD-AUC than CHORD (PPO)
+on 28 of the 30 episodes (Tab. S17).
+D.3. Holding After the Last Frame
+On the DexMachina suite, we re-simulate each policy from
+the simulator states of its own rollout and let it keep acting
+for 3 s after the last frame, with every reference frozen at
+the last frame. A rollout holds the object if the object stays
+within 5 cm of its final pose for the whole 3 s, and drops it
+if the object ends the 3 s more than 10 cm below its final
+pose or off the table. We run it with all four hands on the
+checkpoints of Tab. 1. DexDuet holds the object in more
+runs and drops it in fewer runs than DexMachina with every
+hand (Tab. S18).
+D.4. Ablations
+Each row of Tab. 3 removes or replaces components of
+DexDuet and keeps everything else, including the reward
+weights of Tab. S2 and the settings of Tab. S5.
+Variants.
+Rows (b) and (c) set λhg or λhoc to zero, and
+row (d) sets both to zero. Row (e) replaces the two per-
+hand policies by the unified policy of DexMachina [30], an
+MLP with hidden layers of 512, 512, 256 and 128 units
+shared by the actor and the critic. It maps the observation
+of both hands to their concatenated 24-dimensional action,
+with one value head and one PPO ratio for the joint action.
+Rows (f) and (g) replace A-RSI by DexMachina’s single-
+level VOC curriculum (Sec. A.5), starting from row (d) and
+from DexDuet, respectively.
+Training and evaluation.
+Every row is trained with seeds
+15, 42 and 113 under the stopping rule of Sec. B.4 and the
+update caps of Tab. S5. Table S19 adds the other metrics,
+the comparison with row (a) paired by demonstration and
+seed, and the share of rollouts that hold the object after the
+last frame, and Tab. S20 gives each demonstration.
+Interaction rewards.
+The interaction rewards act mainly
+on the contacts. Removing the hand graph reward or the
+hand-object contact reward lowers Contact-AUC by 9.0 and
+15.1 points, against 2.2 and 3.3 points of ADD-AUC. The
+two rewards matter most on different demonstrations. With-
+out the hand graph reward, Notebook-300 loses the most,
+12.7 points of ADD-AUC and 33.7 points of Contact-AUC,
+and without the hand-object contact reward, all three seeds
+track the bottle poorly on Ketchup-100. Removing both
+(d) makes training less reliable: six of its 21 runs fail SP-
+SR, two each on Ketchup-100 and Waffleiron-300 and one
+each on Ketchup-300 and Notebook-300, against one run of
+DexDuet (Tab. S19). On the five demonstrations on which
+(f), the variant without the interaction rewards and A-RSI,
+tracks the object better than DexDuet, by 1.3 to 3.3 points of
+ADD-AUC, DexDuet preserves the human’s contacts better
+by 16 to 25 points of Contact-AUC.
+Per-hand policy.
+The unified policy (e) is below Dex-
+Duet in both metrics in every paired run on six of the seven
+demonstrations.
+A-RSI.
+A-RSI matters most where the single assistance
+level stalls. On Ketchup-300, all six runs of (f) and (g) reach
+the update cap of 13,000 and end with a lower ADD-AUC
+and Contact-AUC than their counterparts with A-RSI, (d)
+and (a). With the interaction rewards, row (a) reaches a
+higher Contact-AUC than (g) on six of the seven demon-
+strations.
+D.5. Real-World Replays
+Figures S7 and S8 show the replays of Sec. 4.3 frame by
+frame. On the Unitree G1 with Inspire hands, the robot
+lowers a box and places it on the floor, carries a bag and
+puts it down, and pushes an office chair while walking. On
+the two Franka arms with Allegro hands, both hands hold a
+bottle above the table and reorient it, and place a gamepad,
+held by both hands, on a block.
+E. Limitations
+Like DexMachina and ManipTrans, DexDuet trains one
+policy per demonstration, which takes about a day on one
+GPU, and it does not generalize to new objects or motions.
+The policy observes the object state of the simulator, and
+the demonstration must provide accurate hand and object
+motion. On the real robots, we replay simulated rollouts
+open-loop (Sec. 4.3), and closed-loop deployment with an
+estimated object state is left to future work.
+27
+
+
+0.0 s
+0.9 s
+1.7 s
+2.2 s
+2.7 s
+3.2 s
+3.9 s
+4.5 s
+5.3 s
+6.9 s
+7.4 s
+8.3 s
+(a) Box placement
+0.0 s
+2.0 s
+4.0 s
+5.4 s
+6.3 s
+7.7 s
+8.7 s
+9.4 s
+10.0 s
+10.6 s
+11.6 s
+14.7 s
+(b) Bag placement
+0.0 s
+0.6 s
+1.1 s
+1.6 s
+2.3 s
+2.8 s
+3.4 s
+3.9 s
+4.6 s
+5.1 s
+5.7 s
+6.1 s
+(c) Chair pushing
+Figure S7. Real-world replays on the Unitree G1 with Inspire hands. (a) The robot lowers a box from chest height, places it on the floor
+and stands up. (b) It carries a bag and puts it down on the floor. (c) It pushes an office chair while walking.
+28
+
+
+0.0 s
+2.1 s
+4.2 s
+6.4 s
+8.4 s
+10.6 s
+12.7 s
+14.8 s
+17.0 s
+19.0 s
+21.2 s
+23.3 s
+(a) Bimanual object reorientation
+0.0 s
+2.0 s
+4.1 s
+6.1 s
+7.9 s
+10.1 s
+12.0 s
+14.7 s
+17.3 s
+18.7 s
+19.9 s
+23.4 s
+(b) Bimanual object placement
+Figure S8. Real-world replays on two Franka arms with Allegro hands. (a) Both hands reorient a bottle that they hold above the table.
+(b) Both hands place a gamepad on a block.
+Table S15. Per-demonstration results on the ManipTrans suite (OakInk2, two Inspire hands, Isaac Gym, scene with joints), in %, over
+256 rollouts per demonstration. DexDuet: mean over three training seeds. ManipTrans (retrained): retrained with its official protocol, mean
+over three training seeds (42, 24 and 66), each evaluated with evaluation seed 2026, every rollout started at the window. Mean column:
+mean ± std over seeds of the mean over demonstrations. SP-SR∗and MP-SR∗are the original object criteria of SPIDER and ManipTrans,
+which test the object root and the object at every frame, unlike SP-SR and MP-SR in Tab. 1. Bold marks the best value of each metric in
+each column.
+Method
+Gate-a Gate-b Gate-c Gate-d Gate-e Gate-f Gate-g Laptop Paste-a Paste-b
+Mean
+ADD-AUC ManipTrans (retrained)
+98.6
+100.0
+99.0
+99.9
+100.0
+77.2
+93.8
+71.7
+93.1
+37.2
+87.0±4.1
+DexDuet
+99.5
+95.5
+99.0
+99.5
+99.8
+99.3
+95.5
+99.9
+97.4
+98.6
+98.4±0.4
+SP-SR∗
+ManipTrans (retrained)
+98.7
+100.0
+98.8
+99.9
+100.0
+86.2
+96.1
+68.2
+90.8
+34.0
+87.3±4.2
+DexDuet
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+100.0
+99.5
+99.9
+99.9±0.1
+MP-SR∗
+ManipTrans (retrained)
+98.0
+99.9
+98.4
+99.9
+99.9
+63.3
+91.7
+58.6
+90.2
+33.5
+83.3±4.0
+DexDuet
+99.7
+92.6
+99.3
+100.0
+100.0
+100.0
+99.6
+100.0
+49.2
+81.0
+92.1±5.1
+29
+
+
+Table S16. V2D challenge (30 episodes, G1 + Dex3, official evaluator), in %, and MPPE in cm. Steps: environment steps per episode in
+billions (range and mean). For the runs that we train, each value is the mean of four runs of the evaluator, and Contact-AUC is averaged
+over 29 episodes (Sec. C.2). The second block, except DexDuet without interaction rewards, gives the V2D rows of Tab. 1. Bold marks
+the best value in each column.
+Method
+Steps
+ADD-AUC↑
+SP-SR↑
+MP-SR↑
+MPPE↓
+Contact-AUC↑
+CHORD [63], leaderboard entry
+not published
+51.0
+70.0
+20.0
+17.74
+–
+CHORD (PPO, retrained)
+1.97
+39.8
+53.3
+15.8
+14.85
+16.0
+CHORD (FlashSAC, retrained)
+1.97
+32.0
+35.0
+12.5
+37.77
+13.0
+DexDuet without interaction rewards
+1.70–1.97 (mean 1.92)
+76.2
+83.3
+71.7
+11.47
+66.6
+DexDuet
+1.70–1.97 (mean 1.91)
+77.4
+85.0
+75.8
+12.19
+72.6
+Table S17. Per-episode results on the V2D challenge (G1 + Dex3, official evaluator), in %. Each value is the mean of four runs of the
+evaluator, and Contact-AUC is computed as in Sec. C.2. PPO and FlashSAC: CHORD trained with the two recipes; w/o IR: DexDuet
+without interaction rewards. In episode 29 the human never holds the object, so it has no Contact-AUC. Bold marks the best value of each
+metric in each row. The last row gives the means of Tab. S16.
+ADD-AUC↑
+Contact-AUC↑
+Ep.
+Object
+PPO
+FlashSAC
+w/o IR
+DexDuet
+PPO
+FlashSAC
+w/o IR
+DexDuet
+0
+bar stool, tip up
+52.8
+49.8
+99.8
+99.7
+33.8
+17.3
+93.7
+97.3
+1
+vacuum
+18.6
+35.4
+19.2
+19.6
+3.6
+12.4
+5.9
+7.3
+2
+Easter basket
+44.4
+40.9
+91.5
+90.2
+13.2
+20.1
+94.4
+92.2
+3
+mug
+52.5
+7.6
+97.5
+98.4
+25.3
+0.0
+72.7
+98.5
+4
+baseball bat
+13.7
+16.1
+13.5
+13.2
+0.0
+0.0
+0.0
+0.0
+5
+box
+51.7
+16.6
+94.3
+93.0
+29.8
+0.0
+59.8
+59.6
+6
+monitor
+58.6
+72.0
+88.8
+91.0
+31.2
+78.9
+98.8
+97.9
+7
+iron
+38.9
+22.8
+100.0
+99.9
+6.5
+0.0
+99.4
+99.5
+8
+wooden chair
+70.1
+74.2
+96.6
+96.6
+41.0
+55.8
+82.5
+92.5
+9
+bowl
+23.0
+13.6
+45.1
+82.1
+0.3
+0.0
+24.0
+95.1
+10
+desk
+26.9
+25.6
+75.2
+74.8
+12.9
+19.5
+48.0
+32.3
+11
+book
+35.2
+8.5
+86.8
+93.2
+11.4
+0.0
+44.4
+94.9
+12
+platform
+45.3
+62.1
+96.3
+96.0
+25.2
+28.1
+84.7
+89.5
+13
+snack box
+49.3
+42.1
+81.9
+56.8
+19.9
+25.0
+82.1
+31.8
+14
+round table
+42.0
+37.1
+66.9
+73.9
+38.1
+17.0
+62.7
+75.8
+15
+wet-floor sign
+46.6
+23.8
+93.6
+77.8
+9.1
+0.0
+98.0
+72.3
+16
+spray bottle
+55.0
+45.4
+96.0
+94.2
+9.3
+8.7
+96.2
+98.7
+17
+traffic cone
+40.3
+28.4
+92.6
+93.6
+7.9
+0.0
+95.4
+95.9
+18
+trash can
+45.7
+58.2
+98.2
+97.2
+25.0
+25.7
+94.3
+94.9
+19
+cane
+12.3
+14.1
+15.1
+16.2
+0.0
+0.0
+4.6
+5.7
+20
+rice cooker
+45.5
+30.4
+97.1
+92.6
+37.9
+23.8
+92.3
+90.6
+21
+bar stool, pull
+28.3
+13.8
+33.5
+25.3
+6.4
+0.0
+22.8
+11.3
+22
+step ladder
+53.6
+29.3
+95.1
+92.2
+19.7
+0.0
+97.4
+96.2
+23
+toy stroller
+47.0
+31.7
+98.4
+97.7
+20.1
+4.8
+96.7
+97.1
+24
+watering can
+33.7
+45.5
+62.5
+99.8
+5.0
+26.7
+19.6
+99.9
+25
+water bottle
+13.0
+11.8
+26.7
+43.4
+3.1
+0.0
+30.7
+45.7
+26
+skateboard
+49.3
+47.5
+99.5
+99.3
+21.6
+11.7
+95.7
+93.3
+27
+basket
+38.8
+27.0
+95.8
+99.4
+4.1
+0.0
+98.2
+99.9
+28
+squeegee
+17.2
+13.5
+45.9
+48.1
+3.3
+2.7
+37.5
+40.2
+29
+rolling luggage
+44.0
+16.1
+82.9
+66.4
+–
+–
+–
+–
+Mean
+39.8
+32.0
+76.2
+77.4
+16.0
+13.0
+66.6
+72.6
+30
+
+
+Table S18. Holding after the last frame with four hands (DexMachina suite), in % of rollouts, mean ± std over the five training seeds.
+Off track: number of runs that end more than 3 cm from the final pose, of 35 per hand and 140 in all.
+Hand
+Method
+Held↑
+Dropped↓Off track↓
+Inspire
+DexMachina 17.0±11.8
+71.7±14.2
+18
+DexDuet
+37.1±16.3
+51.4±7.8
+5
+Allegro DexMachina 14.1±10.0
+80.0±7.7
+16
+DexDuet
+22.9±12.8
+62.9±16.3
+5
+XHand
+DexMachina
+5.7±7.7
+71.7±17.3
+18
+DexDuet
+25.7±15.6
+54.3±18.6
+1
+Schunk DexMachina 25.5±11.8
+68.9±15.5
+10
+DexDuet
+42.9±10.1
+51.4±16.3
+0
+All
+DexMachina
+15.6±3.2
+73.1±6.9
+62
+DexDuet
+32.1±7.1
+55.0±6.0
+11
+Table S19. Ablations, all metrics (DexMachina suite, Inspire, seeds 15, 42 and 113), in %, and MPPE in cm. Means over the seven
+demonstrations. Worse / better: paired runs (same demonstration and seed) in which the row is below / above DexDuet (a), out of 21. Held:
+share of rollouts that hold the object after the last frame (Sec. D.3). Bold marks the best value in each column.
+Worse / better
+Row
+Change
+ADD-AUC↑
+Contact-AUC↑
+SP-SR↑
+MP-SR↑
+MPPE↓
+ADD
+Contact
+Updates↓
+Held↑
+(a)
+DexDuet
+89.7
+80.5
+95.2
+95.2
+1.45
+–
+–
+5,524
+47.6
+(b)
+λhg = 0
+87.5
+71.5
+100.0
+100.0
+1.56
+16 / 5
+17 / 4
+6,721
+28.6
+(c)
+λhoc = 0
+86.4
+65.4
+85.7
+85.7
+3.01
+8 / 13
+18 / 3
+5,836
+33.3
+(d)
+λhg = λhoc = 0
+76.7
+49.0
+71.4
+71.4
+7.96
+12 / 9
+21 / 0
+6,745
+38.1
+(e)
+unified policy
+74.1
+62.1
+100.0
+90.5
+2.58
+20 / 1
+19 / 2
+6,255
+14.3
+(f)
+(d) with single-level VOC
+79.4
+47.6
+76.2
+76.2
+15.92
+8 / 13
+21 / 0
+6,845
+28.6
+(g)
+single-level VOC, no A-RSI
+88.4
+74.2
+95.2
+95.2
+1.79
+10 / 11
+16 / 5
+6,608
+23.8
+Table S20. Ablations per demonstration (DexMachina suite, Inspire), in %: mean ± std over training seeds 15, 42 and 113. Updates:
+mean number of PPO updates until training stops, with the caps of Tab. S5. Bold marks the best value of each metric in each column.
+Row
+Box-200
+Ketchup-100 Ketchup-300 Mixer-170 Mixer-300 Notebook-300 Waffleiron-300 Mean
+ADD-AUC
+(a)
+94.9±1.4
+79.6±15.5
+87.2±2.9
+95.6±1.8
+93.1±3.0
+86.7±4.3
+91.1±2.0
+89.7
+(b)
+95.1±1.0
+87.9±1.9
+85.0±4.3
+90.8±1.3
+89.0±4.7
+74.0±1.7
+90.9±1.6
+87.5
+(c)
+96.4±1.6
+46.1±18.3
+90.7±1.6
+98.7±0.3
+93.5±6.7
+87.8±5.1
+91.7±1.6
+86.4
+(d)
+97.4±1.0
+69.6±19.8
+70.9±25.9
+98.2±0.8
+82.9±3.1
+68.8±42.4
+49.4±40.8
+76.7
+(e)
+85.1±2.6
+80.2±9.2
+66.0±2.9
+83.8±0.7
+63.8±8.2
+74.4±3.9
+65.5±8.3
+74.1
+(f)
+97.6±0.6
+60.3±32.7
+22.9±14.9
+97.9±0.9
+94.6±3.2
+90.0±1.9
+92.4±1.2
+79.4
+(g)
+91.8±10.4
+89.7±2.6
+74.5±11.1
+97.3±0.3
+91.8±5.1
+85.1±4.6
+88.4±2.0
+88.4
+Contact-AUC
+(a)
+92.2±2.4
+63.3±24.3
+79.4±5.8
+86.7±4.3
+88.6±2.1
+80.5±1.8
+73.1±1.0
+80.5
+(b)
+85.3±4.3
+78.9±4.5
+66.4±4.6
+80.4±4.4
+73.8±4.7
+46.8±4.0
+68.9±3.4
+71.5
+(c)
+86.1±8.3
+12.0±12.4
+71.5±4.3
+86.7±1.5
+77.9±10.6
+66.3±3.1
+57.2±7.8
+65.4
+(d)
+74.1±3.3
+31.0±37.3
+38.7±22.5
+74.5±4.0
+51.3±1.3
+45.8±33.9
+27.7±23.2
+49.0
+(e)
+84.7±7.6
+70.7±11.9
+39.5±7.3
+75.4±3.9
+52.1±17.9
+67.0±3.6
+45.3±11.3
+62.1
+(f)
+70.3±4.2
+15.0±16.4
+5.0±4.4
+70.8±3.6
+63.3±2.8
+57.3±6.1
+51.4±3.2
+47.6
+(g)
+80.9±22.0
+81.6±2.8
+53.3±4.4
+85.7±3.0
+80.9±5.9
+67.8±16.5
+69.2±1.1
+74.2
+Updates
+(a)
+4,530
+4,987
+4,757
+4,803
+6,420
+8,623
+4,550
+5,524
+(b)
+4,510
+4,963
+7,367
+4,830
+8,400
+11,500
+5,477
+6,721
+(c)
+4,600
+5,000
+6,947
+4,420
+6,563
+7,513
+5,810
+5,836
+(d)
+4,403
+5,000
+7,493
+4,570
+8,610
+8,803
+8,333
+6,745
+(e)
+4,430
+4,597
+10,377
+4,377
+6,120
+9,113
+4,773
+6,255
+(f)
+4,627
+5,000
+13,000
+4,573
+5,207
+9,443
+6,063
+6,845
+(g)
+4,673
+4,980
+13,000
+4,907
+6,190
+7,613
+4,893
+6,608
+31

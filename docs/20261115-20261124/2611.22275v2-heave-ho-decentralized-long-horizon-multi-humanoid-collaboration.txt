@@ -1,0 +1,1719 @@
+Heave-Ho: Decentralized Long-Horizon Multi-Humanoid Collaboration
+Ting-Hsuan Chen1∗
+Siheng Zhao1∗‡
+Han Jiang1∗
+Qi Pan1
+Louison Lu1
+Jiaheng Luo1
+Henghui Bao1
+Yiyu Chen2
+Quan Nguyen1
+Yue Wang1†
+1University of Southern California
+2VinMotion
+∗Equal contribution
+†Corresponding author
+‡Project lead
+ Project Page
+Table carry, 4 G1
+Narrow door, 2 G1
+L-shaped corridor, 2 G1
+Box handover, 2 G1
+Stair carry, G1 + human
+Precise placement, 2 G1
+Table carry, G1 + PM01 + human
+Figure 1. HEAVE-HO enables decentralized humanoid teams to complete long-horizon collaborative tasks. Each robot acts on its own
+observations, the leader’s planner chooses the next team skill and speaks it, and followers execute it in synchrony without any network
+communication. Videos can be found on our project page.
+Abstract
+Collaboration promises to extend humanoid capabilities be-
+yond what individual robots can achieve. However, realiz-
+ing this potential requires coordinated whole-body interac-
+tions, coherent long-horizon planning, and precise synchro-
+nization across robots. We introduce HEAVE-HO, a decen-
+tralized framework for long-horizon collaborative multi-
+humanoid loco-manipulation. At the low level, we develop
+a multi-agent post-training framework that adapts a hu-
+manoid foundation tracking model to physically coupled
+interactions between humanoids, enabling coordinated de-
+centralized control from local observations alone. At the
+high level, we train a vision-language planner and design a
+speech-based leader–follower coordination mechanism to
+synchronize decentralized execution without network com-
+munication.
+Trained with two identical humanoids, our
+system scales to teams of up to ten robots and general-
+izes to heterogeneous teams without retraining. To bench-
+mark these capabilities, we introduce HH-BENCH, com-
+prising 12 tasks involving teams of 2–10 humanoids, in-
+cluding heterogeneous teams. Systematic evaluations show
+that HEAVE-HO consistently outperforms baseline meth-
+ods, while real-world experiments demonstrate robust de-
+centralized collaboration across challenging tasks.
+1. Introduction
+Learning-based whole-body control has made individual
+humanoids increasingly capable [27, 42, 77, 78]. However,
+many tasks in homes, warehouses, and construction sites
+remain beyond the physical capabilities of a single robot.
+Handling large or heavy objects, such as tables, bed frames,
+and large boxes, often requires multiple humanoids to share
+the load and coordinate their motion. Collaboration there-
+fore promises to overcome these physical limits.
+Realizing this promise involves three interdependent
+challenges.
+First, interaction is tightly coupled: forces
+transmitted through a shared object make each robot’s bal-
+1
+arXiv:2611.22275v2  [cs.RO]  18 Nov 2026
+
+
+ance and grasp depend on its partners’ actions. Second,
+long-horizon tasks require visually grounded planning of
+coordinated action sequences, such as reorienting the team
+and its shared load before passing through a narrow door-
+way. Third, execution must be synchronized: a mistimed
+lift or step can destabilize the shared load and the robots.
+These challenges become especially demanding under
+decentralized execution. A centralized policy can use team-
+wide observations to jointly coordinate the robots’ actions
+and align their execution timing [9, 44, 45, 62]. However,
+its input context and joint action space grow with team
+size, so policies with fixed input and output dimensions
+require modification and often retraining when robots are
+added. Gathering team-wide observations also requires net-
+work communication at inference. A shared decentralized
+policy can instead preserve the same per-robot observation
+and action interface as the team grows, but must coordinate
+from local observations alone. Our goal is to combine this
+scalability with tightly synchronized whole-body collabora-
+tion, without network communication.
+We introduce HEAVE-HO,
+a decentralized frame-
+work for long-horizon collaborative multi-humanoid loco-
+manipulation.
+At the low level, our multi-agent post-
+training framework augments a frozen humanoid founda-
+tion tracking model [42] with a residual policy shared across
+robots. We train this policy with multi-agent reinforcement
+learning using a centralized critic and shared actor, while
+each robot relies only on local observations at execution.
+The resulting controller executes lifting, stepping, and turn-
+ing skills with compatible start and end configurations, en-
+abling their composition into long-horizon behaviors. At
+the high level, we train a vision-language planner to select
+the next team skill from a leader robot’s visual observations.
+A speech-based leader–follower mechanism aligns skill de-
+cisions and execution timing without network communica-
+tion: the leader announces a skill, followers recognize it
+locally, and all robots begin on a shared execution sched-
+ule. The leader role can be assigned to any robot in the
+team, and the same speech interface allows a person to fol-
+low commands or act as the leader.
+To evaluate these capabilities,
+we introduce HH-
+BENCH, a benchmark of 12 collaborative tasks for teams of
+2–10 humanoids, including heterogeneous teams. The tasks
+span lifting and carrying, shoulder carrying, pulling, push-
+ing, handover, and precise placement under spatial con-
+straints such as narrow doors and corridors.
+Collabora-
+tive skills and task stages can be chained into long-horizon
+tasks. Across these tasks, our low-level policy succeeds in
+94% of simulated episodes, compared with at most 29%
+for baseline and ablated controllers.
+Our planner com-
+pletes 43 of 50 long-horizon trials, compared with 21 for
+zero-shot GPT-6 (Astra), while reducing per-decision la-
+tency by a factor of about 120. Without retraining, the pol-
+icy learned with two identical humanoids scales to teams
+of up to ten robots and collaborates with a different hu-
+manoid platform and with people. Extensive real-world ex-
+periments further demonstrate robust decentralized collab-
+oration on long-horizon tasks. Videos of the real-world and
+simulated experiments are provided on the project page.
+In summary, our contributions are:
+• A multi-agent post-training framework that adapts a
+frozen humanoid foundation tracking model to physically
+coupled collaboration through a shared residual policy,
+for decentralized control from local observations.
+• A trained vision-language model for coherent long-
+horizon planning, together with a speech-based leader–
+follower coordination mechanism for synchronized de-
+centralized execution without network communication.
+• HH-BENCH, a benchmark of 12 collaborative tasks for
+teams of 2–10 humanoids, accompanied by systematic
+evaluations of scalability, heterogeneous collaboration,
+and real-world deployment.
+2. Related Work
+Humanoid whole-body control and loco-manipulation.
+Learning-based methods have substantially advanced hu-
+manoid locomotion and athletic control [23, 35, 54, 55,
+68, 78, 80]. To broaden these capabilities, motion imita-
+tion provides a scalable route to acquiring diverse whole-
+body skills from human demonstrations [10, 11, 20, 25–
+28, 32, 38, 74, 75].
+SONIC [42] further scales motion
+tracking into a generalist controller with a unified interface
+for teleoperation and general tracking.
+Recent work ex-
+tends motion tracking to contact-rich interaction using mo-
+tion capture data [47, 70, 77] or human videos [2, 65, 67].
+Despite this progress, these methods primarily focus on
+the capabilities of individual humanoids. Our work adapts
+a frozen foundation tracking model [42] through multi-
+agent residual learning, enabling physically coupled multi-
+humanoid loco-manipulation collaboration with decentral-
+ized control from local observations alone.
+Centralized and decentralized multi-robot collabora-
+tion.
+Centralized policies jointly process team observa-
+tions and predict actions for multiple robots, support-
+ing multi-arm manipulation [63, 64], collaborative legged
+pushing [46], and collaboration among heterogeneous
+robots [79].
+Decentralized approaches learn coordinated
+policies through multi-agent reinforcement learning with
+centralized training and decentralized execution [41, 72] or
+joint imitation learning with diffusion policies and consen-
+sus representations [15, 24]. CHORUS [16] further extends
+this direction to a shared pretrained vision-language-action
+model, enabling heterogeneous mobile manipulators to act
+independently from their own observations. Closely related
+to our setting, decPLM [50] learns decentralized pinch–
+2
+
+
+lift–move control for quadruped–arm teams, assuming ex-
+ternally specified contact locations, synchronized initiation,
+and payload motion commands. In humanoid settings, ex-
+isting work primarily investigates collaboration with human
+partners [4, 18, 36, 76]. Cooperative manipulation among
+multiple simulated characters has also been explored, which
+is confined to simulation only [21, 39, 71]. Our work targets
+autonomous long-horizon collaborative loco-manipulation
+by real humanoid teams, combining decentralized whole-
+body control with visually grounded skill planning and syn-
+chronized execution without network communication.
+Vision-language task planning.
+Language and vision-
+language models support long-horizon robot tasks by se-
+lecting and composing skills [1, 17, 30, 31] or generating
+executable control programs [37]. At the execution level,
+vision-language-action models map visual observations and
+language instructions to robot actions [5–7, 22, 34, 48, 53,
+66]. Hierarchical frameworks connect these levels by cou-
+pling task reasoning with learned visuomotor policies [60]
+or humanoid motion and skill controllers [14, 69, 73]. For
+robot teams, centralized language planners allocate tasks
+using team-level information [33, 40], while decentralized
+and hybrid planning frameworks coordinate robot-specific
+agents through explicit inter-agent dialogue [9, 44], which
+need network communication. In contrast, HEAVE-HO co-
+ordinates physically coupled humanoids without inter-robot
+network communication: a trained vision-language plan-
+ner selects shared team skills from the leader’s local visual
+observations, and speech-based coordination synchronizes
+their execution. A shared low-level policy realizes each skill
+through decentralized whole-body control using only each
+robot’s local observations.
+3. Method
+3.1. Overview
+We consider a team of N humanoids manipulating a shared
+object. We call the team decentralized in a strict sense: ev-
+ery robot acts only on its own observations, and no network
+message is exchanged between robots during a task. The
+low-level policy runs on each robot’s on-board computer.
+Agent i therefore observes only its proprioception, a short
+window of its own future reference motion, and the object
+specification c = (L, W, H, m) (length, width, height, and
+mass); it has no access to its partners’ states, and their ac-
+tions affect it only through forces transmitted by the shared
+object.
+HEAVE-HO operates at two levels (Fig. 2). The two lev-
+els communicate through a vocabulary of team skills K,
+such as lift, put down, a step in each direction, and a rota-
+tion in place. The high level decides which team skill comes
+next, every few seconds, and makes sure that all robots start
+it together. The low level turns the current team skill into
+whole-body motion on every robot at 50 Hz. Each robot
+maps a team skill to its own frame through a fixed role map
+ρi : K →K; for two robots facing each other across a box,
+moving the team toward the leader’s front is a forward step
+for the leader and a backward step for its partner, whereas
+lifting and rotating are the same for both.
+3.2. Low Level: Multi-Agent Post-Training
+Composable team skills.
+Every team skill starts and ends
+at one of two static hub poses: S0, standing empty-handed,
+and S1, standing while holding the object. Lift moves the
+team from S0 to S1, put down returns it to S0, and steps and
+rotations keep it at S1. Because all skills share these end-
+points, any skill can follow any other, and a long-horizon
+behavior reduces to a sequence of discrete choices. Skills
+are defined at the team level: all robots start and end every
+skill in one canonical team layout and follow one common
+displacement profile during a move, so the spacing between
+partners stays constant over long sequences. Steps have a
+fixed length and rotations a fixed angle, so the planner can
+reason about distance in units of skills, and when no new
+skill arrives the team simply holds its hub pose.
+Reference motions.
+We obtain references from two
+sources. We record pairs of people performing the task, re-
+cover their motion from video [59], and retarget it to the
+robots; we also generate references procedurally with in-
+verse kinematics, which adds objects and interaction modes
+without new recordings. All references are cut into hub-to-
+hub skills and conditioned on c: hand spread, grasp height,
+squat depth, and partner spacing adapt to the object, while
+the leg motion of each step is shared across objects.
+Residual post-training.
+Learning balance and locomo-
+tion from scratch under multi-agent coupling is sample-
+inefficient and fragile.
+We freeze a foundation tracking
+model [42] as a base policy πbase, which maps propriocep-
+tion and reference to joint targets, and learn a residual policy
+πθ that observes and corrects the base action:
+ai = πbase(oi) + πθ
+ oi, πbase(oi)
+
+.
+(1)
+The base policy provides balance and stepping, and the
+residual learns the forces and contacts needed to share a
+load with partners. Exploration starts with a small action
+noise, so early rollouts stay close to the base policy.
+Multi-agent reinforcement learning.
+All agents share
+the parameters θ of one actor [12], which keeps the pol-
+icy independent of the team size. We train with multi-agent
+PPO [58, 72] under centralized training and decentralized
+execution [19, 41]: a centralized critic Vϕ(s) ∈RN receives
+the observations of all agents, concatenated in a fixed agent
+order, and outputs one value per agent, of which agent i
+uses the i-th entry, while each actor acts only on its own
+3
+
+
+High level: leader (a robot or a person)
+Speech-based sync
+Low level: multi-agent RL residual post-training
+Leader's head camera
+“carry the box through
+the narrow door”
+Vision-language
+planner
+Qwen3-VL-2B
++ LoRA
+lift
+put down
+forward
+backward
+left
+right
+turn left
+turn right
+next team skill, one per decision
+leader speaks
+followers hear
+Shared skill schedule
+heard
+start on next slot
+L
+F1
+F2
+robot i
+× N
+Role map
+ρ
+Reference
+from object spec c
+Foundation tracker
+frozen
+Residual policy
+multi-agent RL, shared
++
+ai
+Decentralized execution
+Each robot acts on its own
+observations. Partners interact
+only through the shared object.
+No network messages.
+Figure 2. Overview of HEAVE-HO. At the high level, the leader’s vision-language planner selects the next team skill from its camera and
+speaks it; every follower recognizes the command on board, and all robots start it on a shared skill schedule. At the low level, each robot
+maps the team skill to its own role, generates a reference conditioned on the object specification, and tracks it with a frozen foundation
+tracking model plus a residual policy shared by all robots. No network message is exchanged between robots.
+observation. Rewards are computed per agent and measure
+how well the agent tracks its own reference and how well
+the object follows its reference relative to the agent, with a
+contact term that rewards keeping the hands loaded while
+carrying and a gait term that rewards foot clearance and air
+time and penalizes dragging the feet. Terminations are cou-
+pled: when any agent fails, the episode ends for the whole
+team, so all agents are trained under a shared outcome.
+Training for composition and generalization.
+The skill
+is encoded only in the reference, so one network executes
+every skill and transitions never switch controllers. To cover
+all transitions, we train on long random chains of legal
+skills with balanced directions and random waiting times at
+the hubs, and initialize episodes at random points of these
+chains [51]. The object specification c is an explicit input;
+during training the true size varies by ±10% and the mass
+by ±20% around the nominal value given to the policy, so a
+single network adapts its grasp and posture to different ob-
+jects. We further randomize friction, robot properties, and
+external pushes, and apply curricula on actuation delay and
+on the object tracking tolerance [52, 61].
+3.3. High Level: Planning and Synchronization
+Vision-language planner.
+A leader decides the next team
+skill with a vision-language model. Given the leader’s head-
+camera image and the task instruction, the model outputs
+one token from K ∪{HOLD, DONE}. It is queried after each
+skill completes, so every decision is made from a view of
+the team at rest, and a long-horizon task unfolds as a se-
+quence of such decisions (Fig. 3). We fine-tune Qwen3-VL-
+2B [3] with LoRA [29] (settings in App. D.1) on episodes
+in which the leader’s image is recorded whenever a team
+skill is committed. In the real world, an operator selects the
+skills through the same interface, and we collect 24 episodes
+for each task of Sec. 5.3; in simulation, a scripted planner
+selects them, and we collect 1,000 episodes for each task
+with initial positions sampled over a wide range. A single
+decision maker gives the team one coherent plan, which in-
+dependent planners on each robot cannot guarantee. The
+planner can run on any computer that only the leader is
+connected to, since it never exchanges information with the
+other robots, and it is optional: without it, a person can act
+as the leader.
+Speech-based leader-follower synchronization.
+Start-
+ing a skill together is critical: a late lift tilts the object, and
+a lone step pulls a partner off balance. We separate what the
+team does from when it does it. What is decided once, by
+the leader. When is fixed by a shared skill schedule: a skill
+may only start on a coarse grid of control ticks, so robots
+that learn about the same skill at slightly different moments
+still start it together. The decision is a single discrete to-
+ken, which the leader speaks through its speaker; every fol-
+lower recognizes it with its on-board microphone, and every
+robot schedules the skill on the next slot of the grid, with the
+leader offsetting its own start by the expected acoustic de-
+lay. Because the grid is coarser than the variation in acoustic
+delay, this variation does not change the start slot, and the
+team starts every skill together without exchanging a single
+packet. The leader is a role rather than a fixed robot, since
+every robot can host the same planner, and speech lets peo-
+ple join the team: a person can follow the spoken skills or
+take over as leader.
+3.4. Teams beyond Training
+Nothing in the low-level policy depends on the number of
+partners: it is shared, its inputs are egocentric, and partners
+enter only through the object. To deploy N robots, we as-
+sign each robot a slot around the object, which defines its
+reference and contact targets, and run the same policy on
+all of them; four robots carrying a table, for instance, form
+4
+
+
+lift
+Real world
+turn
+backward
+forward
+Simulation
+hand over
+turn
+Figure 3. Leader’s head-camera views over a task, each with the
+team skill chosen at that step: the narrow door in the real world
+(top) and the box handover in simulation (bottom).
+two facing pairs side by side along its long edge. Partners
+that do not run the G1 policy join through the same skill in-
+terface: a person follows the spoken skills, and a humanoid
+with a different body executes them with its own controller
+trained with the same recipe.
+4. HH-BENCH: Multi-Humanoid Benchmark
+Evaluations of humanoid loco-manipulation mostly con-
+sider a single robot, and multi-agent benchmarks [8, 57]
+rarely involve whole-body contact with a shared object.
+There is thus no common testbed for humanoid teams that
+are physically coupled through a shared object, where the
+balance and grasp of each robot depend on its partners. HH-
+BENCH collects 12 collaborative tasks in which a team of
+humanoids must act on the same object at the same time, of-
+ten over long sequences of coordinated skills. The tasks dif-
+fer in how the robots interact with the object (lifting and car-
+rying, carrying on the shoulder, pulling, pushing, handing
+over, and precise placement) and in how the environment
+constrains the motion (Fig. 4; App. B.1 lists all tasks). No
+task prescribes a team: each can be performed by teams of
+different sizes, including people and other humanoid plat-
+forms, in simulation or in the real world. Together they
+test the three requirements of collaboration: tightly cou-
+pled whole-body interaction, coherent long-horizon plan-
+ning, and synchronized execution.
+Constrained transport.
+The narrow door is the signature
+task: the door is narrower than the object along its carrying
+direction, so the team first rotates the object in place and
+then walks through, with one robot moving forward and its
+partner backward. A team that only walks along a fixed
+direction cannot solve it. In the L-shaped corridor the team
+combines straight and sideways steps and must decide when
+to change direction while the robots and the object stay clear
+of the walls. Carrying an L-shaped sofa onto a target area
+marked on the floor adds an irregular object whose load
+is distributed unevenly between the robots. Precise place-
+ment requires the team to place a box within a target region,
+which calls for the richest set of gaits: walking forward,
+backward, and sideways, and turning in place.
+Team scaling and heterogeneity.
+The table carry suits
+larger teams: a long table leaves room for many robots
+along its edges. Any robot can be replaced by a person who
+follows the spoken skills, or by a humanoid with a different
+body; Secs. 5.2 and 5.5 report the teams we evaluate.
+Diverse interaction modes.
+Beyond lifting with the
+hands, the benchmark includes carrying a palanquin or a
+steel bar on the shoulders, pulling a fire hose, pushing a box
+or a millstone, and handing a box down from a robot on a
+higher level to a partner below, who must take over the load
+at a different height. In our setup, the higher level is the
+bed of a truck, and the robot holding the box starts at differ-
+ent depths inside the truck and must first walk to its edge.
+These tasks change where the contacts are and how force is
+shared, while all robots must still act together.
+Composing long-horizon tasks.
+Because every task is
+executed as a sequence of hub-to-hub team skills, tasks can
+be chained into longer ones. For example, two robots carry
+a box up a flight of stairs onto an elevated platform and
+place it on a wheeled dolly; one of them then leaves its part-
+ner, walks to the edge of the platform, and hands a second
+box of a different size down to a third robot standing below.
+Such compositions test whether the team stays coordinated
+across stages that use different skills, and whether a robot
+can leave one team and join another within one task.
+Inputs and evaluation.
+Robots use only on-board sens-
+ing and the nominal object specification; motion capture
+and network communication between robots are not al-
+lowed. We report the success rate over 10 trials per task
+for real-world experiments and planners, and over three
+seeds of 512 teams for low-level controllers in simulation
+(Sec. 5.4). In simulation, the initial positions of the robots
+and the object are sampled over a wide range that covers
+both easy and hard configurations, whereas real-world trials
+start from a nominal configuration with small perturbations.
+Success rates in simulation and in the real world are there-
+fore not directly comparable. A trial succeeds if the team
+completes the task and reaches the target location without
+dropping the object.
+5. Experiments
+We evaluate HEAVE-HO on HH-BENCH and answer four
+questions. (Q1) Can decentralized humanoid teams com-
+plete long-horizon collaborative tasks in the real world
+without communication? (Q2) Does the high-level planner
+choose better team skills than alternative decision makers?
+(Q3) How does the post-trained low-level policy compare
+with baseline controllers, and which of its design choices
+matter? (Q4) Does a policy trained with two identical hu-
+manoids generalize to larger and heterogeneous teams?
+5
+
+
+L-shaped corridor
+Narrow door
+Table carry
+L-shaped sofa
+Stair carry
+Precise placement
+Box handover
+Palanquin
+Rebar
+Fire hose
+Box push
+Millstone
+Long-horizon composition: stair carry, then placement on a dolly, then a handover of a second box to a third robot
+Figure 4. The tasks of HH-BENCH in simulation. Bottom: tasks can be chained into longer ones, here a stair carry, a placement on a dolly,
+and a handover of a second box to a third robot. Time sequences are in App. B.2 and videos on the project page.
+5.1. Setup
+We use Unitree G1 humanoids with a head-mounted stereo
+camera, and an EngineAI PM01 for heterogeneous teams.
+The PM01 runs its own policy trained with the same recipe.
+Policies run on each robot’s on-board computer at 50 Hz and
+are trained in Isaac-based simulation [43, 49] with 4,096
+parallel two-robot environments [56].
+5.2. Real-World Collaboration
+Figure 5 shows real-world experiments of HEAVE-HO. Ev-
+ery robot runs the shared low-level policy on its own on-
+board computer, and no network message is exchanged be-
+tween robots during a task. Two-robot teams pass through
+the narrow door, follow the L-shaped corridor, hand a box
+down from a truck, and place a box within a target region. A
+person can also take the place of one robot, carrying a box
+through the narrow door or up a flight of stairs together with
+a G1. Finally, the two-robot policy is deployed to larger and
+heterogeneous teams that carry a table (Sec. 5.5). A person
+on the team can also take over as the leader and speak the
+team skills, as we do in some of these experiments. Ev-
+ery skill must start on all partners together, since a late lift
+tilts the object and a lone step pulls a partner off balance.
+The videos on the project page show the spoken commands
+and the synchronized start of each skill. Across all tasks,
+the teams succeed in 92 of 100 trials (App. C.1 lists every
+team). Stair carry is the hardest (7/10): each step leaves
+room for little more than one foot, so small errors in foot
+placement are not tolerated.
+5.3. High-Level Planning
+We evaluate the full system with different decision makers
+on five long-horizon tasks, with 10 trials per task (Tab. 1
+and Fig. 6a). Two run in the real world: the narrow door
+and the L-shaped corridor. Three run in simulation: a box
+handover from the bed of a truck, in which the robot holding
+the box starts at different depths inside the truck and must
+walk to its edge before handing the box down; carrying a
+long table with four robots to the front of a sofa; and plac-
+ing an L-shaped sofa on a target area marked on the floor.
+We compare our fine-tuned Qwen3-VL-2B planner against
+two strong baselines: (1) zero-shot GPT-6 (Astra) with the
+same skill interface, and (2) CHORUS [16], a decentralized
+policy executed independently on each robot. We fine-tune
+CHORUS on the same data following its recipe, including
+the π0.5 backbone [53], LoRA adapters, and a fixed iden-
+tity prompt per robot, and change only its output: instead of
+action chunks, it selects team skills like our planner, which
+isolates the coordination problem. An operator who selects
+the team skills manually serves as the upper bound.
+Our planner matches the operator on all three simulated
+tasks and approaches it on the two real-world tasks, whereas
+GPT-6 (Astra) used zero-shot fails far more often on every
+6
+
+
+Time
+Narrow door
+lift
+turn
+turn
+backward
+backward
+L-shaped corridor
+lift
+backward
+backward
+right
+right
+Box handover
+forward
+hand down
+hand over
+release
+turn
+Precise placement
+backward
+right
+right
+right
+put down
+Other teams
+Table carry, 4 G1
+Table carry, PM01 + human
+Table carry, G1 + PM01 + human
+Narrow door, G1 + human
+Stair carry, G1 + human
+Figure 5. Real-world experiments. The first four rows show two G1 robots over time, from left to right, labeled with the team skill being
+executed. The last row shows teams that differ from the training configuration, including a different humanoid and people. Faces are
+obscured for anonymity. Full time sequences of all teams are in App. C.2 and videos on the project page.
+task. Our planner is also the fastest: one decision takes
+52.5 ms on a single RTX 4090 GPU with 5.3 GiB of mem-
+ory, compared with 78 ms for CHORUS and 6.46 s on av-
+erage for GPT-6 (Astra) through its API, about 120 times
+longer. CHORUS fails every trial on all tasks except the
+handover, where it succeeds in 6 of 10 trials. Each robot
+runs its own copy of the policy and advances through its
+actions asynchronously, with no mechanism to align when
+the robots act [16]. The copies on different robots therefore
+start their skills at different moments, which breaks tasks
+in which the robots carry an object together. The handover
+couples the robots only briefly: one robot carries the box
+to the truck’s edge, and its partner approaches to receive it,
+which leaves CHORUS some chance of success.
+5.4. Low-Level Post-Training
+For each task, we compare the low-level policy against two
+baselines and two ablations in simulation, using the same
+skill chains, objects, and randomization (Tab. 2).
+Pure
+SONIC tracks the same references with the frozen founda-
+Real
+Sim
+Decision maker
+Door Corridor Handover
+Table
+Sofa
+Avg.
+GPT-6 Astra (zero-shot)
+3/10
+4/10
+7/10
+4/10
+3/10
+42%
+CHORUS [16]
+0/10
+0/10
+6/10
+0/10
+0/10
+12%
+HEAVE-HO (ours)
+6/10
+7/10
+10/10
+10/10 10/10 86%
+Human Operator
+9/10
+10/10
+10/10
+10/10 10/10
+98%
+Table 1. Success rate of the full system with different decision
+makers, 10 trials per task. Door: narrow door; Corridor: L-shaped
+corridor; Handover: box handover from a truck; Table: carrying
+a table to the front of a sofa with four robots; Sofa: placing an
+L-shaped sofa on a target area.
+tion tracker alone, without post-training, and is therefore
+unaware of the object and of its partners.
+Multi-HDMI
+extends the single-humanoid loco-manipulation method
+HDMI [67] to the multi-humanoid setting, training it di-
+rectly with independent PPO [13], where each agent has its
+own actor and its own critic that sees only local observa-
+tions. w/o SONIC removes the frozen foundation tracker
+7
+
+
+0.05 0.1
+1
+10
+Latency per decision (s, log scale)
+0
+25
+50
+75
+100
+Success rate (%)
+slower and less successful than ours
+Operator (upper bound)
+Heave-Ho (ours)
+CHORUS
+GPT-6 (Astra), zero-shot
+about 120× lower latency
+L-shaped
+corridor
+Narrow
+door
+Table
+carry
+Sofa
+carry
+Stair
+carry
+Precise
+placement
+Box
+handover
+Palanquin
+Rebar
+Fire
+hose
+Box
+push
+Millstone
+0
+25
+50
+75
+100
+Success rate (%)
+Pure SONIC
+Multi-HDMI
+Heave-Ho w/o SONIC
+Heave-Ho w/ independent actors
+Heave-Ho (full)
+(a)
+(b)
+Figure 6. (a) Success rate of the decision makers, averaged over the five tasks of Tab. 1, against decision latency. The shaded region is
+slower and less successful than ours. The operator selects the skills by hand and serves as the upper bound. (b) Success rate of the low-level
+controllers on each task of HH-BENCH in simulation. Bars show the mean over three seeds, and error bars the standard deviation.
+Method
+Success (%) ↑
+Body (cm) ↓
+Object (cm) ↓
+Baselines
+Pure SONIC [42]
+0.22
+58.24
+83.20
+Multi-HDMI [67]
+28.56
+68.57
+66.92
+Ablations
+HEAVE-HO w/o SONIC
+16.78
+92.69
+89.53
+HEAVE-HO w/ independent actors
+22.05
+35.59
+35.00
+HEAVE-HO (ours)
+94.41
+18.62
+19.59
+Table 2. Low-level controllers in simulation, averaged over the 12
+tasks of HH-BENCH, each with three seeds of 512 teams. Body
+and object errors are mean position errors over the full reference
+horizon, including frames after a failure. Per-task results are in
+App. E.1.
+from HEAVE-HO and learns the full action with the same
+multi-agent setup. Independent actors gives each agent its
+own actor instead of sharing parameters, while keeping the
+centralized critic. Table 2 and Fig. 6b report the results.
+HEAVE-HO succeeds in 94.41% of the episodes on average,
+while no other controller exceeds 28.56%. Pure SONIC
+tracks the body reference more closely than Multi-HDMI
+and HEAVE-HO w/o SONIC but almost never completes
+a task: the foundation tracker reproduces the motion, yet
+does not know how to exert force on the object or share the
+load with its partners. Without SONIC, learning the full
+whole-body action from scratch gives the largest body error
+and succeeds almost only on the two pushing tasks, which
+do not require lifting the object. Starting from the frozen
+tracker instead, the residual only needs to refine tracking
+and interaction. Independent actors reach 22.05%. With a
+shared actor, every update draws on the experience of all
+agents, which face similar but not identical situations in a
+collaborative task, and the number of parameters does not
+grow with the team size. Multi-HDMI succeeds mainly on
+shoulder carry and pushing, and fails on tightly coupled lift-
+ing, where a critic that sees only local observations cannot
+tell how the partner contributes.
+2 G1 (training)
+4 G1
+8 G1
+10 G1
+Figure 7. Train with two, deploy with many. The policy trained
+with two G1 robots (top left) carries a table in simulation with
+teams of four, eight, and ten robots, without retraining.
+5.5. Train with Two, Deploy with Many
+All G1 policies are trained with exactly two identical robots.
+We deploy the same policy, without retraining, to teams that
+differ from this configuration in size and in composition. In
+the real world (Fig. 5), four G1 robots carry a table as two
+pairs side by side, three G1 robots carry it with a person, a
+G1 carries it with a person and a PM01, and a PM01 carries
+it with a person; these teams succeed in 37 of 40 trials. In
+simulation, the same policy drives teams of four, eight, and
+ten G1 robots carrying a table (Fig. 7). Two properties make
+this possible: the shared actor has no notion of team size,
+and partners affect each robot only through the object. Pa-
+rameter sharing is essential, since independent actors would
+require a new actor for every additional robot.
+6. Conclusion
+We
+introduced
+HEAVE-HO,
+a
+decentralized
+frame-
+work for long-horizon collaborative multi-humanoid loco-
+manipulation. At the low level, multi-agent post-training
+turns a frozen humanoid foundation tracking model into a
+shared controller for physically coupled whole-body inter-
+8
+
+
+action. At the high level, a vision-language planner gives
+the team one coherent long-horizon plan, more accurately
+and about 120 times faster than GPT-6 (Astra) used zero-
+shot, and a speech-based leader-follower mechanism exe-
+cutes it in synchrony without network communication. On
+HH-BENCH, HEAVE-HO completes long-horizon collab-
+orative tasks in the real world, and a policy trained with
+two identical humanoids carries over to teams of up to ten
+robots, to a different humanoid platform, and to people.
+Limitations.
+Synchronization relies on followers hearing
+the leader, so it requires a reasonably quiet environment and
+reliable sound pickup. Training the planner for a new task
+requires demonstrations collected manually by teleopera-
+tion, which is time-consuming.
+Acknowledgments
+We thank EngineAI for providing the PM01 humanoid
+robot. Siheng Zhao was supported by an Amazon ML PhD
+Fellowship from the USC + Amazon Center on Secure &
+Trusted Machine Learning.
+References
+[1] Michael Ahn et al. Do as I can, not as I say: Grounding
+language in robotic affordances.
+In Conference on Robot
+Learning (CoRL), 2022. 3
+[2] Arthur Allshire, Hongsuk Choi, Junyi Zhang, David McAl-
+lister, Anthony Zhang, Chung Min Kim, Trevor Darrell,
+Pieter Abbeel, Jitendra Malik, and Angjoo Kanazawa. Vi-
+sual imitation enables contextual humanoid control. arXiv
+preprint arXiv:2505.03729, 2025. 2
+[3] Shuai Bai et al. Qwen3-VL technical report. arXiv preprint
+arXiv:2511.21631, 2025. 4
+[4] Geeta Chandra Raju Bethala, Hao Huang, Niraj Pudasaini,
+Abdullah Mohamed Ali, Shuaihang Yuan, Congcong Wen,
+Anthony Tzes, and Yi Fang.
+H2-COMPACT: Human-
+Humanoid Co-Manipulation via adaptive contact trajectory
+policies.
+In IEEE-RAS International Conference on Hu-
+manoid Robots (Humanoids), 2025. 3
+[5] Kevin Black et al. π0: A vision-language-action flow model
+for general robot control. arXiv preprint arXiv:2410.24164,
+2024. 3
+[6] Anthony Brohan et al. RT-1: Robotics transformer for Real-
+World control at scale. In Robotics: Science and Systems
+(RSS), 2023.
+[7] Anthony Brohan et al. RT-2: Vision-language-action models
+transfer web knowledge to robotic control. In Conference on
+Robot Learning (CoRL), 2023. 3
+[8] Micah Carroll, Rohin Shah, Mark K. Ho, Thomas L. Grif-
+fiths, Sanjit A. Seshia, Pieter Abbeel, and Anca Dragan. On
+the utility of learning about humans for Human-AI coordina-
+tion. In Advances in Neural Information Processing Systems
+(NeurIPS), 2019. 5
+[9] Yongchao Chen, Jacob Arkin, Yang Zhang, Nicholas Roy,
+and Chuchu Fan. Scalable Multi-Robot collaboration with
+large language models: Centralized or decentralized sys-
+tems?
+In IEEE International Conference on Robotics and
+Automation (ICRA), 2024. 2, 3
+[10] Zixuan Chen, Mazeyu Ji, Xuxin Cheng, Xuanbin Peng,
+Xue Bin Peng, and Xiaolong Wang. GMT: General motion
+tracking for humanoid Whole-Body control. arXiv preprint
+arXiv:2506.14770, 2025. 2
+[11] Xuxin Cheng, Yandong Ji, Junming Chen, Ruihan Yang, Ge
+Yang, and Xiaolong Wang.
+Expressive Whole-Body con-
+trol for humanoid robots. In Robotics: Science and Systems
+(RSS), 2024. 2
+[12] Filippos Christianos, Georgios Papoudakis, Arrasy Rahman,
+and Stefano V. Albrecht. Scaling Multi-Agent reinforcement
+learning with selective parameter sharing. In International
+Conference on Machine Learning (ICML), 2021. 3
+[13] Christian Schroeder de Witt, Tarun Gupta, Denys Makovi-
+ichuk, Viktor Makoviychuk, Philip H. S. Torr, Mingfei Sun,
+and Shimon Whiteson. Is independent learning all you need
+in the StarCraft Multi-Agent challenge?
+arXiv preprint
+arXiv:2011.09533, 2020. 7
+[14] Pengxiang Ding et al. Humanoid-VLA: Towards universal
+humanoid control with visual integration.
+arXiv preprint
+arXiv:2502.14795, 2025. 3
+[15] Dayi Dong, Maulik Bhatt, Seoyeon Choi, and Negar Mehr.
+Mimic-d: Multi-modal imitation for multi-agent coordina-
+tion with decentralized diffusion policies, 2026. 2
+[16] Ria Doshi, Tian Gao, Annie Chen, Chelsea Finn, and Jean-
+nette Bohg.
+CHORUS: Decentralized multi-embodiment
+collaboration with one VLA policy.
+arXiv preprint
+arXiv:2606.12352, 2026. 2, 6, 7
+[17] Danny Driess et al.
+PaLM-E: An embodied multimodal
+language model. In International Conference on Machine
+Learning (ICML), 2023. 3
+[18] Yushi Du, Yixuan Li, Baoxiong Jia, Yutang Lin, Pei Zhou,
+Wei Liang, Yanchao Yang, and Siyuan Huang.
+Learning
+Human-Humanoid coordination for collaborative object car-
+rying. In IEEE International Conference on Robotics and
+Automation (ICRA), 2026. 3
+[19] Jakob Foerster, Gregory Farquhar, Triantafyllos Afouras,
+Nantas Nardelli, and Shimon Whiteson.
+Counterfactual
+multi-agent policy gradients. In AAAI Conference on Arti-
+ficial Intelligence, 2018. 3
+[20] Zipeng Fu, Qingqing Zhao, Qi Wu, Gordon Wetzstein, and
+Chelsea Finn. HumanPlus: Humanoid shadowing and im-
+itation from humans.
+In Conference on Robot Learning
+(CoRL), 2024. 2
+[21] Jiawei Gao, Ziqin Wang, Zeqi Xiao, Jingbo Wang, Tai Wang,
+Jinkun Cao, Xiaolin Hu, Si Liu, Jifeng Dai, and Jiangmiao
+Pang. CooHOI: Learning cooperative human-object inter-
+action with manipulated object dynamics. In Advances in
+Neural Information Processing Systems (NeurIPS), 2024. 3
+[22] Gemini Robotics Team, Saminda Abeyruwan, et al. Gemini
+robotics: Bringing AI into the physical world. arXiv preprint
+arXiv:2503.20020, 2025. 3
+[23] Tuomas Haarnoja et al. Learning agile soccer skills for a
+bipedal robot with deep reinforcement learning.
+Science
+Robotics, 9(89), 2024. 2
+9
+
+
+[24] Chengyang He, Gadiel Sznaier Camps, Xu Liu, Mac Schwa-
+ger, and Guillaume Sartoretti. Latent theory of mind: A de-
+centralized diffusion architecture for cooperative manipula-
+tion, 2025. 2
+[25] Tairan He, Zhengyi Luo, Xialin He, Wenli Xiao, Chong
+Zhang, Weinan Zhang, Kris Kitani, Changliu Liu, and
+Guanya Shi. OmniH2O: Universal and dexterous human-to-
+humanoid whole-body teleoperation and learning. In Con-
+ference on Robot Learning (CoRL), 2024. 2
+[26] Tairan He, Zhengyi Luo, Wenli Xiao, Chong Zhang, Kris
+Kitani, Changliu Liu, and Guanya Shi. Learning human-to-
+humanoid real-time whole-body teleoperation. In IEEE/RSJ
+International Conference on Intelligent Robots and Systems
+(IROS), 2024.
+[27] Tairan He et al. ASAP: Aligning simulation and Real-World
+physics for learning agile humanoid Whole-Body skills. In
+Robotics: Science and Systems (RSS), 2025. 1
+[28] Tairan He et al. HOVER: Versatile neural Whole-Body con-
+troller for humanoid robots. In IEEE International Confer-
+ence on Robotics and Automation (ICRA), 2025. 2
+[29] Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen.
+LoRA: Low-rank adaptation of large language models. In In-
+ternational Conference on Learning Representations (ICLR),
+2022. 4
+[30] Wenlong Huang, Pieter Abbeel, Deepak Pathak, and Igor
+Mordatch. Language models as Zero-Shot planners: Extract-
+ing actionable knowledge for embodied agents. In Interna-
+tional Conference on Machine Learning (ICML), 2022. 3
+[31] Wenlong Huang et al. Inner monologue: Embodied reason-
+ing through planning with language models. In Conference
+on Robot Learning (CoRL), 2022. 3
+[32] Mazeyu Ji, Xuanbin Peng, Fangchen Liu, Jialong Li, Ge
+Yang, Xuxin Cheng, and Xiaolong Wang.
+ExBody2:
+Advanced expressive humanoid Whole-Body control.
+In
+IEEE International Conference on Robotics and Automation
+(ICRA), 2026. 2
+[33] Shyam Sundar Kannan, Vishnunandan L. N. Venkatesh, and
+Byung-Cheol Min. SMART-LLM: Smart Multi-Agent robot
+task planning using large language models.
+In IEEE/RSJ
+International Conference on Intelligent Robots and Systems
+(IROS), 2024. 3
+[34] Moo Jin Kim et al.
+OpenVLA: An Open-Source Vision-
+Language-Action model. In Conference on Robot Learning
+(CoRL), 2024. 3
+[35] Jipeng Kong, Xinzhe Liu, Yuhang Lin, Jinrui Han, S¨oren
+Schwertfeger, Chenjia Bai, and Xuelong Li. Learning soccer
+skills for humanoid robots: A progressive perception-action
+framework, 2026. 2
+[36] Shubham S. Kumbhar, Abhijeet M. Kulkarni, and Panagio-
+tis Artemiadis. Efficient and compliant control framework
+for versatile Human-Humanoid collaborative transportation.
+arXiv preprint arXiv:2512.07819, 2025. 3
+[37] Jacky Liang, Wenlong Huang, Fei Xia, Peng Xu, Karol
+Hausman, Brian Ichter, Pete Florence, and Andy Zeng. Code
+as policies: Language model programs for embodied control.
+In IEEE International Conference on Robotics and Automa-
+tion (ICRA), 2023. 3
+[38] Qiayuan Liao, Takara E. Truong, Xiaoyu Huang, Yuman
+Gao, Guy Tevet, Koushil Sreenath, and C. Karen Liu. Be-
+yondMimic: From motion tracking to versatile humanoid
+control via guided diffusion.
+Science Robotics, 11(117),
+2026. 2
+[39] Stefan Lionar and Gim Hee Lee. Teamhoi: Learning a uni-
+fied policy for cooperative human-object interactions with
+any team size, 2026. 3
+[40] Kehui Liu, Zixin Tang, Dong Wang, Zhigang Wang, Xue-
+long Li, and Bin Zhao. COHERENT: Collaboration of het-
+erogeneous Multi-Robot system with large language models.
+In IEEE International Conference on Robotics and Automa-
+tion (ICRA), 2025. 3
+[41] Ryan Lowe, Yi Wu, Aviv Tamar, Jean Harb, Pieter Abbeel,
+and Igor Mordatch.
+Multi-Agent Actor-Critic for mixed
+Cooperative-Competitive environments. In Advances in Neu-
+ral Information Processing Systems (NeurIPS), 2017. 2, 3
+[42] Zhengyi Luo et al. SONIC: Supersizing motion tracking for
+natural humanoid Whole-Body control. Science Robotics, 11
+(117), 2026. 1, 2, 3, 8
+[43] Viktor Makoviychuk et al. Isaac gym: High performance
+GPU-Based physics simulation for robot learning. In Ad-
+vances in Neural Information Processing Systems (NeurIPS)
+Datasets and Benchmarks Track, 2021. 6
+[44] Zhao Mandi, Shreeya Jain, and Shuran Song. RoCo: Dialec-
+tic Multi-Robot collaboration with large language models. In
+IEEE International Conference on Robotics and Automation
+(ICRA), 2024. 2, 3
+[45] N. Michael, J. Fink, and V. Kumar. Cooperative manipula-
+tion and transportation with aerial robots. In Robotics: Sci-
+ence and Systems (RSS), 2009. 2
+[46] Ofir Nachum, Michael Ahn, Hugo Ponte, Shixiang Gu, and
+Vikash Kumar. Multi-Agent manipulation via locomotion
+using hierarchical Sim2Real. In Conference on Robot Learn-
+ing (CoRL), 2019. 2
+[47] Toan Nguyen, Weiduo Yuan, Siheng Zhao, Yue Wang, and
+Daniel Seita. Hotice: Whole-body humanoid object trans-
+portation in cluttered environments, 2026. 2
+[48] NVIDIA, Johan Bjorck, et al. GR00T N1: An open foun-
+dation model for generalist humanoid robots. arXiv preprint
+arXiv:2503.14734, 2025. 3
+[49] NVIDIA, Mayank Mittal, et al.
+Isaac lab:
+A GPU-
+Accelerated simulation framework for Multi-Modal robot
+learning. arXiv preprint arXiv:2511.04831, 2025. 6
+[50] Bikram Pandit, Aayam Kumar Shrestha, and Alan Fern.
+Multi-quadruped cooperative object transport: Learning de-
+centralized pinch-lift-move, 2026. 2
+[51] Xue Bin Peng, Pieter Abbeel, Sergey Levine, and Michiel
+van de Panne. DeepMimic: Example-guided deep reinforce-
+ment learning of physics-based character skills. ACM Trans-
+actions on Graphics, 37(4), 2018. 4
+[52] Xue Bin Peng, Marcin Andrychowicz, Wojciech Zaremba,
+and Pieter Abbeel. Sim-to-Real transfer of robotic control
+with dynamics randomization. In IEEE International Con-
+ference on Robotics and Automation (ICRA), 2018. 4
+[53] Physical Intelligence,
+Kevin Black,
+et al.
+π0.5:
+a
+vision-language-action model with open-world generaliza-
+tion. arXiv preprint arXiv:2504.16054, 2025. 3, 6
+10
+
+
+[54] Ilija Radosavovic, Sarthak Kamat, Trevor Darrell, and Jiten-
+dra Malik. Learning humanoid locomotion over challenging
+terrain, 2024. 2
+[55] Ilija Radosavovic, Tete Xiao, Bike Zhang, Trevor Darrell,
+Jitendra Malik, and Koushil Sreenath. Real-World humanoid
+locomotion with reinforcement learning. Science Robotics,
+9(89), 2024. 2
+[56] Nikita Rudin, David Hoeller, Philipp Reist, and Marco Hut-
+ter. Learning to walk in minutes using massively parallel
+deep reinforcement learning. In Conference on Robot Learn-
+ing (CoRL), 2021. 6
+[57] Mikayel Samvelyan, Tabish Rashid, Christian Schroeder de
+Witt, Gregory Farquhar, Nantas Nardelli, Tim G. J. Rudner,
+Chia-Man Hung, Philip H. S. Torr, Jakob Foerster, and Shi-
+mon Whiteson. The StarCraft Multi-Agent challenge. In
+International Conference on Autonomous Agents and Multi-
+agent Systems (AAMAS), 2019. 5
+[58] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Rad-
+ford, and Oleg Klimov. Proximal policy optimization algo-
+rithms. arXiv preprint arXiv:1707.06347, 2017. 3
+[59] Zehong Shen, Huaijin Pi, Yan Xia, Zhi Cen, Sida Peng,
+Zechen Hu, Hujun Bao, Ruizhen Hu, and Xiaowei Zhou.
+World-grounded human motion recovery via gravity-view
+coordinates. In SIGGRAPH Asia Conference Papers, 2024.
+3
+[60] Lucy Xiaoyang Shi et al. Hi robot: Open-Ended instruction
+following with hierarchical Vision-Language-Action mod-
+els.
+In International Conference on Machine Learning
+(ICML), 2025. 3
+[61] Josh Tobin, Rachel Fong, Alex Ray, Jonas Schneider, Woj-
+ciech Zaremba, and Pieter Abbeel. Domain randomization
+for transferring deep neural networks from simulation to the
+real world. In IEEE/RSJ International Conference on Intel-
+ligent Robots and Systems (IROS), 2017. 4
+[62] Elio Tuci, Muhanad H. M. Alkilabi, and Otar Akanyeti. Co-
+operative object transport in multi-robot systems: A review
+of the state-of-the-art. Frontiers in Robotics and AI, 5, 2018.
+2
+[63] Albert Tung, Josiah Wong, Ajay Mandlekar, Roberto Mart´ın-
+Mart´ın, Yuke Zhu, Li Fei-Fei, and Silvio Savarese. Learning
+multi-arm manipulation through collaborative teleoperation,
+2020. 2
+[64] Ziye Wang, Li Kang, Yiran Qin, Jiahua Ma, Zhanglin Peng,
+Lei Bai, and Ruimao Zhang.
+Gaudp: Reinventing multi-
+agent collaboration through gaussian-image synergy in dif-
+fusion policies, 2025. 2
+[65] Zihan Wang, Zhen Wu, Pieter Abbeel, Rocky Duan, Jitendra
+Malik, Carmelo Sferrazza, C. Karen Liu, Guanya Shi, and
+Angjoo Kanazawa. Counterfactual video generation enables
+scalable humanoid loco-manipulation, 2026. 2
+[66] Songlin Wei, Hongyi Jing, Boqian Li, Zhenyu Zhao, Jiageng
+Mao, Zhenhao Ni, Sicheng He, et al. ψ0: An open founda-
+tion model towards universal humanoid loco-manipulation.
+In Robotics: Science and Systems (RSS), 2026. 3
+[67] Haoyang Weng, Yitang Li, Nikhil Sobanbabu, Zihan Wang,
+Zhengyi Luo, Tairan He, Deva Ramanan, and Guanya Shi.
+HDMI: Learning interactive humanoid Whole-Body control
+from human videos. arXiv preprint arXiv:2509.16757, 2025.
+2, 7, 8
+[68] Zhen Wu, Xiaoyu Huang, Lujie Yang, Yuanhang Zhang,
+Xi Chen, Pieter Abbeel, Rocky Duan, Angjoo Kanazawa,
+Carmelo Sferrazza, Guanya Shi, and C. Karen Liu. Percep-
+tive humanoid parkour: Chaining dynamic human skills via
+motion matching, 2026. 2
+[69] Haoru Xue et al. LeVERB: Humanoid Whole-Body con-
+trol with latent Vision-Language instruction. arXiv preprint
+arXiv:2506.13751, 2025. 3
+[70] Lujie Yang, Xiaoyu Huang, Zhen Wu, Angjoo Kanazawa,
+Pieter Abbeel, Carmelo Sferrazza, C. Karen Liu, Rocky
+Duan, and Guanya Shi.
+OmniRetarget:
+Interaction-
+Preserving data generation for humanoid Whole-Body Loco-
+Manipulation and scene interaction. In IEEE International
+Conference on Robotics and Automation (ICRA), 2026. 2
+[71] Wei Yao, Haohan Ma, Hongwen Zhang, Liangjun Xing,
+Zhile Yang, Yuanjun Guo, Yunlian Sun, and Yebin Liu.
+SynAgent: Generalizable cooperative humanoid manipula-
+tion via Solo-to-Cooperative agent synergy. arXiv preprint
+arXiv:2604.18557, 2026. 3
+[72] Chao Yu, Akash Velu, Eugene Vinitsky, Jiaxuan Gao, Yu
+Wang, Alexandre Bayen, and Yi Wu. The surprising effec-
+tiveness of PPO in cooperative multi-agent games. In Ad-
+vances in Neural Information Processing Systems (NeurIPS)
+Datasets and Benchmarks Track, 2022. 2, 3
+[73] Haoqi Yuan, Yu Bai, Yuhui Fu, Bohan Zhou, Yicheng Feng,
+Xinrun Xu, Yi Zhan, B¨orje F. Karlsson, and Zongqing
+Lu.
+Being-0:
+A humanoid robotic agent with Vision-
+Language models and modular skills.
+arXiv preprint
+arXiv:2503.12533, 2025. 3
+[74] Yanjie Ze, Zixuan Chen, Jo˜ao Pedro Ara´ujo, Zi ang Cao,
+Xue Bin Peng, Jiajun Wu, and C. Karen Liu.
+TWIST:
+Teleoperated Whole-Body imitation system. arXiv preprint
+arXiv:2505.02833, 2025. 2
+[75] Yanjie Ze, Siheng Zhao, Weizhuo Wang, Angjoo Kanazawa,
+Rocky Duan, Pieter Abbeel, Guanya Shi, Jiajun Wu, and
+C. Karen Liu.
+Twist2:
+Scalable, portable, and holis-
+tic humanoid data collection system.
+arXiv preprint
+arXiv:2511.02832, 2025. 2
+[76] Hao Zhang, Yisen Li, Ruize Geng, Yves Tseng, Yaru Niu,
+Ding Zhao, and H. Eric Tseng. Cognition to control - Multi-
+Agent learning for Human-Humanoid collaborative trans-
+port. arXiv preprint arXiv:2603.03768, 2026. 3
+[77] Siheng Zhao, Yanjie Ze, Yue Wang, C. Karen Liu, Pieter
+Abbeel, Guanya Shi, and Rocky Duan.
+ResMimic:
+From general motion tracking to humanoid whole-body
+Loco-Manipulation via residual learning.
+arXiv preprint
+arXiv:2510.05070, 2025. 1, 2
+[78] Siheng Zhao, Yuanhang Zhang, Ziqi Lu, Pieter Abbeel,
+Rocky Duan, Koushil Sreenath, Yue Wang, C. Karen Liu,
+and Guanya Shi. Ladderman: Learning humanoid perceptive
+ladder climbing. In Conference on Robot Learning (CoRL),
+2026. 1, 2
+[79] Yiqi Zhao, Ruohai Ge, Celina Shiyu Wang, Junjie Ye,
+Muchen Xu, Minhao Li, Sergey Zakharov, Basile Van
+Hoorick, Vitor Campagnolo Guizilini, Leonidas Guibas,
+11
+
+
+Gaurav S. Sukhatme, Jyotirmoy V. Deshmukh, and Yue
+Wang. Duet: Dual-robot understanding via efficient teach-
+ing, 2026. 2
+[80] Ziwen Zhuang, Shenzhe Yao, and Hang Zhao. Humanoid
+parkour learning. In Conference on Robot Learning (CoRL),
+2024. 2
+12
+
+
+Supplementary Material
+A. Human Participants
+The people who appear in our real-world experiments, fig-
+ures, and videos are members of the research team and are
+among the authors. They took part as carrying partners or as
+the leader who speaks the team commands. No data about
+the participants themselves was collected or analyzed, and
+the evaluation measures only task success; therefore, no
+IRB review was sought. All participants consented to ap-
+pear in the figures and videos, and their faces are obscured
+to preserve anonymity.
+B. Benchmark Details
+B.1. Tasks
+Table 3 lists the 12 tasks of HH-BENCH, grouped by how
+the robots interact with the object; Fig. 4 shows each of
+them in simulation.
+Task
+What it tests
+Lift and carry
+L-shaped corridor
+steps along a turning path
+Narrow door
+rotating to fit through a door
+Table carry
+a large object shared by many robots
+L-shaped sofa
+an irregular, unevenly loaded object
+Stair carry
+partners at different heights
+Precise placement
+placing a box in a target region
+Handover
+Box handover
+passing a load down to a partner
+Shoulder carry
+Palanquin
+a load carried above the arms
+Rebar
+a long load along a line of robots
+Pull
+Fire hose
+pulling a deformable object
+Push
+Box push
+pushing a heavy object together
+Millstone
+pushing around a fixed axis
+Table 3. Tasks in HH-BENCH, grouped by how the robots interact
+with the object.
+B.2. Simulated Time Sequences
+Figures 9 and 10 show a time sequence for each of the 12
+tasks, in the order of Tab. 3.
+C. Real-World Experiments
+C.1. Results per Team
+Table 4 lists the success rate of every real-world team in
+Sec. 5.2.
+Task
+Team
+Success
+Narrow door
+2 G1
+9/10
+L-shaped corridor
+2 G1
+10/10
+Box handover
+2 G1
+10/10
+Precise placement
+2 G1
+9/10
+Narrow door
+G1 + human
+10/10
+Stair carry
+G1 + human
+7/10
+Table carry
+4 G1
+8/10
+Table carry
+3 G1 + human
+9/10
+Table carry
+PM01 + human
+10/10
+Table carry
+G1 + PM01 + human
+10/10
+Table 4. Real-world experiments. No network message is ex-
+changed between robots.
+C.2. Time Sequences
+Figure 5 shows time sequences for the two-robot teams and
+a single frame for each of the other teams. Figure 8 shows
+the full time sequences of these other teams, together with
+the team of three G1 robots and a person, which is listed in
+Tab. 4 but not shown in Fig. 5.
+D. Implementation Details
+D.1. Planner Training
+Table 5 lists the training settings of the vision-language
+planner described in Sec. 3.3.
+Item
+Value
+Base model
+Qwen3-VL-2B-Instruct
+LoRA rank / alpha
+32 / 64
+LoRA targets (LLM)
+q, k, v, o, gate, up, and down projections
+in every layer
+LoRA targets (vision)
+attention qkv and output projections and
+both MLP layers in the last 8 ViT blocks
+Vision merger
+fully trained
+Trainable parameters
+≈140 M (4.2 M in the ViT LoRA)
+Optimizer
+AdamW, 5% warmup, cosine decay
+Learning rate
+2 × 10−4 (LLM), 5 × 10−5 (ViT)
+Batch size
+4 × 4 gradient accumulation (effective
+16)
+Epochs
+2
+Precision
+bf16 base weights, fp32 trainable param-
+eters, gradient checkpointing
+Training data
+24 real-world episodes or 1,000 simu-
+lated episodes per task
+Inference
+52.5 ms per decision, 5.3 GiB, one RTX
+4090 GPU
+Table 5. Training settings of the vision-language planner.
+13
+
+
+D.2. Low-Level Policy Training
+We post-train the low-level policy in Isaac Lab with teams
+of two Unitree G1 robots. A shared actor predicts joint-
+target residuals on top of frozen SONIC, and a centralized
+critic sees the concatenated observations of both robots dur-
+ing training. We train a teacher with privileged simulator
+observations and distill its mean actions into a student while
+training an adaptation module to predict the privileged la-
+tent from local inputs. We then fine-tune the student with
+MAPPO in closed loop. Both teacher and student use the
+same frozen SONIC base. Table 6 gives the MAPPO set-
+tings.
+For the box-carrying skills (lifting, putting down,
+stepping in each direction, and turning in place), which to-
+gether cover the two-robot box-carrying tasks such as the
+narrow door and the L-shaped corridor, and for the box han-
+dover, training uses 4,096 parallel teams and a budget of 109
+environment steps per training stage, counting one step per
+team.
+Item
+Value
+Physics / control time step
+5 / 20 ms
+Actor hidden widths
+512, 256, 256
+Critic hidden widths
+512, 256, 128
+Optimizer
+Adam
+Initial learning rate
+3 × 10−4
+Actor KL target
+0.01
+Rollout length
+32 control steps per team
+PPO epochs / minibatches
+3 epochs,
+8 minibatches per
+epoch
+PPO clip range
+0.2
+Discount / GAE λ
+0.99 / 0.95
+Entropy coefficient
+0.001
+Gradient norm limit
+1.0
+Table 6. MAPPO settings for low-level policy post-training.
+E. Additional Results
+E.1. Per-Task Low-Level Results
+Section 5.4 compares the low-level controllers averaged
+over the 12 tasks of HH-BENCH (Tab. 2) and shows their
+success rate on each task (Fig. 6b). Table 7 lists the success
+rate, body error, and object error of every controller on each
+task.
+F. Supplementary Videos
+All videos are on the project page. The webpage contains
+a summary video; the spoken team commands with sound,
+with either a robot or a person as the leader; videos of all
+real-world experiments in Tab. 4; and videos of the tasks
+in HH-BENCH in simulation, including a long-horizon task
+composed of several of them.
+14
+
+
+Success rate (%) ↑
+Pure SONIC
+Multi-HDMI
+HEAVE-HO w/o SONIC
+HEAVE-HO w/ indep. actors
+HEAVE-HO
+L-shaped corridor
+0.00±0.00
+0.00±0.00
+0.00±0.00
+0.00±0.00
+96.29±0.68
+Narrow door
+0.00±0.00
+0.00±0.00
+0.00±0.00
+0.39±0.20
+82.62±1.55
+Table carry
+0.00±0.00
+0.00±0.00
+0.00±0.00
+0.52±0.30
+97.01±0.49
+Sofa carry
+0.00±0.00
+4.36±0.88
+0.00±0.00
+3.26±0.69
+93.36±0.70
+Stair carry
+0.00±0.00
+0.00±0.00
+0.00±0.00
+3.71±1.09
+100.00±0.00
+Precise placement
+0.00±0.00
+0.00±0.00
+0.00±0.00
+0.00±0.00
+97.66±0.70
+Box handover
+0.00±0.00
+0.00±0.00
+0.00±0.00
+80.40±0.98
+100.00±0.00
+Palanquin
+0.00±0.00
+80.53±1.24
+1.56±0.34
+0.00±0.00
+85.87±1.33
+Rebar
+0.00±0.00
+57.88±2.44
+0.00±0.00
+21.61±1.77
+94.34±1.19
+Fire hose
+0.00±0.00
+0.00±0.00
+0.00±0.00
+0.00±0.00
+85.81±1.58
+Box push
+2.67±0.11
+100.00±0.00
+99.80±0.00
+54.75±0.56
+100.00±0.00
+Millstone
+0.00±0.00
+100.00±0.00
+100.00±0.00
+100.00±0.00
+100.00±0.00
+Body error (cm) ↓
+Pure SONIC
+Multi-HDMI
+HEAVE-HO w/o SONIC
+HEAVE-HO w/ indep. actors
+HEAVE-HO
+L-shaped corridor
+89.24±0.14
+227.81±0.80
+269.41±0.98
+64.98±0.58
+39.51±0.04
+Narrow door
+84.59±0.11
+149.78±0.63
+182.96±0.46
+41.32±2.36
+16.71±0.30
+Table carry
+36.03±0.13
+46.52±0.20
+51.86±0.39
+102.72±4.80
+25.40±0.37
+Sofa carry
+31.81±0.14
+92.22±1.57
+95.67±0.93
+73.72±0.69
+25.63±0.07
+Stair carry
+106.64±0.42
+54.23±0.29
+115.92±0.83
+13.05±0.30
+11.04±0.01
+Precise placement
+67.15±0.07
+120.49±0.19
+142.76±0.64
+41.02±1.41
+16.11±0.54
+Box handover
+11.57±0.51
+36.86±0.09
+37.99±0.65
+6.95±0.09
+6.21±0.01
+Palanquin
+56.42±0.10
+20.03±0.09
+13.50±0.40
+22.52±0.16
+22.14±0.12
+Rebar
+36.21±0.02
+22.35±0.43
+50.17±0.35
+15.03±0.54
+16.25±0.21
+Fire hose
+40.22±0.09
+22.83±0.27
+138.88±0.29
+23.47±0.10
+30.70±0.18
+Box push
+38.71±0.35
+9.45±0.03
+8.93±0.01
+15.22±0.04
+7.65±0.01
+Millstone
+100.29±0.10
+20.27±0.05
+4.27±0.01
+7.10±0.04
+6.04±0.00
+Object error (cm) ↓
+Pure SONIC
+Multi-HDMI
+HEAVE-HO w/o SONIC
+HEAVE-HO w/ indep. actors
+HEAVE-HO
+L-shaped corridor
+166.87±1.62
+242.21±0.60
+238.43±2.36
+67.01±0.29
+41.00±0.03
+Narrow door
+101.06±0.48
+139.67±0.30
+154.70±1.08
+41.07±1.75
+26.50±0.34
+Table carry
+52.51±0.84
+44.50±0.70
+51.09±0.69
+83.84±11.16
+24.21±0.28
+Sofa carry
+93.89±0.17
+109.61±1.41
+111.37±2.18
+82.48±1.49
+23.27±0.37
+Stair carry
+144.35±0.66
+45.88±0.22
+109.96±2.37
+19.40±0.29
+14.71±0.02
+Precise placement
+78.23±0.21
+96.12±0.29
+106.35±0.83
+39.26±0.72
+25.61±0.46
+Box handover
+88.74±0.98
+59.38±0.05
+72.03±0.96
+10.65±0.43
+6.03±0.06
+Palanquin
+56.58±0.13
+20.58±0.26
+15.11±0.70
+24.37±0.22
+23.90±0.13
+Rebar
+50.66±0.19
+18.64±0.61
+70.52±2.57
+15.18±0.80
+14.90±0.26
+Fire hose
+134.36±0.00
+18.62±0.52
+138.08±0.56
+23.10±0.11
+27.64±0.08
+Box push
+31.12±0.16
+7.83±0.03
+6.68±0.04
+13.67±0.01
+7.32±0.01
+Millstone
+<0.01±0.00
+<0.01±0.00
+<0.01±0.00
+<0.01±0.00
+<0.01±0.00
+Table 7. Per-task comparison of the low-level controllers in simulation. Each entry reports the mean over three seeds with 512 teams per
+seed. Superscripts show the sample standard deviation across seeds. Success rate is the percentage of teams completing a task. Body and
+object errors are mean position errors in centimeters over the full reference horizon, including frames after a failure.
+15
+
+
+time
+Table carry
+4 G1
+Table carry
+3 G1 + human
+Table carry
+PM01 + human
+Table carry
+G1 + PM01 + human
+Narrow door
+G1 + human
+Stair carry
+G1 + human
+Figure 8. Real-world time sequences of the teams shown as single frames in Fig. 5, and of the team of three G1 robots and a person. Time
+runs from left to right. Faces are obscured for anonymity.
+16
+
+
+time
+L-shaped corridor
+Narrow door
+Table carry
+L-shaped sofa
+Stair carry
+Precise placement
+Figure 9. Time sequences of the lift-and-carry tasks in HH-BENCH, in simulation. Time runs from left to right.
+17
+
+
+time
+Box handover
+Palanquin
+Rebar
+Fire hose
+Box push
+Millstone
+Figure 10. Time sequences of the handover, shoulder-carry, pull, and push tasks in HH-BENCH, in simulation. Time runs from left to right.
+18
