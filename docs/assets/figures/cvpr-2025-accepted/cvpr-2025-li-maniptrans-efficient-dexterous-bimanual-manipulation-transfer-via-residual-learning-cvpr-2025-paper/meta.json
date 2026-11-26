@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 3843,
+      "height": 1278
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-002.webp",
+      "caption": "",
+      "page": 1,
+      "index": 2,
+      "width": 695,
+      "height": 690
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-003.webp",
+      "caption": "",
+      "page": 4,
+      "index": 3,
+      "width": 3601,
+      "height": 1379
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-004.webp",
+      "caption": "",
+      "page": 7,
+      "index": 4,
+      "width": 3244,
+      "height": 900
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-005.webp",
+      "caption": "",
+      "page": 7,
+      "index": 5,
+      "width": 3309,
+      "height": 1196
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-006.webp",
+      "caption": "",
+      "page": 7,
+      "index": 6,
+      "width": 3205,
+      "height": 1386
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper/fig-007.webp",
+      "caption": "",
+      "page": 8,
+      "index": 7,
+      "width": 2039,
+      "height": 868
+    }
+  ]
+}

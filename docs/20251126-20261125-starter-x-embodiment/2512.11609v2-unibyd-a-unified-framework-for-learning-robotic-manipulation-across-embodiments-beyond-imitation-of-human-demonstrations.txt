@@ -1,0 +1,2882 @@
+UniBYD: A Unified Framework for Learning Robotic Manipulation Across
+Embodiments Beyond Imitation of Human Demonstrations
+Tingyu Yuan1,2
+Biaoliang Guan3
+Wen Ye1,2
+Ziyan Tian1,2 Yi Yang4
+Weijie Zhou5
+Zhaowen Li6
+Yan Huang1,2
+Peng Wang1,2
+Chaoyang Zhao1†
+Jinqiao Wang1,2†
+1CASIA
+2UCAS
+3XJTU
+4CSU
+5BJTU
+6Yinwang Intelligent Technology Co. Ltd.
+Abstract
+In embodied intelligence, the embodiment gap between
+robotic and human hands brings significant challenges for
+learning from human demonstrations. Although some stud-
+ies have attempted to bridge this gap using reinforce-
+ment learning, they remain confined to merely reproduc-
+ing human manipulation, resulting in limited task perfor-
+mance. Moreover, current methods struggle to support di-
+verse robotic hand configurations. In this paper, we pro-
+pose UniBYD, a unified framework that uses a dynamic re-
+inforcement learning algorithm to discover manipulation
+policies aligned with the robot’s physical characteristics.
+To enable consistent modeling across diverse robotic hand
+morphologies, UniBYD incorporates a unified morpholog-
+ical representation (UMR). Building on UMR, we design a
+dynamic PPO with an annealed reward schedule, enabling
+reinforcement learning to transition from offline-informed
+imitation of human demonstrations to online-adaptive ex-
+ploration of policies better adapted to diverse robotic mor-
+phologies, thereby going beyond mere imitation of human
+hands. To address the severe state drift caused by the inca-
+pacity of early-stage policies, we design a hybrid Markov-
+based shadow engine that provides fine-grained guidance
+to anchor the imitation within the expert’s manifold. To
+evaluate UniBYD, we propose UniManip, the first bench-
+mark for cross-embodiment manipulation spanning diverse
+robotic morphologies. Experiments demonstrate a 44.08%
+average improvement in success rate over the current state-
+of-the-art. Upon acceptance, we will release our code and
+benchmark.
+1. Introduction
+Within
+embodied
+intelligence,
+learning
+from
+human
+demonstrations [16, 18, 25, 38, 45] has emerged as a dom-
+inant paradigm. However, the embodiment gap between
+†Corresponding authors.
+UniBYD
+Shadow Engine
+Mocap Data
+Our results
+UMR
+Imitation-based reinforcement learning
+Dynamic PPO
+Reinforcement learning
+2-fingered
+3-fingered
+5-fingered
+Figure 1. Leveraging human demonstrations, UniBYD learns ma-
+nipulation strategies that transcend mere imitation and are tailored
+to a broad spectrum of robotic hand morphologies.
+human hands and robotic hands of varying morphologies
+[17] poses significant challenges for this area, which ex-
+isting studies have yet to effectively address.
+Notably,
+most research focuses on anthropomorphic hands, while
+cross-embodiment generalization to 2/3-fingered grippers
+remains largely unexplored. For example, retargeting-based
+methods typically map only the kinematic poses while ig-
+noring critical dynamic information.
+Existing imitation
+learning methods remain at merely reproducing human
+operations[25, 33]. Given the morphological and dynamic
+discrepancies between human hands and robot hands of
+varying structures, such as differences in finger count and
+degrees of freedom, such direct reproduction limits them
+far below the level demonstrated by humans.
+To overcome the limitations of the above approaches,
+researchers have begun exploring reinforcement learning
+from human data. However, such methods often struggle
+to discover strategies that are truly aligned with the robot’s
+own morphology, resulting in suboptimal task performance,
+especially for non-anthropomorphic hands with significant
+topological deviations. Some studies, such as ManipTrans
+[13], employ Proximal Policy Optimization (PPO) [27] in
+simulated environments, yet their reward functions merely
+enforce strict time alignment of the robot hand’s joint an-
+1
+arXiv:2512.11609v2  [cs.RO]  10 Mar 2026
+
+
+gles with the expert trajectory at every step, which only par-
+tially addresses the inherent limitations of imitation learn-
+ing. As shown on the right of Fig. 1, such methods merely
+map human-hand motions onto robotic hands, resulting in
+low success rates for task execution. Secondly, another line
+of research attempts to completely eliminate dependence on
+human demonstrations by defining reward functions cen-
+tered on object pose errors [3]. This comes at the cost of
+losing the crucial guidance that human prior provides, mak-
+ing it difficult to approach the high-performance policy re-
+gions. These methods tend to fall into local optima. Be-
+yond these limitations, a fundamental challenge for rein-
+forcement learning in this domain is the severe state drift in
+early training. Due to the lack of effective guidance, even
+minor deviations from human priors can cause the robot to
+stray from correct trajectories and terminate episodes pre-
+maturely, resulting in extremely limited information gain
+and failed bootstrapping. Moreover, existing methods ex-
+hibit limited generalization, as most are tailored to specific
+robotic hands and lack a unified framework for adapting hu-
+man policies to diverse robots [40].
+To address these challenges, we introduce a novel
+paradigm that shifts from rigid motion imitation to
+morphology-adaptive policy discovery, ensuring manipu-
+lation strategies are inherently aligned with the mechan-
+ical characteristics of diverse robotic embodiments.
+Ac-
+cording to this paradigm, we introduce UniBYD, a uni-
+fied reinforcement learning framework designed to acquire
+morphology-adaptive manipulation policies that transcend
+mere imitation and generalize across diverse embodiments.
+Firstly, to realize cross-embodiment generalization, we in-
+troduce a unified morphological representation (UMR),
+which standardizes the state-action space and employs mor-
+phology embeddings to enable configuration-aware model-
+ing. Building on UMR, we propose a dynamic PPO mecha-
+nism with reward annealing, which enables a smooth transi-
+tion from offline-informed imitation to online-adaptive ex-
+ploration. This process guides the model to discover poli-
+cies better suited to the physical potential of diverse robots.
+To mitigate the severe state drift in early training, we de-
+sign a hybrid Markov-based shadow engine that provides
+fine-grained guidance to anchor the robot’s execution near
+expert trajectories, ensuring consistent information gain.
+To our knowledge, UniBYD is the first to learn ma-
+nipulation policies for diverse embodiments from human
+demonstrations with reinforcement learning. To rigorously
+evaluate UniBYD, we build UniManip, the first benchmark
+that spans diverse hand configurations and a wide variety
+of tasks, providing a standardized measure for manipula-
+tion competence. Experimental results show that UniBYD
+achieves a substantial improvement of up to 44.08% in over-
+all success rate over the current state-of-the-art (SOTA). Our
+contributions are as follows:
+• We propose UniBYD, a unified reinforcement learning
+framework compatible with various robotic hand types.
+The framework learns control strategies aligned with the
+diverse embodiments better.
+• We design a dynamic PPO, which facilitates a system-
+atic transition from offline-informed imitation to online-
+adaptive exploration, enabled by a hybrid Markov-based
+shadow engine that anchors early-stage training to pre-
+vent trajectory drift.
+• We construct UniManip, the first unified benchmark
+based on human demonstrations for evaluating robotic
+manipulation capability across morphologies.
+Experi-
+ments on UniManip demonstrate that UniBYD signifi-
+cantly outperforms existing SOTA methods, achieving a
+44.08% gain in success rate.
+2. Related Work
+Robotic manipulation learning methods.
+Achieving
+human-level dexterity remains a central challenge in
+robotics [5, 6, 8, 10, 11, 19, 21, 29, 36, 43, 44]. Classi-
+cal approaches such as trajectory optimization [24, 30, 36]
+and STOCS [42] compute joint trajectories and contact
+forces, yet are predominantly offline and thus limited in
+real-time applicability. Model Predictive Control [1, 9, 10]
+enables online planning via finite-horizon optimization, but
+its computational burden hampers real-time deployment.
+Reinforcement learning optimizes policies through environ-
+ment interaction [4, 39], supporting the training of complex
+tasks. However, the exploration space is vast, a challenge
+UniBYD addresses by using human demonstrations to pro-
+vide crucial guidance and rapidly focus the policy search.
+Learning from Human Demonstrations. Given the high
+cost of collecting robotic manipulation data, numerous
+methods have sought to learn from human demonstra-
+tions [26, 46]. Conventional inverse-kinematics retargeting
+[14, 34] and learning-based retargeting [14, 23, 28] offer
+limited performance. Mainstream practice leverages rein-
+forcement learning to acquire robotic manipulation skills
+from human hand data. Imitation-centric approaches map
+demonstrations directly onto robots [25]. For example, Ma-
+nipTrans [13] reproduces human actions on a 5-fingered
+platform via a universal trajectory imitator and residual
+modules.
+However, it fails to surpass the imitation of
+demonstrations and ignores the embodiment gap. In con-
+trast, goal-centric methods[17], such as DexMachina [22],
+prioritize task objectives while largely ignoring imitation
+rewards to encourage exploration, but training is lengthy
+and convergence is often precarious. Moreover, developing
+a unified framework that generalizes across diverse robotic
+hand morphologies remains a critical challenge.
+Benchmarks. Existing benchmarks for robotic manipula-
+tion have been proposed [12], including Bi-DexHands [2],
+which assembles dozens of bimanual tasks in simulation,
+2
+
+
+Update ➡ ️
+Goal 
+Reward
+Imitation 
+Reward
+Policy 
+Loss
+       Reward 
+       Annealing
+Value 
+Loss
+Bound 
+Loss
+Entropy 
+Bonus
+UMR
+Object & Multi-
+hand Observation
+Shadow Engine
+Model
+Reward Calculation
+Model Action
+Human Expert
+Action Execution
+Sliding Window
+(Success Rate Computation) 
+...
+...
+...
+Inference Procedure
+Figure 2. The framework of UniBYD. UniBYD first encodes diverse hands via UMR. It then employs a dynamic PPO with an annealed
+reward mechanism, which initially leverages the shadow engine for high-fidelity imitation before transitioning to autonomous exploration
+to discover morphology-aligned policies.
+and VTDexManip [15], which evaluates single- and biman-
+ual manipulation with integrated vision and touch. Bench-
+marks tailored to LfHD have likewise emerged [37]; for in-
+stance, EgoDex [7] compiles 829 hours of egocentric ma-
+nipulation videos and hand-motion data, and DexMachina
+[22] introduces a benchmark centered on articulated ob-
+jects. Nevertheless, a comprehensive, unified benchmark
+spanning 2-, 3-, and 5-fingered hand morphologies across
+diverse single-hand and bimanual tasks is still lacking.
+Moreover, existing evaluation protocols are largely one-
+dimensional, failing to assess manipulation strategies and
+their alignment with diverse robotic hand embodiments.
+3. Method
+As shown in Fig. 2, we propose UniBYD, a unified and pro-
+gressive reinforcement learning framework that learns from
+humans across various robotic hands. UniBYD aims to dis-
+cover morphology-aligned policies that transcend mere im-
+itation. During the early training phase, UniBYD blends
+the action ∆aπ
+t predicted by the policy network with the
+expert action ∆aE
+t from the demonstration to generate the
+final executed action used to advance the environment to the
+next state. In contrast, during the inference phase, UniBYD
+relies solely on the policy network, directly executing its
+predicted action ∆aπ
+t to complete the task.
+3.1. Unified Morphological Representation
+The challenge of cross-morphology generalization lies in
+the fundamental differences among robotic hand embodi-
+ments. Accordingly, we propose an efficient unified mor-
+phological representation.
+For robotic hand h, the proprioceptive state sh
+t at step t
+includes a fixed-dimensional wrist state sbase ∈R13 and a
+variable-dimensional joint state sh
+joint. The wrist state en-
+codes position, orientation, and velocities, while the joint
+state contains joint angles and velocities, qh, ˙qh ∈RDh,
+where Dh is the hand’s degrees of freedom. To avoid the
+2π wrap-around issue, joint angles are trigonometrically en-
+coded as cos(qh) and sin(qh).
+Let Dmax denote the maximum number of joint degrees
+of freedom. For hands with Dh < Dmax, we apply zero-
+padding to the variable component sh
+joint, thereby elevating
+its dimensionality to Dmax and obtaining spad
+joint:
+spad
+joint = [qh ⊕0Dmax−Dh ⊕cos(qh) ⊕0Dmax−Dh⊕
+sin(qh) ⊕0Dmax−Dh ⊕˙qh ⊕0Dmax−Dh].
+(1)
+Moreover, the policy πθ must be informed of the hand’s
+specific physical attributes.
+To this end, we extract key
+static morphological properties from the hand’s URDF
+model, namely Dh, the number of fingers N h
+finger, and the
+number of rigid bodies N h
+body. These quantities constitute a
+static descriptor vh
+morph = [N h
+finger, Dh, N h
+body].
+Finally, we concatenate sbase, spad
+joint, and vh
+morph to form
+the observation ofinger
+t
+= sbase ⊕spad
+joint ⊕vh
+morph. By
+unifying dynamic states and static attributes into a fixed-
+dimensional representation, UMR enables the policy to
+adapt to diverse hand morphologies and learn morphology-
+specific manipulation policies.
+3.2. Dynamic Proximal Policy Optimization
+With UMR providing a consistent observation space,
+UniBYD employs a reinforcement learning algorithm in-
+tegrating a reward annealing mechanism. This mechanism
+facilitates a systematic transition from offline-informed im-
+itation to online-adaptive exploration, allowing the model to
+inherit expert knowledge while transcending its limitations
+through active environmental interaction.
+3
+
+
+3.2.1. From Offline-Informed Imitation to Online-
+Adaptive Exploration
+(1) Imitation Reward (Rimitation). To achieve precise im-
+itation of offline expert demonstrations, we design a dense,
+multi-component imitation reward Rimitation that, at step
+t of episode i, quantifies the similarity between the current
+state st and the expert state sE
+t . It is defined as
+Rimitation
+t
+=
+n
+X
+k=1
+wk · rk(st, sE
+t ) −p(∆at),
+(2)
+where rk denotes the k-th reward component and wk its cor-
+responding weight. The components primarily encompass
+discrepancies in wrist pose, linear and angular velocities;
+fingertip positions and contact forces; joint positions and
+velocities; and object pose, linear and angular velocities.
+The term p(∆at) is a power penalty on actuation. For de-
+tailed computations, see Appendix Section 7.
+(2) Goal Reward (Rgoal). To relax the reliance on of-
+fline expert demonstrations in dexterous manipulation, we
+define a sparse goal reward Rgoal that depends solely on
+task success. In contrast to the dense Rimitation
+t
+, this signal
+is step-agnostic and granted only when the entire episode
+is successfully completed, thereby conferring a substan-
+tial bonus that marks the attempt as productive exploration.
+Rgoal is defined as:
+Rgoal =
+(
+Sbonus
+if Csuc = 1
+0
+otherwise
+,
+(3)
+where Sbonus is a fixed-magnitude bonus, and Csuc ∈
+{0, 1} denotes the episodic success indicator. In the first
+phase, Csuc is determined by the discrepancies between the
+object and fingertip observations and those of the expert,
+and later solely by the object. More details are provided in
+Appendix Section 8.
+(3) Dynamic Reward Annealing. To enable a smooth
+transition from imitation to task-centric exploration, we de-
+fine the total reward Rt as a dynamically weighted sum of
+the imitation reward Rimitation
+t
+and the goal reward Rgoal:
+Rt = wimi
+e
+· Rimitation
+t
++ wgoal
+e
+· Rgoal,
+(4)
+where wimi
+e
+and wgoal
+e
+are weighting coefficients for
+Rimitation
+t
+and Rgoal at training epoch e. The evolution
+of these weights constitutes a three-stage curriculum, with
+phase transitions jointly governed by the epoch threshold
+Tdecay marking the end of the shadow engine, the earliest
+trigger threshold Tearly, the recent success rate ¯
+SR, and a
+scaling factor γscale controlling the transition speed.
+To evaluate the current competence of the model in real
+time, we introduce the recent success rate ¯
+SR as a perfor-
+mance indicator. Specifically, we design a sliding window
+of size M to aggregate the outcomes of the most recent M
+episodes, defined as ¯
+SR =
+1
+M
+Pi
+j=i−M+1 Csuc.
+To quantify the progression of task mastery, we intro-
+duce a minimal competence threshold δmin (set to 0.2) and
+a transition factor f:
+f = max
+ 0, min
+ 1, ( ¯
+SR −δmin) × γscale
+
+.
+(5)
+The term ( ¯
+SR −δmin) primarily serves to prevent wimi
+e
+from decaying under sub-optimal performance or stochas-
+tic noise. Simultaneously, it mitigates abrupt weight drops
+upon triggering the transition mechanism, thereby main-
+taining training stability during the switchover phase.
+Furthermore, we introduce a success-rate trigger thresh-
+old δSR as a criterion to determine whether the model
+has attained sufficient proficiency to initiate the transition.
+Building on this, the weights wimi
+e
+and wgoal
+e
+are adaptively
+adjusted according to the following formulations:
+wimi
+e
+=
+
+
+
+
+
+wimi
+max,
+if e ≤Tdecay∧
+(e ≤Tearly ∨¯
+SR ≤δSR)
+max(wimi
+min, wimi
+max × (1.0 −f)),
+otherwise
+, (6)
+wgoal
+e
+=
+
+
+
+
+
+0,
+if e ≤Tdecay∧
+(e ≤Tearly ∨¯
+SR ≤δSR)
+max(wgoal
+min, wgoal
+max × f),
+otherwise
+.
+(7)
+This dynamic reward annealing approach implicitly par-
+titions the training process into three stages. In the early
+imitation-driven alignment phase, while the initial tempo-
+ral or performance criteria are not yet met, the weights re-
+main fixed to prioritize learning from expert demonstrations
+and establishing basic manipulation skills. During the hy-
+brid adaptive transition phase, if the model’s competence
+remains limited ( ¯
+SR −δmin ≤0), wimi
+e
+is maintained
+without decay while wgoal
+e
+is set to a small value to intro-
+duce Rgoal. Once the model has mastered the manipulation
+skills, wimi
+e
+enters an annealing mode, decreasing gradu-
+ally according to changes in ¯
+SR as wgoal
+e
+increases. At this
+stage, the influence of expert data begins to wane, facilitat-
+ing a ”soft-handover” of the guidance focus toward Rgoal.
+Finally, in the autonomous exploration phase, the imitation
+weight reaches its minimum wimi
+min, exerting a nearly negli-
+gible influence. At this point, the policy is predominantly
+driven by the sparse goal reward, focusing solely on the
+overall success of the task. This allows the model to move
+beyond strictly mirroring human manipulation and discover
+refined control strategies that are better optimized for the
+robot hand’s unique hardware morphology.
+3.2.2. Loss Synergy and Counterbalancing
+To facilitate effective exploration and prevent premature
+convergence, we incorporate the entropy regularization and
+boundary loss into the PPO objective, forming a syn-
+ergy–counterbalance strategy that ensures policy physical
+feasibility while pursuing optimal performance.
+4
+
+
+(1) Entropy Regularization. To prevent the policy, par-
+ticularly during the imitation-guided reinforcement learn-
+ing phase, from prematurely converging to a suboptimal
+deterministic solution, we introduce an entropy regulariza-
+tion term, H(πθ(· | ot)). This term serves as an entropy
+bonus that encourages sustained exploration. Its coefficient,
+centropy
+e
+, follows a linear decay schedule:
+centropy
+e
+= max
+
+0, centropy
+start
+
+1 −
+e
+Tentropy decay
+
+,
+(8)
+where centropy
+start
+is the initial entropy coefficient,
+and
+Tentropy decay is the decay horizon. This mechanism ensures
+ample exploration in the early stages of training and gradu-
+ally reduces exploration thereafter to facilitate convergence.
+(2) Bound Loss. While the entropy bonus fosters ex-
+ploration, the mean of the policy distribution, µθ(ot), can
+readily drift beyond the physical action space. Conventional
+hard clipping disrupts gradient flow and severely impairs
+training. To remedy this, we introduce a differentiable soft
+boundary loss, Lbound, which penalizes only clearly out-of-
+bounds means µt:
+Lbound
+t
+(µt) = [
+Da
+X
+j=1
+(max(0, µt,j −µbound)2+
+max(0, −µt,j −µbound)2)]
+(9)
+where Da denotes the action dimensionality, µt,j is the j-th
+component of the action-mean vector µt , and µbound is a
+soft boundary threshold.
+(3) Dynamic PPO Objective Function. We integrate
+the foregoing components into the PPO objective, which we
+minimize:
+Lt(θ) = [ −LCLIP
+t
+(θ) + cvfLVF
+t (θ)−
+centropy
+e
+H(πθ(· | ot)) + cboundLbound
+t
+(µt)]
+(10)
+where LCLIP
+t
+denotes PPO’s clipped surrogate objective,
+LVF
+t
+is the mean-squared error loss of the value function,
+and cvf and cbound are their respective weighting coeffi-
+cients. The entropy bonus term (−centropy
+e
+H) and the bound-
+ary loss term (+cboundLbound
+t
+) establish an effective synergy-
+and-counterbalance: the former fosters broad exploration,
+while the latter ensures that such exploration remains con-
+fined to a physically safe and smooth action space.
+3.3. Hybrid Markov-based Shadow Engine
+At the outset of training, the policy network πθ is markedly
+weak. Within a standard Markov Decision Process (MDP),
+even a slight action deviation ∆at can shift the subsequent
+state st+1, and the ensuing compounding errors rapidly
+drive the policy away from meaningful expert trajectories.
+However, it is difficult for the policy to return to the correct
+Expert 
+Action
+Object Force
+Shadow Engine
+PD
+Controller
+Model
+Action 
+Execution
+      Weight Controller
+Figure 3. Overview of action generation and object control in
+the shadow engine. It blends the model-predicted action and the
+expert-guided action to generate the final executed action ∆aexec
+t
+.
+A PD controller applies an expert object force to guide the object.
+path by relying on the penalties provided by post-hoc met-
+rics Rimitation. As a result, this leads to frequent premature
+episode terminations. Ultimately, the model receives only
+scarce and weak training signals, impairing overall learn-
+ing efficiency. Therefore, UniBYD introduces the shadow
+engine to guide the dynamic PPO during the crucial early
+phase as shown in Fig. 3. It enables fine-grained, efficient
+imitation by applying dynamic expert guidance to both the
+robotic hands and the object.
+3.3.1. Dexterous Hand Control
+To mitigate compounding errors caused by an initially weak
+policy, we propose a Hybrid MDP mechanism that unifies
+discrete pointwise learning with continuous Markov pro-
+cess learning. Specifically, at training step t, the action ex-
+ecuted in the simulator, ∆aexec
+t
+, is not the raw prediction
+∆aπ
+t from πθ. It is a dynamically weighted blend of ∆aπ
+t
+and the expert demonstration action ∆aE
+t .
+At step t, conditioned on the current observation ot, the
+policy network produces the action ∆aπ
+t .
+Concurrently,
+we retrieve the corresponding expert action ∆aE
+t from the
+demonstration. The executed action ∆aexec
+t
+is defined as
+∆aexec
+t
+= αt · ∆aπ
+t + βt · ∆aE
+t ,
+(11)
+where αt is the weight on the policy action ∆aπ
+t , and βt is
+the weight on the expert action ∆aE
+t . These weights satisfy
+αt + βt = 1 throughout training.
+We realize dynamic guidance by applying a linear decay
+curriculum to βt as a function of the training epoch e:
+βt = max
+
+0, 1 −
+e
+Tdecay
+
+,
+(12)
+where Tdecay is a predefined decay horizon. Correspond-
+ingly, αt increases linearly from 0 to 1. This setup ensures
+that in the early phase of training βt ≈1 and αt ≈0,
+so the model effectively learns each step in isolation with-
+out being influenced by the previous step. Once imitation
+performance is high, βt = 0 and αt = 1. At that point
+5
+
+
+aexec
+t
+= aπ
+t , the guidance of the shadow engine disappears,
+and πθ must independently handle the full Markov decision
+process. See Appendix Section 6.1 for details.
+3.3.2. Object Control
+In complex tasks, the object’s intrinsic physical properties,
+such as gravity and inertia, can still precipitate failure. To
+further ease the initial learning phase, the shadow engine
+also applies a dynamic support force Fsupport directly to the
+object. We utilize a proportional-derivative (PD) controller
+to compute Fsupport based on the desired object pose and
+velocity (gobj
+t
+, ˙gobj
+t
+) from the expert demonstration. Act-
+ing as an invisible hand, Fsupport constrains the object to
+remain near its target trajectory, preventing drops or catas-
+trophic deviations. The gains of this PD controller (Kp, Kd)
+are also gradually decayed to zero as training proceeds. For
+further details, see Appendix Section 6.2.
+4. Experiments
+4.1. Benchmark
+To evaluate generalizable manipulation across diverse hand
+morphologies, a benchmark must encompass a wide spec-
+trum of tasks involving complex object interactions and di-
+verse functional manipulations. We build UniManip upon
+OakInk-V2 [41], as it represents one of the largest-scale
+and most diverse human demonstration datasets, featuring
+unrivaled synchronization precision and task complexity.
+Leveraging these high-fidelity motion data, we curate a
+wide range of unimanual and bimanual tasks and convert
+them into expert demonstrations tailored to robotic hands
+with 2, 3, or 5 fingers (see Appendix Section 10 for con-
+version details and task taxonomy). In total, we assemble
+31 task categories to construct UniManip. For 5-finger uni-
+manual and bimanual settings, we select 9 and 6 task cate-
+gories, respectively. Given that 3-finger and 2-finger hands
+are ill-suited to bimanual manipulation, we evaluate them
+on 8 unimanual task categories each. We assess manipula-
+tion performance along multiple axes, and specifically de-
+fine the following metrics:
+• Position Error (PE): PE is defined as the mean Eu-
+clidean distance between the observed and target object
+positions across time steps in successful episodes. If all
+test episodes fail, PE is assigned a default value of 3.
+Lower PE indicates more accurate and stable manipula-
+tion.
+• Orientation Error (OE): OE is defined as the mean min-
+imal rotation angle between the observed and target ori-
+entations across time steps in successful episodes. If all
+test episodes fail, OE is set to a default value of 30. Lower
+OE reflects more precise orientation control.
+• Success Rate (SR): The percentage of test episodes clas-
+sified as successful. Given the process-oriented nature of
+our tasks, an episode is deemed successful if and only if
+every time step simultaneously satisfies PE ≤3 cm and
+OE ≤30°. Any violation at any time step renders the
+episode a failure.
+• Adaptation Score (AS): This metric aims to quantify
+how well a manipulation policy aligns with the robot’s
+hardware morphology beyond binary success. We em-
+ploy a joint evaluation framework, incorporating a suite
+of heterogeneous large models (including Gemini 2.5 Pro,
+GPT-5.2, and Qwen2.5-VL-72B) alongside 100 human
+volunteers as expert evaluators to provide a composite
+score from 0 to 10. LLMs and humans are blind to suc-
+cess labels to ensure independent assessment of manipu-
+lation quality. Please refer to Appendix Section 10.3 for
+calculation details and prompts. Crucially, AS serves as a
+qualitative complement to our primary physical metric.
+4.2. Experimental Setup
+Implementation details. Simulations were conducted in
+Isaac Gym[20], with 4,096 parallel environments during
+training. We configured Sbonus to 20, Tdecay to 150, Tearly
+to 100, γscale to 2, δmin to 0.2, and δSR to 0.8. Additional
+parameters are detailed in Appendix Section 9.1. For each
+task in UniManip, we executed 1,000 trials per task in sim-
+ulation.
+Experimental equipment.
+All experiments were con-
+ducted on servers equipped with an NVIDIA GeForce RTX
+4090 GPU and an Intel Core i9-14900K CPU. We evaluated
+our methods on the Franka 2-fingered gripper, the xArm
+2-fingered gripper, the CASIA Hand-G 3-fingered dexter-
+ous hand[35], the Inspire 5-fingered dexterous hand, and
+the OHandT M dexterous hand.
+4.3. Comparison with SOTA
+To comprehensively evaluate UniBYD, we compare it
+with three representative baselines: a classical retarget-
+ing method based on optimization-based inverse kinemat-
+ics, and two current SOTA methods for dexterous manip-
+ulation, ManipTrans [13] and DexMachina* [22].
+Since
+existing SOTA methods do not support 2/3-fingered tasks,
+and there is a lack of comparative approaches for learning
+2/3-fingered dexterous manipulation from human demon-
+strations, we employ retargeting as the primary baseline for
+such embodiments. To ensure a fair comparison, we reim-
+plement DexMachina within our simulator, denoted as Dex-
+Machina∗throughout this paper. To maintain consistency,
+all methods share the same experimental configuration, the
+implementation details of which are provided in Appendix
+Section 9. The comparative results are reported in Tab. 1,
+where ✗denotes that the method does not support that hand
+type.
+The results unequivocally demonstrate that UniBYD
+surpasses all baselines across every evaluation dimension,
+achieving a 44.08% improvement in success rate over Ma-
+6
+
+
+Table 1.
+Comparative results on UniManip.
+UniBYD consis-
+tently outperforms representative baselines across diverse hand
+morphologies.
+Hand
+Type Metrics
+Reta
+rget
+Manip
+trans
+DexMa
+china∗UniBYD
+2 (1
+hand)
+SR↑(%) 12.27
+✗
+✗
+78.13
+PE↓(cm) 2.81
+✗
+✗
+0.53
+OE↓(◦)
+28.77
+✗
+✗
+18.74
+AS↑
+4.24
+✗
+✗
+8.93
+3 (1
+hand)
+SR↑(%)
+4.36
+✗
+✗
+71.81
+PE↓(cm) 2.65
+✗
+✗
+0.89
+OE↓(◦)
+29.19
+✗
+✗
+12.95
+AS↑
+2.48
+✗
+✗
+9.13
+5 (1
+hand)
+SR↑(%)
+5.68
+26.44
+✗
+85.67
+PE↓(cm) 2.89
+1.93
+✗
+0.77
+OE↓(◦)
+29.13 22.28
+✗
+10.90
+AS↑
+3.07
+5.88
+✗
+9.29
+5 (2
+hands)
+SR↑(%)
+2.10
+28.75
+25.33
+57.67
+PE↓(cm) 2.96
+1.44
+1.66
+0.72
+OE↓(◦)
+29.56 16.84
+14.13
+13.44
+AS↑
+2.58
+4.34
+4.81
+8.16
+nipTrans (SOTA). This underscores UniBYD’s superior
+high-dimensional coordination, whereas imitation-centric
+ManipTrans is constrained by the embodiment gap and
+goal-centric DexMachina struggles with complex collabo-
+ration without fine-grained guidance. First, UniBYD is the
+only unified framework that consistently achieves high reli-
+ability across all hand morphologies, whereas ManipTrans
+and DexMachina do not support 2/3-fingered hands. Sec-
+ond, retargeting yields marginal success rates.
+Even on
+challenging 5-finger bimanual tasks, UniBYD achieves a
+57.67% success rate, outperforming the best baseline by
+a substantial 28.92% margin.
+On 5-fingered unimanual
+tasks, UniBYD achieves an 85.67% SR, outperforming Ma-
+nipTrans by a 59.23% margin. Simultaneously, UniBYD
+significantly improves manipulation precision, reducing PE
+and OE by 60.10% and 51.08% compared to ManipTrans,
+demonstrating its superior fine-grained control.
+On 2/3-
+fingered tasks, UniBYD achieves a high SR of 78.13% and
+71.81%, respectively.
+This underscores its robust cross-
+embodiment generalization and ability to complete tasks re-
+liably. Finally, UniBYD consistently maintains a superior
+AS (≥8.16), markedly exceeding all baselines (max 5.88).
+This proves that its learned policies are not only more ef-
+fective but also more strongly aligned with specific embod-
+iments.
+As illustrated in Fig. 4, we visually compare the manip-
+ulation strategies learned by UniBYD against those of other
+Human 
+UniBYD
+Dexmachina
+Maniptrans
+Figure 4.
+A visual comparison of the experimental results.
+UniBYD learns manipulation strategies aligned with the robot’s
+embodiment, thereby successfully completing the task, whereas
+both ManipTrans and DexMachina* fail.
+methods. ManipTrans seeks to emulate the human tactic of
+grasping the mug with the three rear fingers. However, these
+fingers are too wide to pass through the handle, causing the
+mug to slip and fall. Hampered by sparse reward signals,
+DexMachina* likewise fails to discover a viable strategy.
+By contrast, through trial and error, UniBYD identifies that
+the three robotic fingers are much wider than those of a hu-
+man. It adapts by using only two fingers (the middle and
+ring fingers) to grasp the handle, pinching it with the thumb
+and index finger while bracing the mug with the little finger.
+4.4. Ablation Study
+As reported in Tab. 2, we conduct an ablation study built
+upon the base model. We define the base as an RL ap-
+proach utilizing only the imitation rewards, functionally
+equivalent to behavior cloning and serving as the primary
+baseline for Sec. 4.3. Notably, even base outperforms ex-
+isting SOTA in bimanual tasks, confirming that our UMR
+and imitation rewards provide a superior foundation. Com-
+pared to the base, +SE (base with shadow engine) improves
+the success rate by 31.26%, validating that the fine-grained
+expert guidance provided by SE is essential for effective
+policy initialization. +GR (base with goal reward Rgoal)
+achieves a 35.00% SR gain and elevates AS to 7.77. This
+variant facilitates a seamless transition from offline-data-
+driven imitation to online goal-driven exploration. This al-
+lows the robot to transcend human priors and discover phys-
+ically optimal postures uniquely tailored to its own mor-
+phology.
++GR+LSC (base with Rgoal and loss synergy
+with counterbalancing) maintains strategic stochasticity, ef-
+fectively preventing premature convergence to suboptimal
+imitation. More investigations into other components, in-
+cluding manipulator-specific information(UMR), hyperpa-
+rameter sensitivity, Boundary Loss, Entropy Loss, and the
+Reward Annealing schedule are provided in Appendix Sec-
+7
+
+
+Table 2. Ablation study of UniBYD. The results validate the indi-
+vidual contributions of SE and GR, as well as the incremental gain
+of LSC, in enhancing performance.
+Hand
+Type Metrics
+base
++SE +GR +GR
++LSC UniBYD
+2 (1
+hand)
+SR↑(%) 24.94 67.06 56.19 61.50
+78.13
+PE↓(cm) 2.66
+0.54
+1.28
+1.32
+0.53
+OE↓(◦)
+27.51 19.89 21.31 21.58
+18.74
+AS↑
+5.63
+7.56
+7.99
+8.36
+8.93
+3 (1
+hand)
+SR↑(%) 19.56 51.06 65.13 67.63
+71.81
+PE↓(cm) 2.45
+0.95
+0.93
+0.87
+0.89
+OE↓(◦)
+26.09 14.67 14.06 12.85
+12.95
+AS↑
+5.42
+6.87
+8.52
+8.78
+9.13
+5 (1
+hand)
+SR↑(%) 13.56 55.11 63.17 65.39
+85.67
+PE↓(cm) 2.46
+1.24
+0.87
+0.79
+0.77
+OE↓(◦)
+27.12 17.29 13.22 13.23
+10.90
+AS↑
+4.87
+6.33
+8.29
+8.64
+9.29
+5 (2
+hands)
+SR↑(%) 33.46 43.33 47.01 54.17
+57.67
+PE↓(cm) 1.46
+1.43
+1.48
+1.36
+0.72
+OE↓(◦)
+15.35 17.64 17.17 14.17
+13.44
+AS↑
+3.20
+3.55
+6.27
+6.73
+8.16
+A. Training Reward Comparison
+B. Training Success Rate Comparison
+Epoch
+Epoch
+Figure 5. Training procedure of a representative task.
+tion 14.
+Fig. 5 illustrates the evolution of reward and success rate
+in a representative task.
+Base is unable to explore opti-
+mal postures, rapidly settling into a suboptimal policy. In
+contrast, +SE more accurately reproduces human behav-
+ior. Building upon +SE, the introduction of Rgoal forms
++SE+GR. With the fading of expert guidance and under the
+direction of explicit objectives, this strategy explores pos-
+tures that lead to higher success rates. Furthermore, com-
+bined with LSC (UniBYD), it encourages exploration by
+maintaining stochasticity in the early phase, eventually con-
+verging to a superior manipulation strategy.
+4.5. Qualitative Analysis: Beyond Mere Imitation
+As shown in Fig. 6, UniBYD can discover manipulation
+strategies aligned with each robot’s embodiment. For the 2-
+fingered gripper, the imitation-only base rigidly reproduces
+the human’s oblique grasp, while UniBYD adopts a more
+stable grasp oriented perpendicular to the body of the al-
+cohol burner. For the 3-fingered hand, unlike the base that
+relies solely on two fingertips to pinch the Erlenmeyer flask,
+UniBYD secures the flask with two fingers while employing
+the third finger to support the bottom for a more stable ma-
+nipulation. For the 5-fingered hand, in tasks such as stirring
+and handwriting, the base imitates a two-fingertip pinch
+prone to slippage, whereas UniBYD employs the remaining
+three digits to provide supportive contact forces, enhancing
+success. To demonstrate the generalizability of UniBYD,
+we further present results on the GRAB dataset [31] in
+Fig. 6, where UniBYD achieves a remarkable 98.00% SR
+and 9.43 AS.
+To investigate the progression from imitation to explo-
+ration, we compare checkpoints across training epochs, as
+shown in Fig. 7. By epoch 100, training is dominated by
+imitation. The policy attempts to manipulate with two fin-
+gers but frequently drops it due to limited force control. By
+epoch 200, the policy begins to relax its reliance on expert
+data, attempting to grasp the doughnut with the first and
+third digits while probing the role of the second digit. By
+epoch 400, it discovers a strategy that pinches the doughnut
+with two fingers and braces it with the remaining finger. Ex-
+ploiting the mechanical characteristics, UniBYD observes
+that operating with the wrist canted sideways enhances suc-
+cess.
+4.6. Real-World Experiments
+By mapping the dexterous hand’s wrist to the robotic arm
+flange and aligning its degrees of freedom, we conduct
+experiments on three real-world platforms: the X-Arm 2-
+fingered hand, the Casia Hand-G 3-fingered dexterous hand,
+and the OHandT M 5-fingered dexterous hand. To facili-
+tate zero-shot transfer, we employ FoundationPose [32] for
+hand-object alignment and MoveIt! for trajectory planning.
+More implementation details are provided in Appendix Sec-
+tion 9.5.
+The system achieves success in 26 of 50 trials, 32 of
+50 trials, and 35 of 50 trials, respectively. As shown in
+Fig. 8, for the same task, UniBYD tailors its manipulation
+strategy to the end-effector morphology. With a 2-fingered
+gripper, it clamps the beaker diagonally, whereas with a 3-
+fingered hand, it wraps the beaker with all fingers. These
+8
+
+
+Figure 6. Comparative experimental results for base and UniBYD.
+Human
+100epoch
+200epoch
+400epoch
+Figure 7. Results illustrating the progressive evolution of manipu-
+lation strategies over the course of training.
+2-fingered
+3-fingered
+5-fingered
+Task: Shake experiment substances in the beaker.
+Human 
+Figure 8. Experimental results on real-world robotic platforms.
+results prove that UniBYD transfers effectively to the real
+world, despite a slight drop in success rate. Failure anal-
+ysis indicates that failure modes include hand-object colli-
+sions (19%), object drops (9%), joint limit triggers (7%),
+and hand-table collisions (3%).
+5. Conclusion
+We introduce UniBYD, a unified framework that learns
+robotic manipulation beyond imitation from human demon-
+strations.
+UniBYD achieves a systematic evolution
+from fine-grained imitation to morphology-adaptive ex-
+ploration, discovering manipulation strategies that align
+with each robot’s embodiment.
+Real-world results con-
+firm its superior embodiment alignment and transferabil-
+ity.
+References
+[1] Bo Ai, Stephen Tian, Haochen Shi, Yixuan Wang, Tobias
+Pfaff, Cheston Tan, Henrik I Christensen, Hao Su, Jiajun
+Wu, and Yunzhu Li. A review of learning-based dynamics
+models for robotic manipulation. Science Robotics, 10(106):
+eadt1497, 2025. 2
+[2] Yuanpei Chen, Yiran Geng, Fangwei Zhong, Jiaming Ji,
+Jiechuang Jiang, Zongqing Lu, Hao Dong, and Yaodong
+Yang. Bi-dexhands: Towards human-level bimanual dexter-
+ous manipulation. IEEE Transactions on Pattern Analysis
+and Machine Intelligence, 46(5):2804–2818, 2023. 2
+[3] Yuanpei Chen, Chen Wang, Yaodong Yang, and C Karen
+Liu. Object-centric dexterous manipulation from human mo-
+tion data. arXiv preprint arXiv:2411.04005, 2024. 2
+[4] Elizabeth Cutler, Yuning Xing, Tony Cui, Brendan Zhou,
+Koen van Rijnsoever, Ben Hart, David Valencia, Lee Vio-
+let C Ong, Trevor Gee, Minas Liarokapis, et al. Benchmark-
+ing reinforcement learning methods for dexterous robotic
+manipulation with a three-fingered gripper. arXiv preprint
+arXiv:2408.14747, 2024. 2
+[5] Xiao Gao, Kunpeng Yao, Farshad Khadivar, and Aude Bil-
+lard. Real-time motion planning for in-hand manipulation
+with a multi-fingered hand. CoRR, 2023. 2
+[6] Xiao Gao, Kunpeng Yao, Farshad Khadivar, and Aude Bil-
+lard. Enhancing dexterity in confined spaces: real-time mo-
+tion planning for multifingered in-hand manipulation. IEEE
+Robotics & Automation Magazine, 2024. 2
+[7] Ryan Hoque, Peide Huang, David J Yoon, Mouli Sivapu-
+rapu, and Jian Zhang. Egodex: Learning dexterous manip-
+9
+
+
+ulation from large-scale egocentric video.
+arXiv preprint
+arXiv:2505.11709, 2025. 3
+[8] Dongchi Huang, Tianle Zhang, Yihang Li, Ling Zhao, Ji-
+ayi Li, Zhirui Fang, Chunhe Xia, Lusong Li, and Xiaodong
+He.
+Dexterous hand manipulation via efficient imitation-
+bootstrapped online reinforcement learning. arXiv preprint
+arXiv:2503.04014, 2025. 2
+[9] Yongpeng Jiang, Mingrui Yu, Xinghao Zhu, Masayoshi
+Tomizuka, and Xiang Li.
+Contact-implicit model predic-
+tive control for dexterous in-hand manipulation: A long-
+horizon and robust approach.
+In 2024 IEEE/RSJ Interna-
+tional Conference on Intelligent Robots and Systems (IROS),
+pages 5260–5266. IEEE, 2024. 2
+[10] Wanxin Jin. Complementarity-free multi-contact modeling
+and optimization for dexterous manipulation. arXiv preprint
+arXiv:2408.07855, 2024. 2
+[11] Gaofeng Li, Ruize Wang, Peisen Xu, Qi Ye, and Jiming
+Chen.
+The developments and challenges towards dexter-
+ous and embodied robotic manipulation: A survey. arXiv
+preprint arXiv:2507.11840, 2025. 2
+[12] Hangyu Li, Qin Zhao, Haoran Xu, Xinyu Jiang, Qingwei
+Ben, Feiyu Jia, Haoyu Zhao, Liang Xu, Jia Zeng, Han-
+qing Wang, et al. Teleopbench: A simulator-centric bench-
+mark for dual-arm dexterous teleoperation. arXiv preprint
+arXiv:2505.12748, 2025. 2
+[13] Kailin Li, Puhao Li, Tengyu Liu, Yuyang Li, and Siyuan
+Huang. Maniptrans: Efficient dexterous bimanual manip-
+ulation transfer via residual learning. In Proceedings of the
+Computer Vision and Pattern Recognition Conference, pages
+6991–7003, 2025. 1, 2, 6
+[14] Xiaoyi Lin, Kunpeng Yao, Lixin Xu, Xueqiang Wang, Xue-
+tao Li, Yuchen Wang, and Miao Li. Dexflow: A unified ap-
+proach for dexterous hand pose retargeting and interaction.
+arXiv preprint arXiv:2505.01083, 2025. 2
+[15] Qingtao Liu, Yu Cui, Zhengnan Sun, Gaofeng Li, Jiming
+Chen, and Qi Ye. Vtdexmanip: A dataset and benchmark for
+visual-tactile pretraining and dexterous manipulation with
+reinforcement learning. In The Thirteenth International Con-
+ference on Learning Representations. 3
+[16] Xueyi Liu, Kangbo Lyu, Jieqiong Zhang, Tao Du, and
+Li Yi.
+Quasisim:
+Parameterized quasi-physical simula-
+tors for dexterous manipulations transfer.
+arXiv preprint
+arXiv:2404.07988, 2024. 1
+[17] Tyler Ga Wei Lum, Olivia Y Lee, C Karen Liu, and Jeannette
+Bohg. Crossing the human-robot embodiment gap with sim-
+to-real rl using one human demonstration.
+arXiv preprint
+arXiv:2504.12609, 2025. 1, 2
+[18] Hao Luo, Yicheng Feng, Wanpeng Zhang, Sipeng Zheng,
+Ye Wang, Haoqi Yuan, Jiazheng Liu, Chaoyi Xu, Qin Jin,
+and Zongqing Lu.
+Being-h0: vision-language-action pre-
+training from large-scale human videos.
+arXiv preprint
+arXiv:2507.15597, 2025. 1
+[19] J Luo, C Xu, J Wu, and S Levine.
+Precise and dexter-
+ous robotic manipulation via human-inthe-loop reinforce-
+ment learning. arXiv preprint arXiv:2410.21845, 2(3), 2024.
+2
+[20] Viktor Makoviychuk, Lukasz Wawrzyniak, Yunrong Guo,
+Michelle Lu, Kier Storey, Miles Macklin, David Hoeller,
+Nikita Rudin, Arthur Allshire, Ankur Handa, et al.
+Isaac
+gym: High performance gpu-based physics simulation for
+robot learning. arXiv preprint arXiv:2108.10470, 2021. 6
+[21] Udaka A Manawadu and Naruse Keitaro. Dexterous manip-
+ulation based on object recognition and accurate pose esti-
+mation using rgb-d data. Sensors, 24(21):6823, 2024. 2
+[22] Zhao Mandi, Yifan Hou, Dieter Fox, Yashraj Narang, Ajay
+Mandlekar, and Shuran Song.
+Dexmachina: Functional
+retargeting for bimanual dexterous manipulation.
+arXiv
+preprint arXiv:2505.24853, 2025. 2, 3, 6
+[23] Sungjae Park, Seungho Lee, Mingi Choi, Jiye Lee, Jeongh-
+wan Kim, Jisoo Kim, and Hanbyul Joo. Learning to transfer
+human hand skills for robot manipulations. arXiv preprint
+arXiv:2501.04169, 2025. 2
+[24] Amir Patel, Stacey Leigh Shield, Saif Kazi, Aaron M John-
+son, and Lorenz T Biegler. Contact-implicit trajectory opti-
+mization using orthogonal collocation. IEEE Robotics and
+Automation Letters, 4(2):2242–2249, 2019. 2
+[25] Yuzhe Qin, Yueh-Hua Wu, Shaowei Liu, Hanwen Jiang, Rui-
+han Yang, Yang Fu, and Xiaolong Wang. Dexmv: Imitation
+learning for dexterous manipulation from human videos. In
+European Conference on Computer Vision, pages 570–587.
+Springer, 2022. 1, 2
+[26] Aravind Rajeswaran, Vikash Kumar, Abhishek Gupta, Giu-
+lia Vezzani, John Schulman, Emanuel Todorov, and Sergey
+Levine. Learning complex dexterous manipulation with deep
+reinforcement learning and demonstrations. arXiv preprint
+arXiv:1709.10087, 2017. 2
+[27] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Rad-
+ford, and Oleg Klimov. Proximal policy optimization algo-
+rithms. arXiv preprint arXiv:1707.06347, 2017. 1
+[28] Kenneth Shaw, Shikhar Bahl, Aravind Sivakumar, Aditya
+Kannan, and Deepak Pathak. Learning dexterity from human
+hand motion in internet videos. The International Journal of
+Robotics Research, 43(4):513–532, 2024. 2
+[29] Xu Song, Yongyao Li, Yunfan Zhang, Yufei Liu, and Lei
+Jiang. An overview of learning-based dexterous grasping:
+recent advances and future directions. Artificial Intelligence
+Review, 58(10):1–44, 2025. 2
+[30] HJ Suh, Tao Pang, Tong Zhao, and Russ Tedrake. Dexterous
+contact-rich manipulation via the contact trust region. arXiv
+preprint arXiv:2505.02291, 2025. 2
+[31] Omid Taheri, Nima Ghorbani, Michael J Black, and Dim-
+itrios Tzionas. Grab: A dataset of whole-body human grasp-
+ing of objects. In European conference on computer vision,
+pages 581–600. Springer, 2020. 8
+[32] Bowen Wen, Wei Yang, Jan Kautz, and Stan Birchfield.
+Foundationpose: Unified 6d pose estimation and tracking of
+novel objects. In Proceedings of the IEEE/CVF conference
+on computer vision and pattern recognition, pages 17868–
+17879, 2024. 8
+[33] Yueh-Hua Wu, Jiashun Wang, and Xiaolong Wang. Learning
+generalizable dexterous manipulation from human grasp af-
+fordance. In Conference on Robot Learning, pages 618–629.
+PMLR, 2023. 1
+[34] Chendong Xin, Mingrui Yu, Yongpeng Jiang, Zhefeng
+Zhang, and Xiang Li. Analyzing key objectives in human-to-
+10
+
+
+robot retargeting for dexterous manipulation. arXiv preprint
+arXiv:2506.09384, 2025. 2
+[35] Dashun Yan, Peng Wang, Tianyi Zhang, Xiwei Wang, Yinglu
+Wang, Zhenghan Wang, Yongkang Luo, Yayu Huang, and
+Guoqiang Deng.
+Casiahand: Design and evaluation of a
+15-dof tendon-driven anthropomorphic robotic hand. IEEE
+Robotics and Automation Letters, 2025. 6
+[36] Fan Yang, Thomas Power, Sergio Aguilera Marinovic, Soshi
+Iba, Rana Soltani Zarrin, and Dmitry Berenson. Multi-finger
+manipulation via trajectory optimization with differentiable
+rolling and geometric constraints. IEEE Robotics and Au-
+tomation Letters, 2025. 2
+[37] Jianglong Ye, Keyi Wang, Chengjing Yuan, Ruihan Yang,
+Yiquan Li, Jiyue Zhu, Yuzhe Qin, Xueyan Zou, and Xiao-
+long Wang. Dex1b: Learning with 1b demonstrations for
+dexterous manipulation. arXiv preprint arXiv:2506.17198,
+2025. 3
+[38] Seonghyeon Ye, Joel Jang, Byeongguk Jeon, Sejune Joo,
+Jianwei Yang, Baolin Peng, Ajay Mandlekar, Reuben Tan,
+Yu-Wei Chao, Bill Yuchen Lin, et al. Latent action pretrain-
+ing from videos. arXiv preprint arXiv:2410.11758, 2024. 1
+[39] Zhao-Heng Yin, Binghao Huang, Yuzhe Qin, Qifeng Chen,
+and Xiaolong Wang.
+Rotating without seeing:
+To-
+wards in-hand dexterity through touch.
+arXiv preprint
+arXiv:2303.10880, 2023. 2
+[40] Zhecheng Yuan, Tianming Wei, Langzhe Gu, Pu Hua,
+Tianhai Liang, Yuanpei Chen, and Huazhe Xu.
+Hermes:
+Human-to-robot embodied learning from multi-source mo-
+tion data for mobile dexterous manipulation. arXiv preprint
+arXiv:2508.20085, 2025. 2
+[41] Xinyu Zhan, Lixin Yang, Yifei Zhao, Kangrui Mao, Han-
+lin Xu, Zenan Lin, Kailin Li, and Cewu Lu. Oakink2: A
+dataset of bimanual hands-object manipulation in complex
+task completion. In Proceedings of the IEEE/CVF Confer-
+ence on Computer Vision and Pattern Recognition, pages
+445–456, 2024. 6
+[42] Mengchao Zhang, Devesh K Jha, Arvind U Raghunathan,
+and Kris Hauser. Simultaneous trajectory optimization and
+contact selection for contact-rich manipulation with high-
+fidelity geometry. IEEE Transactions on Robotics, 2025. 2
+[43] Jialiang Zhao and Edward H Adelson. Gelsight svelte: A
+human finger-shaped single-camera tactile robot finger with
+large sensing coverage and proprioceptive sensing. In 2023
+IEEE/RSJ International Conference on Intelligent Robots
+and Systems (IROS), pages 8979–8984. IEEE, 2023. 2
+[44] Yaofeng Desmond Zhong,
+Biswadip Dey,
+and Amit
+Chakraborty.
+Extending lagrangian and hamiltonian neu-
+ral networks with differentiable contact models. Advances
+in Neural Information Processing Systems, 34:21910–21922,
+2021. 2
+[45] Huayi Zhou, Ruixiang Wang, Yunxin Tai, Yueci Deng, Guil-
+iang Liu, and Kui Jia. You only teach once: Learn one-shot
+bimanual robotic manipulation from video demonstrations.
+arXiv preprint arXiv:2501.14208, 2025. 1
+[46] Henry Zhu, Abhishek Gupta, Aravind Rajeswaran, Sergey
+Levine, and Vikash Kumar.
+Dexterous manipulation with
+deep reinforcement learning: Efficient, general, and low-
+cost. In 2019 International Conference on Robotics and Au-
+tomation (ICRA), pages 3651–3657. IEEE, 2019. 2
+11
+
+
+UniBYD: A Unified Framework for Learning Robotic Manipulation Across
+Embodiments Beyond Imitation of Human Demonstrations
+Supplementary Material
+This supplementary material provides comprehensive
+implementation details and additional experimental results.
+We begin by elaborating on the core mechanisms of the
+Hybrid Markov-based shadow engine and the associated
+dynamic control strategies in Sec. 6.
+Sec. 7 and Sec. 8
+provide the precise mathematical definitions for the com-
+prehensive reward functions and the curriculum-based suc-
+cess/failure criteria, respectively. Sec. 9 outlines the spe-
+cific experimental hyperparameters, the optimization-based
+motion retargeting pipeline, and the reproduction details
+for the baseline methods (ManipTrans and DexMachina).
+Sec. 10 details the MLLM-driven pipeline for generating
+cross-morphology expert data and the evaluation metrics for
+the UniManip benchmark. Sec. 11 analyzes the evolution of
+success rate and episode length over the training course to
+validate the effectiveness of UniBYD. Sec. 12 presents the
+complete pseudocode of the UniBYD framework. Sec. 13
+demonstrates the distinct manipulation strategies learned by
+UniBYD tailored to different robotic morphologies for the
+same task. Finally, Sec. 14 provides extensive additional
+qualitative results across diverse robotic hands in both sim-
+ulation and the real world.
+6. Hybrid Markov-based Shadow Engine
+6.1. Dexterous Hand Control
+The standard training process functions as a pure Markov
+process where the state st+1 at step t+1 is fully determined
+by the action ∆aπ
+t . Specifically, ∆aπ
+t is predicted by the
+policy πθ based on the observation ot at step t, denoted as
+∆aπ
+t = πθ(ot). Under this training paradigm, state updates
+are driven exclusively by the actions predicted by the model
+itself.
+However, during the early stages of training, the
+model possesses limited capabilities, resulting in significant
+errors in the predicted actions at each step. The compound-
+ing errors accumulated over just a few consecutive steps are
+sufficient to cause the object to deviate completely from the
+target state, leading the episode to be immediately judged
+as a failure and terminated. Such frequent episode termina-
+tions and resets severely degrade the efficiency and capacity
+of the model for early knowledge acquisition. This issue is
+particularly critical for complex manipulation tasks. If the
+model fails to grasp preliminary manipulation skills early
+on, combined with the fact that success criteria become in-
+creasingly stringent as training epochs increase, failures in
+the mid-to-late stages will become more frequent. Conse-
+quently, the number of continuous steps learned within an
+episode decreases, rendering it impossible for the model to
+learn the complete execution flow of the task.
+Therefore, to ensure that the model can preliminarily
+grasp manipulation skills during the early stages and to en-
+hance training efficiency, we propose a Hybrid MDP mech-
+anism. In the first training epoch, where βt = 1 and αt = 0,
+UniBYD still uses the predicted action ∆aπ
+t at step t to
+compute the reward function. However, it exclusively em-
+ploys the expert demonstration action ∆aE
+t to update the
+simulator and obtain the next state. Effectively, the model
+learns the manipulation at each individual step in isolation,
+unaffected by the previous step. This phase approximates
+discrete pointwise learning, focusing solely on the action
+at each step while the state update relies entirely on expert
+data.
+In the early hybrid phase, exemplified by βt = 0.7 and
+αt = 0.3, the action ∆aexec
+t
+executed by the simulator is
+a weighted blend of the policy-predicted action and the ex-
+pert action, defined as ∆aexec
+t
+= 0.3 · ∆aπ
+t + 0.7 · ∆aE
+t .
+This implies that the evolution of the subsequent state st+1
+begins to be partially influenced by the model’s own policy
+πθ. Consequently, the state distribution of the environment
+is no longer identical to the expert demonstration trajectory
+but starts to incorporate perturbations introduced by the pol-
+icy itself. However, as the weight of the expert action βt
+remains dominant, action errors resulting from model pre-
+dictions are significantly corrected by the shadow engine.
+While allowing the model to explore action-state transition
+logic, this mechanism employs strong expert guidance to
+constrain the states of the robotic hand and the object within
+a safe region. This effectively prevents error accumulation
+and catastrophic state deviations caused by the immaturity
+of the policy in the early stages. This establishes a con-
+trolled, error-tolerant learning environment that enables the
+model to sustain episode continuity in long-horizon tasks,
+thereby allowing it to observe states in the later stages of
+the process.
+In the late hybrid stage, exemplified by βt = 0.3 and
+αt = 0.7, the dominance of action control shifts. At this
+point, the executed action ∆aexec
+t
+is primarily determined
+by the prediction ∆aπ
+t from the policy network πθ, with the
+expert demonstration action ∆aE
+t serving merely as an aux-
+iliary correction term. This implies that the update of the
+environmental state st+1 depends largely on the model’s
+own decisions, and the state distribution closely approxi-
+mates the true distribution observed under fully autonomous
+mode. During this phase, the expert action provides only a
+1
+
+
+weak ”corrective” signal and can no longer fully mask the
+accumulated errors generated by the model. This forces the
+policy network to learn to handle and rectify state deviations
+induced by its own actions, thereby maintaining manipula-
+tion stability within a nearly authentic Markov chain. This
+design ensures that the model adapts to self-induced distri-
+bution shift, effectively preparing it for the final transition
+where βt drops to 0, the assistance of the shadow engine is
+completely withdrawn, and the system enters a pure Markov
+process.
+As training epochs increase, we adhere to a linear decay
+schedule defined as βt = max
+
+0, 1 −
+e
+Tdecay
+
+, gradually
+reducing the weight of expert guidance. When βt eventually
+decays to 0 and αt rises to 1, the shadow engine completely
+disengages, allowing the model to transition smoothly into
+a full Markov Decision Process. At this stage, the model
+has acquired preliminary competencies and must indepen-
+dently shoulder the long-horizon cumulative consequences
+resulting from all actions, thereby completing a robust tran-
+sition from discrete pointwise imitation to continuous au-
+tonomous decision-making.
+Through this smooth transition from discrete pointwise
+learning to hybrid guided learning, and finally to fully
+autonomous sequential learning, UniBYD effectively ad-
+dresses the exploration challenges in dexterous manipula-
+tion tasks caused by the initially weak policy in reinforce-
+ment learning.
+6.2. Object Control
+To mitigate the instability of object manipulation during the
+early training phase and prevent premature episode termi-
+nation caused by object drops, the shadow engine applies a
+dynamic auxiliary force Fsupport to the object. As shown
+in Fig. 9, when a substantial support force is applied to the
+object, the object can be constrained to move near its target
+trajectory, preventing it from falling.
+At each time step t, we first retrieve the target object pose
+gobj
+t
+and velocity ˙gobj
+t
+from the expert demonstration, which
+serve as the reference trajectory. We then compute the sup-
+porting force using a PD controller based on the deviation
+of the current object state from this reference:
+Fsupport = Kp,e(gobj
+t
+−oobj
+t
+) + Kd,e(˙gobj
+t
+−˙oobj
+t
+), (13)
+where oobj
+t
+and ˙oobj
+t
+denote the observed object pose and ve-
+locity at time t, respectively. Kp,e and Kd,e are the propor-
+tional and derivative gain coefficients at the current training
+epoch e.
+Considering the physical differences between various
+manipulated objects, we normalize the PD parameters ac-
+cording to the actual object mass mobj. Given a reference
+object mass mref and predefined baseline gains Kp,cfg and
+Kd,cfg, the initial PD parameters Kstart
+p
+and Kstart
+d
+are
+Figure 9. An example of task completion using a PD controller
+without robotic hands. The green fingertip keypoints shown in
+the figure represent the location of the robotic hand in the expert
+demonstration data.
+calculated as follows:
+Kstart
+p
+= Kp,cfg· mobj
+mref
+,
+Kstart
+d
+= Kd,cfg· mobj
+mref
+. (14)
+Crucially, to ensure that the object dynamics transition
+to a purely physical interaction state synchronously with the
+policy assuming full control authority, the gain coefficients
+follow the same linear decay schedule as the hand action
+blending weight βt. The decay is defined as:
+Kp,e = Kstart
+p
+· max
+
+0, 1 −
+e
+Tdecay
+
+,
+(15)
+Kd,e = Kstart
+d
+· max
+
+0, 1 −
+e
+Tdecay
+
+,
+(16)
+where Tdecay is the predefined decay horizon, which is
+identical to the threshold used in the Dexterous Hand Con-
+trol module. This synchronization guarantees that the auxil-
+iary support force Fsupport is completely removed (Kp,e =
+0, Kd,e = 0) exactly when the shadow engine ceases its
+guidance (e ≥Tdecay), forcing the policy to maintain ob-
+ject stability independently.
+7. Computation of the Imitation Reward
+The imitation reward Rimitation
+t
+quantifies the similarity
+between the current state and the expert demonstration.
+This reward function comprises a weighted sum of state-
+similarity components and a power penalty term for action
+regularization. For each reward component rk in the sum-
+mation, we employ a standardized exponential kernel de-
+fined generally as rk(st, sE
+t ) = exp(−λk · Ek). Here, Ek
+2
+
+
+represents the specific physical error metric, and λk denotes
+the sensitivity coefficient, which governs the decay rate of
+the reward with respect to the error.
+We first impose strict constraints on the kinematic state
+of the robotic hand’s wrist.
+Specifically, the wrist posi-
+tion component reef pos measures the Euclidean distance
+between the current wrist position peef and the expert tar-
+get position pE
+eef. To ensure tracking precision, this com-
+ponent is assigned a weight weef pos of 0.1 and a high
+sensitivity coefficient λeef pos of 40, with the formula de-
+fined as reef pos = exp(−40 · ∥peef −pE
+eef∥2). Simul-
+taneously, the wrist orientation component reef rot utilizes
+quaternion differences to quantify the rotational deviation
+θdiff. Given the critical role of orientation in manipula-
+tion stability, this component is assigned a higher weight
+of 0.6 and a sensitivity coefficient of 1. The calculation is
+reef rot = exp(−1·θdiff), where the deviation angle θdiff
+is the magnitude of the axis-angle representation extracted
+from the relative rotation quaternion.
+To further ensure motion smoothness and consistency,
+we incorporate velocity synchronization rewards, calculated
+based on the mean absolute error across dimensions. The
+end-effector linear velocity component reef vel computes
+the average deviation of the Cartesian velocity vector, with
+a weight of 0.1 and a sensitivity coefficient of 1. Similarly,
+the end-effector angular velocity component reef ang vel
+applies the same constraint to the 3D angular velocity vec-
+tor but with a reduced weight of 0.05 to balance the op-
+timization objectives.
+Finally, to regularize the internal
+joint movements, the joint velocity component is defined as
+rjoints vel = exp(−0.1 · 1
+N
+PN
+j=1 | ˙qj −˙qE
+j |). This term is
+normalized with a weight of 0.1 and a sensitivity coefficient
+of 0.1, where N represents the total number of degrees of
+freedom, and ˙qj and ˙qE
+j denote the current and expert an-
+gular velocities of the j-th joint, respectively. This formula
+aims to minimize the average velocity deviation across the
+entire joint space.
+Addressing the crucial aspect of fingertip control in dex-
+terous manipulation, we implement a fine-grained hierar-
+chical weighting scheme. Each fingertip position reward
+rtip is calculated based on the Euclidean distance between
+the current fingertip position ptip and the expert target pE
+tip
+using the general form rtip = exp(−λtip · ∥ptip −pE
+tip∥2).
+As the primary drivers for stable opposition and pinching,
+the thumb and index finger are accorded the highest prior-
+ity. Specifically, the thumb component rthumb is assigned
+a weight of 0.9 with a high sensitivity coefficient λthumb
+of 100 to ensure extreme positional precision. The index
+finger component rindex follows with a weight of 0.8 and a
+sensitivity coefficient of 90. The middle finger, serving as a
+primary support, is assigned a weight of 0.75 and a sensitiv-
+ity of 80, while the ring and little fingers, acting as auxiliary
+supports, are each assigned a weight of 0.6 and a sensitivity
+of 60. Furthermore, to encourage necessary physical in-
+teraction, we include a fingertip contact force component
+rforce with a weight of 1.0. This component is defined as
+rforce = exp(−1·(∥Ftips∥2+ϵ)−1), where Ftips represents
+the resultant vector of effective contact forces on all finger-
+tips and ϵ is a stability constant. This inverse exponential
+mapping penalizes excessive impact forces while impos-
+ing a severe penalty when contact force approaches zero,
+thereby enforcing sustained stable contact with the object.
+Regarding the manipulated object, we guide the policy to
+reproduce the expert’s trajectory through multi-dimensional
+state constraints. The object position component robj pos
+is calculated based on the Euclidean distance between the
+current object position pobj and the expert target pE
+obj. To
+ensure millimeter-level tracking precision, this component
+is assigned the highest weight in the entire reward system
+(5.0), combined with a high sensitivity coefficient of 80,
+defined as robj pos = exp(−80 · ∥pobj −pE
+obj∥2). Simulta-
+neously, the object orientation component robj rot aims to
+minimize the rotational deviation between the current pose
+quaternion qobj and the target quaternion qE
+obj. This compo-
+nent is assigned a weight of 1.0 and a sensitivity coefficient
+of 3. Additionally, to ensure the smoothness of object mo-
+tion, we introduce velocity synchronization rewards. The
+object linear velocity component robj vel and angular ve-
+locity component robj ang vel calculate the mean absolute
+deviations of the velocity vectors in 3D space. Both are
+assigned a weight of 0.1 and a sensitivity coefficient of 1,
+constraining the dynamic characteristics of the object dur-
+ing manipulation.
+Finally, regarding the penalty term p(∆at), we define it
+as a regularization constraint on the system’s energy con-
+sumption. Specifically, it calculates the sum of the absolute
+products of joint torques τ and angular velocities ˙q, given by
+P = P |τ · ˙q|. To strike a balance between minimizing en-
+ergy expenditure and successful task completion, this term
+is scaled by a weight coefficient of 0.5. This design is in-
+tended to prevent the policy from generating high-frequency
+oscillations or unrealistic violent movements, thereby guid-
+ing the model to learn manipulation strategies that are both
+natural and energy-efficient.
+8. Success and Failure Criteria
+The sparse goal reward Rgoal is activated exclusively when
+the episodic success indicator Csuc = 1. To ensure pol-
+icy robustness and preclude accidental successes, we define
+Csuc as a dual criterion function grounded in trajectory com-
+pletion and dynamic state constraints. Specifically, a train-
+ing episode is deemed successful if and only if the current
+execution step t approaches the total length of the expert
+demonstration Tmax, and no failure conditions are triggered
+within a stability window Tstable (default set to 3 steps) at
+3
+
+
+the trajectory’s conclusion:
+Csuc = I ((t + 1 + Tstable ≥Tmax) ∧(¬Failed)) .
+(17)
+The failure determination logic, denoted as Failed, is not
+static but is tightly coupled with the training phase divi-
+sions described in the main text. During the early imitation-
+driven reinforcement learning phase, the policy has not yet
+acquired basic manipulation competence.
+When the av-
+erage success rate
+¯
+SR is below the predefined threshold,
+we impose high-dimensional geometric constraints. These
+constraints guide the policy to accurately reproduce the ex-
+pert’s hand configuration. In this phase, a failure is trig-
+gered if the current step exceeds the minimum step count
+tmin (designed to ignore initial perturbations) and any of
+the following conditions are met. Firstly, the object po-
+sition deviates severely from the target, meaning the Eu-
+clidean distance between the current object position pobj
+and the expert target pE
+obj exceeds a dynamic threshold:
+∥pobj −pE
+obj∥2 > δpos · S3, where δpos is the base posi-
+tion threshold and S is the dynamic scaling factor. Sec-
+ondly, the object orientation deviation is excessive, such
+that the axis-angle magnitude θdiff derived from the quater-
+nion difference satisfies θdiff > δrot·S3. Thirdly, to ensure
+the correct grasping configuration, the fingertip positions of
+key digits (thumb, index, and middle fingers) are required
+to precisely track the expert trajectory: ∥ptip −pE
+tip∥2 >
+δfinger ·S. Finally, we detect unintended collisions, defined
+as instances where the distance dtip between any fingertip
+and the object is less than the collision threshold ϵcoll while
+no contact exists in the expert demonstration (¬ctarget):
+(dtip < ϵcoll) ∧(¬ctarget).
+As the model’s capabilities improve, the training process
+advances into the hybrid phase and ultimately the explo-
+ration phase. During these stages, constraints imposed by
+expert data are gradually relaxed to encourage the policy
+to discover solutions adapted to the robot’s specific mor-
+phology. Once the success rate ¯
+SR exceeds the threshold,
+the failure criteria no longer enforce strict constraints on
+fingertip positions and unintended collisions. Instead, the
+focus shifts to the core task objectives and the physical sta-
+bility of the manipulation. At this point, while retaining
+the deviation constraints on object position and pose men-
+tioned above, we introduce a constraint on the number of
+contact points. A failure is declared when the number of
+effective contact points on the object’s surface, denoted as
+Ncontact, falls below the minimum required for a stable
+grasp, Nmin (specifically, 2 for unimanual tasks and 3 for
+bimanual tasks): Ncontact < Nmin.
+This evolution in the determination logic ensures a
+smooth transition of the policy from early rote imitation to
+late-stage goal-oriented autonomous exploration. The term
+S in the aforementioned formulas represents the dynamic
+scale factor. It functions as a time-dependent variable that
+decays over the course of training, thereby implementing an
+automatic curriculum learning mechanism. Its computation
+adheres to an exponential decay schedule:
+S(t) = (e · 2)−t/Ttighten · (1 −Sfinal) + Sfinal,
+(18)
+where t denotes the current training environment steps and
+Ttighten represents the tightening period.
+In the initial
+stages of training, S remains close to 1.0, providing a rela-
+tively tolerant exploration space. As training progresses, S
+gradually converges to Sfinal (set to 0.7), causing the posi-
+tion threshold (proportional to S3) and the fingertip thresh-
+old (proportional to S) to tighten progressively, thereby
+forcing the policy to achieve higher manipulation precision
+in the later stages.
+Finally, during the inference and evaluation phase, to
+standardize the assessment of manipulation capabilities and
+ensure fair benchmarking, we adopt fixed physical crite-
+ria for success determination.
+A test episode is classi-
+fied as successful if and only if the object’s state devia-
+tion remains strictly within safe thresholds at every time
+step t: specifically, the object position error must satisfy
+∥pobj −pE
+obj∥2 ≤3 cm, and the rotational error must satisfy
+θdiff < 30◦. Any violation of these conditions at any point
+during the operation results in the immediate classification
+of the episode as a failure.
+9. Experimental Details
+9.1. Experimental Parameter Setting
+To supplement the configuration, this section details the
+specific hyperparameters for the PPO optimizer, the initial
+gains for the shadow engine, and the specifications of the
+robotic hands used in our experiments.
+9.1.1. Optimization and Network Hyperparameters
+We utilize the PPO algorithm for policy learning. The spe-
+cific settings for gradient clipping, entropy regularization,
+and batch updates are listed in Tab. 3.
+Table 3. PPO Hyperparameters and Training Configuration.
+Parameter
+Value
+Learning Rate
+5 × 10−4
+Mini-batch Size
+1, 024
+Horizon Length
+32
+Optimization Epochs
+5
+Discount Factor
+0.99
+GAE Parameter
+0.95
+Clip Range
+0.2
+Entropy Coefficient (centropy
+start
+)
+5 × 10−4
+Value Loss Coefficient (cvf)
+4.0
+Bound Loss Coefficient (cbound)
+0.1
+Max Gradient Norm
+1.0
+4
+
+
+9.1.2. Dynamic Control and Curriculum Parameters
+Tab. 4 presents the specific values for the dynamic compo-
+nents of UniBYD, including the reference object mass and
+baseline PD gains for the shadow engine, the weight ex-
+trema for both imitation and goal rewards, and the sliding
+window size utilized for metric computation.
+Table 4. Additional Dynamic Control and Curriculum Parameters.
+Parameter
+Value
+Reference Object Mass (mref)
+0.03788
+Baseline Prop. Gain (Kp,cfg)
+10.0
+Baseline Deriv. Gain (Kd,cfg)
+3.0
+Max Imitation Weight (wimi
+max)
+1.0
+Min Imitation Weight (wimi
+min)
+0.2
+Max Goal Weight (wgoal
+max)
+3.0
+Min Goal Weight (wgoal
+min)
+0.2
+Sliding Window Size (M)
+100
+9.1.3. Unified Morphological Representation and Hand
+Specifications
+To enable consistent modeling across diverse embodiments,
+we set the maximum number of joint degrees of freedom
+for UMR to Dmax = 22. This dimension is sufficient to
+accommodate the vast majority of existing robotic hands.
+For hands with fewer degrees of freedom, zero-padding is
+applied. The specific robotic hands supported and their cor-
+responding degrees of freedom are listed in Tab. 5.
+Table 5. Specifications of Supported Robotic Hands.
+Robotic Hand
+Degrees of Freedom (DOF)
+Shadow Hand
+22
+Allegro Hand
+16
+Inspire Hand
+6
+OHandT M
+11
+CasiaHand 3-Finger
+10
+XArm Gripper
+1
+Franka Panda
+1
+9.2. Motion Retargeting
+To bridge the significant embodiment gap between the hu-
+man hand (represented by the MANO model) and hetero-
+geneous robotic hands, we employ an optimization-based
+inverse kinematics method. This approach seeks to iden-
+tify the optimal robotic joint configuration q and the 6-DoF
+pose of the robotic wrist Pwrist such that the robot’s end-
+effectors spatially align with the human expert’s demonstra-
+tion in Cartesian space.
+We formulate the retargeting process for each step t as
+a non-linear least squares optimization problem. The de-
+cision variables include the wrist position pwrist ∈R3,
+the wrist rotation parameters rwrist ∈R6 (using a continu-
+ous 6D rotation representation), and the robot’s joint angle
+vector q ∈RDh. The objective function J is defined as
+the weighted Euclidean distance between the corresponding
+keypoints:
+J(pwrist, rwrist, q) =
+1
+Nkp
+Nkp
+X
+i=1
+wi·
+Φi(pwrist, rwrist, q) −xhuman
+i
+
+2
+,
+(19)
+where Nkp denotes the total number of matched keypoints.
+xhuman
+i
+∈R3 represents the 3D position of the i-th human
+keypoint (fingertip or joint center) derived from the MANO
+model. Φi(·) is the differentiable forward kinematics func-
+tion that computes the Cartesian coordinates of the robot’s
+i-th keypoint under the current configuration. wi is a scalar
+weight assigned to the i-th keypoint to regulate its influence
+on the optimization.
+Given the diverse kinematic structures of robotic hands,
+we automatically establish correspondences between robot
+links and human joints based on semantic naming conven-
+tions in the URDF. To prioritize the precision of manipula-
+tion contacts, we implement a hierarchical weighting strat-
+egy. As the primary contact interfaces, fingertips are as-
+signed the highest weights wtip ∈[20, 30]. Specifically, for
+5-finger dexterous hands, the thumb and index fingertips are
+often weighted between 25 and 30 to ensure the faithful re-
+production of fine pinching motions. To maintain a natural
+hand pose and prevent non-physical contortions, interme-
+diate links and the wrist base serve as auxiliary constraints
+with significantly lower weights, typically wlink ≈1 to 5.
+This non-uniform weighting ensures that the optimizer con-
+verges primarily on the fingertip positions while utilizing
+the null space to maintain a plausible overall posture.
+To ensure the physical feasibility of the retargeted mo-
+tion, we enforce the following constraints and mechanisms
+during optimization:
+• Joint Limits: We impose strict constraints on the joint
+angles using a hard clamping function to keep predictions
+within the physical range defined by the URDF:
+qclamped = clamp(q, qlower, qupper),
+(20)
+where qlower and qupper are the lower and upper joint
+limits, respectively.
+• Mimic Joint Constraints: For underactuated grippers
+with mechanically coupled joints, we explicitly enforce
+coupling logic prior to the forward kinematics computa-
+tion. For instance, slave joint values are forced to match
+the master joint (qslave = qmaster) to reflect the actual
+transmission mechanics.
+• Solver Configuration: We utilize the Adam optimizer
+for iterative solving. The learning rates are set to 8 ×
+5
+
+
+10−4 for the wrist pose (pwrist, rwrist) and 4 × 10−4 for
+the joint angles q. The optimization is parallelized on
+the GPU, allowing for a maximum of 4,000 iterations per
+frame, with an early stopping mechanism triggered if the
+loss improvement falls below a threshold ϵ = 10−5.
+Crucially, the optimization-based retargeting method de-
+scribed above serves a dual purpose in this study. Firstly, it
+constitutes the specific implementation detail for the Retar-
+geting baseline compared in the experimental section. Sec-
+ondly, for UniBYD, this method is utilized to generate the
+physically feasible initial poses for the robotic hand. These
+poses are used to initialize the environment at the begin-
+ning of each training episode, ensuring that the reinforce-
+ment learning policy starts from a valid state close to the
+object before beginning its autonomous exploration.
+9.3. ManipTrans and Reproduction of DexMachina
+9.3.1. ManipTrans
+To rigorously evaluate the effectiveness of UniBYD, we
+conducted comparative experiments against ManipTrans,
+which represents the current state-of-the-art method for
+dexterous manipulation. To ensure the fairness and unifor-
+mity of the comparison, ManipTrans is implemented using
+the exact same experimental configuration as UniBYD, in-
+cluding identical hardware equipment, the same component
+weights for the imitation reward, and the same strict testing
+standards (PE ≤3 cm and OE < 30◦).
+Crucially, to ensure a fair comparison, we do not train
+the first stage of ManipTrans from scratch for each spe-
+cific task. Instead, we directly used the open-source general
+checkpoint for the first stage provided by the ManipTrans
+paper.
+9.3.2. Reproduction of DexMachina
+As a task-centric approach, DexMachina’s core advantage
+lies in introducing the Virtual Object Controller Curricu-
+lum and a unique reward structure.
+We reproduce Dex-
+Machina’s key mechanisms within the unified environment
+of UniBYD.
+We first reproduce the Virtual Object Controller Curricu-
+lum. DexMachina’s core idea is to use virtual object con-
+trollers with decaying strength to drive the object, allowing
+the policy to learn under guided conditions before eventu-
+ally taking over control. To replicate this mechanism, we
+implement PD controllers with gain annealing. The con-
+troller is initialized with proportional gain and derivative
+gain, and by setting a decay schedule, it accurately repli-
+cates the virtual object controller with decaying strength de-
+scribed in the original paper.
+The second step is the precise reproduction of the reward
+functions. DexMachina’s Task Reward is its primary signal,
+which centrally adopts a multiplicative structure, calculated
+as the product of exponential terms of the object’s position,
+rotation, and joint angle errors. Furthermore, it uses Aux-
+iliary Rewards, such as the Motion Imitation Reward and
+Contact Reward. To be faithful to DexMachina’s philos-
+ophy of prioritized exploration, we remove the dense imi-
+tation rewards during policy training, relying primarily on
+sparse goal rewards and auxiliary rewards.
+To ensure the fairness and validity of the experimental
+comparison, we use the exact same hardware devices, the
+same early stopping strategy, and the same testing criteria
+as UniBYD during the reproduction of DexMachina.
+9.4. Early Stopping Strategy
+We employ an early stopping strategy based on multi-
+epoch-scale slope detection to robustly determine when
+training has reached a convergence plateau, differing from
+traditional methods that rely on monitoring validation loss
+patience. This strategy aims to prevent training from stop-
+ping prematurely or consuming computational resources in-
+efficiently by analyzing the growth trend of the average re-
+ward curve across different epoch windows.
+The core decision for early stopping is based on the
+history of the average reward recorded after each training
+epoch. We use the linear regression to quantify the slope
+SlopeW of the reward as it changes with epochs. For a given
+epoch window W, the slope is calculated as:
+SlopeW = linregress(e, RW )[0],
+(21)
+where e is the epoch index sequence, and RW is the se-
+quence of average reward values from the most recent W
+epochs. SlopeW represents the average growth rate of the
+reward over W epochs.
+To ensure the robustness of the convergence judgment,
+we simultaneously monitor the slope trends across three
+different epoch windows W: short-term (W = 8 epochs),
+medium-term (W = 32 epochs), and long-term (W = 64
+epochs). This mechanism is activated only after the number
+of training epochs exceeds a minimum detection threshold,
+δearly = 150.
+Early stopping is triggered only if the reward slope
+across all three epoch windows W is less than a small, pre-
+defined threshold δslope = 1 × 10−4. Training terminates
+if and only if the following compound logical condition is
+met:
+EarlyStop = I
+
+(Epoch ≥δearly
+∧
+[
+^
+W ∈{8,32,64}
+(SlopeW ≤1 × 10−4)]
+
+
+.
+(22)
+This multi-scale coupled condition effectively prevents
+false positives caused by local fluctuations or noise in the
+reward curve, ensuring that the policy has fully exploited its
+performance potential before training is halted.
+6
+
+
+9.5. Real-World Experiment Details
+9.5.1. Detailed Deployment Pipeline
+This is a hierarchically decoupled engineering system.
+First, we use a RealSense D435i camera and the Founda-
+tionPose algorithm to perform object-centric 6D pose es-
+timation. Second, we need to drive the robotic arm to an
+initial pose identical to that in the simulator. We do not
+use UniBYD to control the robotic arm; instead, we adopt
+classical planning. Based on the detected object pose and
+the relative hand-object pose in the simulator, combined
+with pre-calibrated hand-flange extrinsics, we calculate the
+global target for the arm’s end-effector. Subsequently, we
+utilize IK and the RRT-Connect planner (MoveIt!) to trans-
+port the dexterous hand collision-free to the initial pose.
+Finally, once the arm is in position, UniBYD takes over
+the manipulation prediction of the dexterous hand. At this
+stage, UniBYD operates at a frequency of 20Hz, and the
+system utilizes the aforementioned extrinsics to calculate
+the precise pose of the object relative to the wrist in real-
+time, constructing the relative observation space.
+9.5.2. Failure Analysis & Zero-Shot Transfer Mechanism
+a. Mechanism of Zero-Shot Transfer
+(1) State Consistency via Initialization: We utilize
+robotic arm planning to physically transport the dexterous
+hand to a Relative Initial Pose exactly consistent with the
+simulator.
+(2) Constraint via Boundary Loss: The Boundary Loss
+introduced during training forces the policy to output ac-
+tions that remain within safe physical joint limits. This em-
+bedded constraint makes the policy inherently safe on the
+real robot, preventing extreme command outputs.
+b. Sim-to-Real Gap
+(1) Independence from SE: The shadow engine (SE)
+serves solely as a training aid (and is fully annealed before
+training ends); it does not exist during inference or real-
+world deployment. Thus, failures in real-world experiments
+are unrelated to SE removal.
+(2) Sim-to-Real Performance Gap: Our experiments
+indicate a performance loss. The tasks in the paper achieve
+success rates exceeding 95% in simulation, whereas the av-
+erage success rate on the real robot is 62%.
+c. Detailed Failure Analysis
+We compile detailed statistics on the specific causes of
+task failure across 150 trials:
+(1) Hand-Object Collision ( 19%): This is the primary
+source of failure. Unintended collisions occur during dex-
+terous manipulation, causing the object to be knocked over
+or displaced before a grasp is established.
+(2) Object Drops ( 9%): During lifting or reorientation,
+the object slips due to an insecure grip.
+(3) Joint/Workspace Limit ( 7%): Robot self-collision
+almost never occurs. Such failures mainly happen because
+the arm or dexterous hand reaches joint limits when the
+policy attempts to track certain trajectories, triggering low-
+level emergency stops.
+(4) Robot-Table Collision ( 3%): Minor collisions oc-
+cur between the robot fingertips or the object and the work-
+bench during manipulation, causing the robot to emergency
+stop.
+10. Further Implementation Details of the Uni-
+Manip Benchmark
+10.1. Generating Expert Data for Diverse Robotic
+Morphologies from Human Hand Demon-
+strations
+Due to the immense morphological discrepancy between
+human and diverse robotic hands, human demonstrations
+cannot directly serve as expert data for robotic hands of di-
+verse configurations, particularly 2- and 3-fingered manip-
+ulators. To overcome this problem, we designed an itera-
+tive retargeting pipeline based on a Multimodal Large Lan-
+guage Model (MLLM) for generating high-quality cross-
+morphology expert data.
+We utilize the Gemini 2.5 Pro
+model as the core MLLM engine.
+10.1.1. Rigid Body Mapping Generation
+The model receives the raw Mocap human hand motion
+data and the target robot’s URDF file. The model’s core
+task is to directly establish a one-to-one functional map-
+ping (Mrigid) between the human hand rigid bodies and
+the robotic hand rigid bodies.
+This mapping must possess functional equivalence. Ev-
+ery critical rigid body of the robotic hand, including all fin-
+gertips and major metacarpophalangeal joints, must find a
+corresponding human rigid body on the human hand model
+that performs an equivalent kinematic function. The MLLM
+must rely on its understanding of the robot’s topological
+structure and kinematic function to establish this mapping
+that bridges the morphological gap. The specific prompt
+used is shown below:
+[ROLE AND MISSION DEFINITION]
+You are a senior robotics kinematics expert and a multi-
+modal structure analysis engine. Your primary mission
+is to generate a high-precision, high-functional equiv-
+alence rigid body mapping table (Mrigid) based on
+the provided human motion data and the target robot’s
+URDF file.
+[INPUT DATA STRUCTURE]
+1. Human Hand Structure (Source - MANO):
+• List of human keypoint names (e.g., thumb tip,
+index mcp, wrist).
+• Description of human hand topological structure
+7
+
+
+(joint parent-child relationships, to aid functional
+understanding).
+2. Robot Hand Structure (Target - URDF Parse):
+• List of all rigid body names for the target robot
+(e.g., rh ff tip link, panda leftfinger).
+• Description of human hand topological structure
+(joint parent-child relationships, to aid functional
+understanding).
+[CORE TASK AND MAPPING REQUIREMENTS]
+Generate a high-precision, one-to-one functional map-
+ping table from the robot rigid bodies to human key-
+points.
+1. Functional Equivalence (Mrigid):
+The mapping
+must ensure functional equivalence.
+Specifically,
+every link of the robot must be mapped to a corre-
+sponding human rigid body that possesses the same
+kinematic function.
+2. Completeness and Criticality: The mapping must
+include all critical functional links deemed essential
+for grasping, particularly the correspondence for all
+Fingertips and major Proximal Joints.
+3. Kinematic Plausibility: When establishing the map-
+ping, you must rely on an understanding of the
+robot’s topological structure to ensure the mapping
+does not introduce kinematic conflicts (e.g., the
+robot’s distal link must not be mapped to the human
+hand’s proximal joint).
+[OUTPUT FORMAT SPECIFICATION]
+Strictly return the mapping table (Mrigid) in JSON for-
+mat. The Key must be the robot rigid body name, and
+the value must be the human keypoint name.
+{
+“robot rigid 1 name”: “human keypoint name A”,
+“robot rigid 2 name”: “human keypoint name B”,
+...
+}
+The MLLM subsequently performs a rigorous internal
+validation of the generated mapping Mrigid, ensuring its
+compliance with advanced kinematic and geometric con-
+straints. This validation is a critical safeguard before pro-
+ceeding to simulator retargeting.
+This process involves
+three core checks:
+Firstly, the kinematic plausibility check requires the
+MLLM to verify the topological structure of the mapping,
+preventing non-physical correspondences. For example, a
+robot’s distal link must not be mapped to the human hand’s
+proximal joint, thereby preserving the topological order and
+relative motion relationships of the kinematic chain. Sec-
+ondly, during the geometric and DOF compatibility check,
+the MLLM utilizes its URDF parsing capability to assess
+whether the mapping is compatible with the hand’s intrinsic
+degrees of freedom and joint types (such as revolute ver-
+sus prismatic joints), thus ensuring the generated trajectory
+is physically feasible. Finally, the initial feasibility heuris-
+tics check involves the MLLM performing a preliminary as-
+sessment, based on its understanding of the initial relative
+positions of the object and hand, to determine if the map-
+ping would immediately cause obvious interpenetration or
+unreachability in the very first frame. If the validation fails,
+the MLLM automatically regenerates the mapping until the
+internal consistency check is passed. The specific prompt is
+shown below:
+[ROLE AND MISSION DEFINITION]
+You are a Senior Robotics Kinematics Validation Ex-
+pert and a Topological Structure Analysis Engine. Your
+primary mission is to perform a rigorous Three-Stage
+Internal Consistency Check on the newly generated
+rigid body mapping table (Mrigid) to determine its
+physical plausibility and kinematic compliance before
+it proceeds to simulator retargeting.
+[INPUT DATA]
+1. Mapping Table Under Validation: Mrigid (JSON
+format).
+2. Robot Structure Data:
+The URDF topologi-
+cal structure (parent-child relationships, link list)
+and the DOF list (including joint types:
+Revo-
+lute/Prismatic).
+3. Initial State Data: The initial relative position and
+orientation of the human hand and the target object
+at step t = 0.
+[THREE-STAGE CHECK REQUIREMENTS]
+The mapping Mrigid must pass all three comprehen-
+sive checks:
+1. Kinematic Plausibility Check
+• Requirement: Verify the topological sequence of
+the mapping to prevent non-physical correspon-
+dences. For instance, a robot’s distal link must
+not be mapped to the human hand’s proximal
+joint.
+• Goal: Ensure the topological order and relative
+motion relationships of the kinematic chain are
+maintained.
+2. Geometric and DOF Compatibility Check
+• Requirement: Utilize the URDF file analysis to
+assess whether the mapping is compatible with
+the robot’s intrinsic Degrees of Freedom (DOF)
+count and specific joint types (e.g., a revolute joint
+cannot map to an inappropriate linear motion).
+• Goal: Ensure the resulting trajectory is physically
+executable.
+3. Initial Feasibility Heuristic Check
+• Requirement: Based on the initial state data, per-
+8
+
+
+form a preliminary assessment of the mapping.
+Determine if the mapping would lead to obvious
+interpenetration (self-collision or object pene-
+tration) or unreachability in the very first frame.
+• Goal: Filter out guaranteed failure mappings be-
+fore computationally expensive simulation.
+[OUTPUT FORMAT SPECIFICATION]
+Strictly return a JSON object containing the final ver-
+dict and a detailed reasoning chain.
+{
+“verdict”: “GO” |“REGENERATE”,
+“reasoning chain”: “Detailed logic explaining the
+successful passage of all three checks, or specifying
+the exact reason for failure (e.g., Kinematic check
+failed because robot link X maps proximal joint to
+distal joint).”,
+“failed check type”:
+“None”
+|“Kinematic”
+|“Geometric” |“Feasibility”
+}
+10.1.2. Simulation Retargeting and Iterative Evaluation
+Once the mapping Mrigid passes the MLLM’s internal val-
+idation, it is applied in the simulator to drive the robotic
+hand’s retargeting execution. Subsequently, we initiate an
+iterative feedback loop, utilizing the Gemini 2.5 Pro model
+as a high-level visual expert evaluator to guarantee the qual-
+ity and morphological adaptability of the retargeted trajec-
+tory.
+1. Visual Data Acquisition and Multimodal Input: After
+each retargeting execution, to provide comprehensive vi-
+sual evidence, we capture images of the current robotic
+hand pose from four standardized viewpoints (front,
+back, left, and right). This visual input is packaged along
+with the contextual information from the original Mocap
+data and provided as input for the MLLM’s evaluation.
+2. MLLM Morphological Adaptability Judgment:
+The
+Gemini 2.5 Pro model combines its prior understand-
+ing of the robot’s structure (derived from the URDF)
+with the visual information in the images to perform a
+high-level assessment of the retargeted pose. The core
+of the judgment focuses on evaluating the embodied ap-
+propriateness and visual quality of the pose. The model
+must infer whether the current pose fully leverages the
+target robotic hand’s morphological characteristics and
+whether there is any obvious interpenetration or unsta-
+ble grasping configuration.
+3. Feedback and Termination Mechanism: If the MLLM
+determines that the current pose is visually and func-
+tionally unacceptable, the model then automatically re-
+generates a new set of rigid body mappings (M′
+rigid),
+driving the simulator into the next round of IK optimiza-
+tion iteration. This iterative feedback mechanism, cen-
+tered on the MLLM, ensures that the final output expert
+data is not only kinematically feasible but also highly
+adapted to the target robotic hand’s morphology in both
+visual and functional terms, supporting the subsequent
+UniBYD training.
+The specific prompt used is shown below:
+[ROLE AND MISSION DEFINITION]
+You are a High-Level Visual Expert Evaluator and a
+kinematics reasoning engine. Your primary task is to
+perform a functional and visual validation of the cur-
+rent retargeted robotic hand pose against the human in-
+tent and the robot’s mechanical structure.
+[INPUT DATA STREAMS]
+1. Visual Evidence (4 Images): Four standardized
+viewpoint images of the current robot pose interact-
+ing with the object (Front, Back, Left, Right).
+2. Structural Context:
+Prior knowledge of the
+Robot’s Morphological Characteristics (derived
+from URDF analysis).
+3. Functional Context: The original Human Mocap
+Intent (e.g., target object pose, action type, desired
+contact points).
+[THREE-POINT JUDGMENT CRITERIA] Perform a
+comprehensive, high-level assessment of the pose qual-
+ity. A verdict of ’REGENERATE’ must be returned
+if any criterion fails.
+1. Embodied Appropriateness (Functional Feasibil-
+ity)
+• Check:
+Does the pose successfully achieve
+the functional objective dictated by the human
+demonstration (e.g., stable pinching, enclosing)
+while strictly adhering to the robot’s physical
+and kinematic capability? The pose must reflect
+a viable path to the intended grasp configuration.
+• Failure Example: A multi-finger hand, which
+possesses the mechanical capability to form a sta-
+ble full-web-space wrap, defaults to an inefficient
+or unstable minimalist action (e.g., only two fin-
+gers for a large object). The pose must utilize the
+robot’s capacity to maximize functional stability.
+2. Visual Quality and Physical Plausibility
+• Check: Is the pose physically sound and visually
+stable?
+• Failure Examples: (a) Obvious Interpenetration
+(self-collision or object-link penetration). (b) Fin-
+gertips are clearly forming an unstable grasping
+configuration (e.g., near or past the object center
+point, visually indicating slippage).
+3. Grasp Stability Heuristics
+• Check: Based on the visual evidence, are the fin-
+gers forming clear opposing forces or are they
+9
+
+
+merely resting against the object?
+• Failure Example: The fingers are resting against
+the object instead of forming a clear opposing
+force required for a stable grasp in this context.
+[OUTPUT FORMAT SPECIFICATION]
+Strictly return a JSON object with the final verdict and
+reasoning. The output is used by the external control
+script to determine if a new mapping (M′
+rigid) must be
+generated.
+{
+“verdict”: “ACCEPT” | “REGENERATE”,
+“failed criteria”: [“None”, “Embodied Appropri-
+ateness”, “Visual Quality”, “Grasp Stability”],
+“reasoning summary”: “Provide a brief explana-
+tion (e.g., ‘Failure: Obvious self-collision observed be-
+tween the ring finger and the palm.’, or ‘Success: Pose
+is efficient and stable, utilizing the full three-finger web
+space.’)”
+}
+10.2. Data Category Distribution
+As shown on the left of Fig. 10, the data categories of the
+UniManip benchmark are primarily divided into four major
+task types: two-finger unimanual, three-finger unimanual,
+five-finger unimanual, and five-finger bimanual. These are
+further subdivided into 29 total task categories.
+10.3. Details of AS Computation
+The MLLM and ten human volunteers both score the
+robotic manipulation strategy based on the identical eval-
+uation prompt. We utilize the MLLM to score the same op-
+eration ten times using the identical prompt. The final AS
+metric is then derived by averaging these ten model scores
+together with the scores provided by the ten human volun-
+teers. The specific prompt used is shown below:
+[TASK]
+You are an expert in dexterous robotic manipulation
+and embodiment adaptation. You are given four se-
+quential images showing the manipulation process of
+a robotic hand performing a specific task. The robotic
+hand may have different morphologies (e.g., two-
+finger, three-finger, or five-finger).
+Your goal is to carefully analyze the manipulation strat-
+egy shown in the images and assess how well the op-
+eration method fits the hardware characteristics of the
+robotic hand.
+[EVALUATION FOCUS]
+1. Embodiment Adaptation (Hardware Compati-
+bility):
+• Does the manipulation strategy fully leverage the
+mechanical structure, degrees of freedom, and
+motion range of this robotic hand?
+• Are the contact patterns, grasp poses, and motion
+trajectories appropriate for this specific morphol-
+ogy?
+• Is the control strategy (e.g.,
+parallel pinch,
+rolling, regrasping, finger coordination) mechani-
+cally feasible and efficient for this hardware?
+2. Manipulation Quality (Effectiveness & Natural-
+ness):
+• Is the manipulation stable, efficient, and smooth
+across the sequence?
+• Does the sequence demonstrate coordinated con-
+trol and realistic grasp transitions?
+• Are there unnecessary or suboptimal motions that
+reduce effectiveness?
+[SCORING]
+Give a single numerical score from 0 to 10, where:
+• 0–2: The manipulation strategy is unsuitable for this
+hardware and performs poorly.
+• 3–5: The manipulation is partially feasible but inef-
+ficient or poorly adapted.
+• 6–8: The manipulation fits the hardware well and is
+mostly effective.
+• 9–10: The manipulation is excellently adapted to the
+hardware, showing highly efficient, natural, and op-
+timal control.
+[OUTPUT FORMAT]
+Score: X/10
+Explanation: [Brief, objective
+reasoning focusing on
+adaptation and quality]
+11.
+Performance
+Evolution
+and
+Episode
+Length Variation over Training Time
+We compare the proposed UniBYD framework against the
+imitation-driven baseline ManipTrans and the pure explo-
+ration baseline Only RL, to analyze the evolution of SR and
+executed Episode Length over time during training. The
+Only RL strategy uses UniBYD’s reward settings but delib-
+erately removes the imitation reward component for robotic
+hand movement.
+As shown on the left of Fig. 11, the training results
+clearly demonstrate the impact and limitations of the imita-
+tion reward on learning efficiency. Due to the strong guid-
+ance of the dense imitation reward, ManipTrans’s success
+rate rapidly increases during the early training phase (0-
+25 minutes). However, this strict imitation quickly locks
+the policy into a local optimum, causing its success rate
+to rapidly converge and stagnate around 0.4, failing to
+10
+
+
+Figure 10. The distribution of UniManip.
+Figure 11. The evolution of success rate and episode length over training time for a representative task: Pouring liquid from a tall blue mug
+into a bowl.
+achieve further breakthroughs. In contrast, the Only RL
+strategy shows a slower initial increase in SR because it
+lacks the guidance of the imitation reward, stabilizing sim-
+ilarly around 0.4. This result indicates that relying purely
+on sparse goal rewards for exploration makes it difficult to
+effectively learn the initial configurations required for com-
+plex operations.
+The UniBYD curve (orange) highlights the advantages
+of the dynamic reinforcement learning mechanism. While
+UniBYD’s SR is not the highest initially because it deliber-
+ately maintains high entropy for exploration, it rapidly con-
+verges to a success rate level similar to ManipTrans (around
+0.4). The critical breakthrough occurs in the mid-to-late
+phase of training (after approximately 30 minutes). Sup-
+ported by the Goal Reward (Rgoal) and sustained explo-
+ration entropy, UniBYD successfully breaks through the
+local optimum set by the Imitation Reward.
+The policy
+explores manipulation methods better suited to the robot’s
+physical morphology, and the SR subsequently leaps, ulti-
+mately stabilizing around 0.8, significantly outperforming
+other baselines. The corresponding Episode Length trend
+mirrors this success rate, demonstrating that UniBYD not
+only achieves higher SR but also learns more stable, longer,
+and thus more reliable trajectories.
+As shown on the right side of Fig. 11, the episode length
+curves for ManipTrans and Only RL quickly reach a plateau
+in the early training phase, stabilizing around 500 steps.
+This confirms that although these two baselines can main-
+11
+
+
+tain a success rate of around 0.4, this success is mainly
+achieved in shorter, end-of-trajectory segments. This phe-
+nomenon is due to our training process randomly select-
+ing a step within the full Episode to start training. This
+also explains why the success rate of these two baselines in
+real testing (where the task starts from the beginning) is far
+lower than during training, as their policies fail to maintain
+stability in longer task sequences.
+In contrast,
+UniBYD’s episode length grows syn-
+chronously and significantly with the rapid rise in its suc-
+cess rate, ultimately breaking through 750 steps.
+This
+strongly demonstrates UniBYD’s ability to complete the
+full, long-horizon task with high robustness, rather than re-
+lying on imitation of segments. Furthermore, we observe an
+interesting phenomenon: although the success rate of Only
+RL remains slightly lower than ManipTrans until the end of
+training, its episode length continues to increase and grad-
+ually surpasses ManipTrans. This potentially means that if
+training is to continue, the pure exploration nature of the
+Only RL policy possesses the potential to surpass the final
+performance of the imitation-driven ManipTrans.
+12. Algorithm of UniBYD
+Algorithm 1 summarizes the procedure of the UniBYD
+framework.
+13. Distinct Manipulation Policies of Different
+Robotic Hands for the Same Task
+For the same task (Assemble the donuts together), UniBYD
+is able to discover manipulation strategies tailored to the
+physical characteristics of different robotic hands.
+As shown in Fig. 12, in this task, the two-fingered grip-
+per directly grasps both sides of the donut.
+The three-
+fingered dexterous hand, having thicker fingers, uses its first
+and third fingers to grasp the sides while employing the
+middle finger to grip the donut from above.
+In contrast, the more slender five-fingered dexterous
+hand uses its thumb to support the donut from below, while
+the middle and ring fingers grasp it from the sides. The most
+distinct difference compared to the 2- and 3-fingered hands
+is that UniBYD learned to pass the index finger through the
+center hole of the donut, thereby firmly securing it in coor-
+dination with the thumb.
+14. More Experimental Results
+This section provides additional experimental results.
+Please refer to the video in the supplementary material for
+more detailed analysis and results.
+14.1. Ablation on Morphological Descriptors
+To evaluate the necessity of the hand-specific physical at-
+tributes, we compare UniBYD against a variant where the
+Algorithm 1 UniBYD Framework
+Require: Expert Demonstrations DE, Robotic Hand Set
+H, Max Epochs Emax.
+1: Initialize Policy πθ, Value Function Vϕ, Sliding Win-
+dow Size M.
+2: Initialize Thresholds: Tdecay, Tearly, δSR, δmin (0.2),
+and Scaling Factor γscale.
+3: Initialize Baseline Gains (Kp,cfg, Kd,cfg) and Refer-
+ence Mass mref.
+4: for epoch e = 1 to Emax do
+5:
+// 1. Parameter and Reward Weight Updates
+6:
+Compute Hand Blending Weight βt ←max(0, 1 −
+e/Tdecay).
+7:
+Calculate
+Initial
+Gains:
+Kstart
+p
+, Kstart
+d
+←
+f(mobj, mref, Kp,cfg, Kd,cfg).
+8:
+Update Object PD Gains: Kp,e, Kd,e ←Kstart · βt.
+9:
+Compute Recent Success Rate ¯
+SR using window M.
+10:
+Compute
+Transition
+Factor
+f
+←
+max(0, min(1, ( ¯
+SR −δmin) × γscale)).
+11:
+Update wimi
+e
+and wgoal
+e
+using piecewise formula-
+tions based on e and ¯
+SR.
+12:
+// 2. Data Collection (Hybrid MDP with Shadow En-
+gine)
+13:
+for step t = 1 to Thorizon do
+14:
+Get observation ot using UMR.
+15:
+Compute Model Action ∆aπ
+t ←πθ(ot) and re-
+trieve Expert Action ∆aE
+t .
+16:
+// Execute Shadow Engine Guidance
+17:
+∆aexec
+t
+←(1 −βt)∆aπ
+t + βt∆aE
+t .
+18:
+Apply Object Support Force Fsupport via PD con-
+troller (Kp,e, Kd,e).
+19:
+Execute ∆aexec
+t
+, observe st+1, and determine
+episodic success Csuc.
+20:
+Store transition (ot, ∆aexec
+t
+, Rimitation
+t
+, . . . ).
+21:
+end for
+22:
+// 3. Policy Update (Dynamic PPO Loss Synergy)
+23:
+Compute Total Reward Rt ←wimi
+e
+Rimitation
+t
++
+wgoal
+e
+Rgoal.
+24:
+Compute PPO loss Lt(θ) including Entropy and
+Bound Loss.
+25:
+Update policy parameters: θ ←θ −η∇θLt(θ).
+26: end for
+static morphological descriptor vh
+morph is removed on a rep-
+resentative task. Omitting vh
+morph leads to a significant per-
+formance degradation, with SR dropping from 93.00% to
+72.00%, while OE and PE increase by 9% and 62%, re-
+spectively.
+Furthermore, vh
+morph proves essential for training effi-
+ciency. UniBYD requires only 80.7M steps to reach an
+12
+
+
+Figure 12. For the same task, UniBYD can learn different manip-
+ulation policies based on the physical characteristics of different
+robotic hands.
+80% SR, whereas the ablied version requires 97.9M steps.
+This 18% speedup confirms that providing explicit morpho-
+logical information significantly reduces the complexity of
+policy search across diverse robotic embodiments.
+14.2. Hyperparameter Robustness Analysis
+To quantify robustness, we conduct a sensitivity sweep on
+critical parameters (SE Decay, Goal Reward Start Epoch,
+Entropy Decay) with a significant variation margin of
+±50% on a representative task. As shown in Tab. 6, even
+under extreme parameter deviations, the model maintains
+competitive performance (> 81%), demonstrating that it
+does not suffer from ”cliff-edge” brittleness. For param-
+eters such as SE Decay, performance remains consistently
+near-perfect (> 93%) across the entire variation range. This
+confirms that while reasonable curriculum scheduling aids
+training, the framework itself is robust to hyperparameter
+selection.
+Table 6. Hyperparameter Sensitivity Analysis.
+Hyperparameter
+Low Setting (-50%)
+Default Setting
+High Setting (+50%)
+SE Decay Horizon (Tdecay)
+93.59%
+99.83%
+96.17%
+Goal Reward Start Epoch
+81.83%
+98.17%
+86.50%
+Entropy Decay (Tentropy decay)
+84.50%
+98.50%
+98.17%
+14.3. Component Ablation Analysis
+To validate the contribution of each module, we conduct
+an ablation study on a representative task as shown in
+Tab. 7. Reward Annealing is critical. Removing it causes
+the sharpest performance drop (93.00% →75.44%), indi-
+cating its vital role in bridging imitation and exploration.
+Boundary and Entropy Losses are essential for precision.
+Removing them notably degrades both SR and pose accu-
+racy (higher OE/PE). The full UniBYD framework consis-
+Move the beaker from one location to another
+Heat the experimental substance in a beaker using an 
+alcohol lamp
+Figure 13. Experimental results of the 2-fingered robotic hand in
+simulation.
+tently outperforms all ablated variants, confirming the ne-
+cessity of each component.
+Table 7. Ablation study of different components on a representa-
+tive task.
+Method
+SR↑(%)
+OE↓(◦)
+PE↓(m)
+AS
+w/o Boundary Loss
+81.57
+7.50
+0.17
+8.97
+w/o Entropy Loss
+84.68
+5.67
+0.18
+8.34
+w/o Reward Annealing
+75.44
+5.80
+0.20
+7.65
+UniBYD
+93.00
+2.92
+0.10
+9.12
+14.4. Experimental Results in Simulation
+This subsection presents the experimental results in simu-
+lation. The results for the 2-fingered, 3-fingered, single 5-
+fingered, and dual 5-fingered hands are shown in Fig. 13,
+Fig. 14, Fig. 15, and Fig. 16, respectively.
+14.5. Real-World Experimental Results
+This subsection presents the experimental results in the real
+world. The results for the 2-fingered, 3-fingered, and 5-
+fingered hands are shown in Fig. 17, Fig. 18, and Fig. 19,
+respectively.
+13
+
+
+Place the pencil sharpener in the box
+Remove the pencil from the pencil sharpener
+Place the mouse in the box
+Place the donuts on a plate
+Figure 14. Experimental results of the 3-fingered robotic hand in
+simulation.
+Figure 15. Experimental results of the single 5-fingered robotic
+hand in simulation.
+14
+
+
+Figure 16. Experimental results of the dual 5-fingered robotic hand
+in simulation.
+Figure 17. Experimental results of the 2-fingered robotic hand in
+the real world.
+15
+
+
+Move the Jar from one location to another
+Move the pencil sharpener from one location to 
+another
+Move the apple from one location to another
+Move the beaker from one location to another
+Move the conical flask from one location to another
+Figure 18. Experimental results of the 3-fingered robotic hand in
+the real world.
+Figure 19. Experimental results of the 5-fingered robotic hand in
+the real world.
+16

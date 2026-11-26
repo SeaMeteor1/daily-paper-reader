@@ -1,0 +1,2381 @@
+Meituan-Robotics-0: A Vision-Language-Action Foundation
+Model for Desktop Manipulation
+Meituan Robotics Team∗
+ABSTRACT
+General-purpose desktop manipulation requires an embodied system that can acquire broad behavioral priors
+from heterogeneous data, transfer them across robot embodiments, recover from closed-loop execution errors,
+and preserve task-relevant state over extended horizons. We present Meituan-Robotics-0 (MR0), a vision-
+language-action foundation model and embodied-agent system for stationary-base desktop manipulation. Its
+data foundation combines 147 million vision-language samples with 15,060 hours of curated robot trajectories
+spanning 12 embodiments. MR0 converts this heterogeneous experience into executable control through a
+three-stage training recipe. Discrete action-token pre-training first aligns multimodal representations with robot
+behavior. Continuous flow-matching mid-training then transfers these priors to fine-grained cross-embodiment
+control. Real-world post-training further adapts the policy using successful demonstrations, human-gated
+corrections, and outcome-labeled autonomous rollouts. We introduce Rollback, a data collection mechanism
+that pairs replaced policy segments with human corrections for CFG-DAgger training. A unified end-effector
+interface supports learning across heterogeneous embodiments, while asynchronous action-chunk merging
+maintains smooth execution under variable inference latency. Because the low-level policy is reactive, an
+event-driven agent converts visual observations into persistent task events and invokes task-level reassessment
+only when task progress or feasibility changes. This separation preserves continuous motor control while
+enabling cross-task retrieval and conditional task resumption. Evaluated as a standalone policy, MR0 achieves
+93.6% success rate on RoboTwin 2.0 and 15.73% success rate on RoboDojo. Under matched HG-DAgger
+post-training, MR0 achieves higher average success rate and progress score than π0.5 across the three tasks. On
+Ethernet insertion, CFG-DAgger trained with Rollback data reaches 70% success and a progress score of 0.90
+without value learning or advantage labeling. Qualitative agent deployments further demonstrate cross-task
+event retrieval and recovery from temporarily unsatisfied task conditions. These results show that aligned
+heterogeneous data, real-world post-training, and event-level memory provide complementary foundations for
+transferable and long-horizon desktop manipulation.
+Ñ Homepage
+|
+§ GitHub
+|
+Æ Model
+|
+õ Data
+1
+Introduction
+Vision–language–action [1, 2, 3, 4, 5, 6, 7] models provide a general interface for mapping visual observations and
+language instructions to robot actions. Their increasing data and model scales have substantially broadened the
+range of manipulation behaviors that can be learned within a single policy. Deploying such policies on desktop
+manipulation, however, exposes several limitations that cannot be addressed by scaling the action model alone.
+Robot datasets [8, 9, 10, 11, 12, 13, 14] collected from different sources use inconsistent observation formats, action
+spaces, embodiments, and task descriptions, which prevents them from providing coherent supervision without careful
+alignment. Even after data alignment, policies trained primarily on successful demonstrations receive little guidance for
+recovering from the error states induced by their own closed-loop behavior. Moreover, a reactive policy conditioned
+only on the current observation cannot preserve task information once it leaves the observation window. A practical
+desktop-manipulation system must therefore connect aligned heterogeneous data, robust real-world policy learning, and
+persistent task-level memory.
+We present Meituan-Robotics-0 (MR0), a desktop-manipulation framework built around a large-scale data foundation,
+a generalist VLA policy, and an event-driven embodied agent, as summarized in Figure 1. The data foundation combines
+147 million vision–language samples with 15,060 hours of curated robot trajectories spanning 12 embodiments. The
+∗See Contributions for the full author list.
+arXiv:2611.08577v3  [cs.RO]  12 Nov 2026
+
+
+Meituan-Robotics-0
+Vision-Language Data （147,000,000 Samples）
+Robotic Manipulation Data（15,000 Hours）
+50% Licensed Real
+VQA Data Curation
+Action
+Canonicalization
+3-Stage Training Recipe
+Meituan-Robotics-0
+Consistency Filter
+Noise Removal
+Coordinate
+Alignment
+Embodied Agent System
+Stage 1: Pretraining
+Stage 2: Mid-training
+Stage 3: Real-World Policy Optimization
+Real Robot Deployment（Diverse Tasks）
+Model Performance
+A Vision-Language-Action Foundation Model
+General VQA
+Q: What is the color 
+and material of the 
+furniture?
+A:The seating 
+furniture is ..., 
+Grounding
+Q: Please detect all 
+objects in the image.
+A: {”couch": [568 
+473 774 769]"}
+Spatial
+Q: Where is the 
+striped … relative to 
+the white bowl?
+A: …the right of the 
+white bowl.
+Affordance
+Affordance
+Q: Where should the 
+robot interact … the 
+kettle?
+A:{”Point_2d": ”
+[710, 611]"}
+Planning
+Q: After lifting the 
+spatula, what‘s the 
+most…?
+A: Move the spatula 
+towards…
+12 Embodiments
+VLM Backbone
+Multi View Image
+Language Instruction
+Proprioception
+“ Place the brown bread slices 
+from the woven basket into 
+the pink toaster. ”
+Large Scale Data Foundation
+MMDiT+JiT Head
+21.5% RoboDesk
+28.5% Open Sim
+Task Goal
+Put the cup
+into the bowls.
+Planner
+Task Decomposition
+Skill Queue
+Executable Skill
+Policy
+MR0-VLA
+Robot
+Executable
+Event Memory ｜Task Retrieval ｜Conditional Recovery
+Monitor
+Memory
+Observation &
+Evaluation
+Event Memory
+Discrete LLM Head
+Language Tokens
+FAST Tokens
+Stage 1
+Stage 2
+Noise Tokens
+Unified multi-embodiment action
+MM Tokens
+VLM
+Co-training
+FAST Action
+Training
+VLM
+Co-Training
+Continuous
+Action
+Training
+SFT
+Roll-
+Back
+CFG-
+DAgger
+Letter-Block Placement
+Garment Folding
+Network Cable Insertion
+Agentic System
+Event Memory and Conditional Recovery
+Figure 1: Overview of Meituan-Robotics-0. The framework integrates large-scale multimodal data, three-stage VLA
+training, an event-driven embodied-agent system, and real-robot deployment. The RoboDojo panel orders the displayed
+VLA models in ascending order of average success rate.
+vision–language corpus provides general visual-semantic knowledge together with embodied supervision for grounding,
+scene understanding, affordance prediction, and task reasoning. The robot corpus comprises three complementary
+components: RoboDesk, a curated collection of open-source real-robot trajectories totaling 3,235 hours; 7,530 hours of
+licensed real-robot data spanning seven robot configurations; and 4,295 hours of open simulation data. The complete
+corpus is processed through temporal and visual filtering, kinematic-consistency checks, cross-embodiment action
+canonicalization, and hierarchical task alignment. RoboDesk and the simulation data broaden task, environment, and
+embodiment coverage, while the licensed real-robot data provide task-focused manipulation experience.
+Building on this aligned data foundation, the MR0 policy follows a three-stage training recipe that separates the
+acquisition of broad action priors from continuous-control learning and real-world adaptation. A shared multimodal
+backbone is first paired with a discrete action head and pre-trained jointly on vision-language data and tokenized
+robot actions. Continuous mid-training then introduces an MMDiT [15] action head and optimizes flow matching over
+a unified end-effector representation, transferring the pre-trained features to fine-grained control across single-arm
+and bimanual embodiments. Real-world post-training [16, 17, 18] starts with supervised finetuning on successful
+demonstrations. HG-DAgger [19] adds human corrections from policy-induced error states, while RECAP (RL with
+Experience and Corrections via Advantage-conditioned Policies) [20] derives advantage labels from outcome-labeled
+autonomous rollouts. We further introduce Rollback, a collection mechanism that returns to a historical anchor to
+collect a human replacement while retaining the original policy segment. These paired segments supply direct positive
+and negative labels to CFG-DAgger and remove the need for value learning and advantage labeling. At deployment,
+asynchronous action-chunk merging integrates new predictions with commands already being executed, maintaining
+smooth control without blocking on policy inference.
+The VLA policy does not explicitly maintain task state across subtasks. MR0 therefore adds an event-driven embodied
+agent [21, 22, 23] to retain relevant context, track task progress, and revise plans as conditions change. A Monitor
+summarizes short visual windows into task-relevant events, and a Memory Manager consolidates these events into a
+persistent record of task progress and environmental conditions. The Planner updates the active subtask only when a
+new event changes task progress, reveals a failure, or alters whether the current objective is feasible. Motor execution
+consequently remains with the VLA policy, while the Planner is invoked only when task-level reassessment is needed.
+2
+
+
+Meituan-Robotics-0
+Please detect all objects in the 
+image.
+Q:
+A: {”couch": [568 473 774 769]"}
+…
+How many plates are there 
+in the image?
+Q:
+A: 4
+What is the material of the 
+furniture in the living room?
+Q:
+A: The seating furniture is ..., 
+the built-in bench…
+Where is the striped napkin 
+relative to the white bowl?
+Q:
+A: The striped napkin is 
+positioned to the right of …
+Please detect all objects in 
+the image.
+Q:
+A: {”fork": ”[259, 585, 608, 
+952]"}…
+Where should the robot interact 
+next to pick up the kettle?
+Q:
+A: {”Point_2d": ”[710, 611]"}
+…
+After lift the spatula, what's 
+the most probable next event?
+Q:
+A: Move the spatula towards 
+the upper middle of the table.
+The robot is performing the 
+task …, describe the image
+in detail, focus on …
+Q:
+A: The image shows…
+General Vision-Language Data
+Embodied Vision-Language Data
+Visual Grounding
+Counting
+General VQA
+Spatial Understanding
+Visual Grounding
+Affordance Grounding
+Scene Captioning
+Task Planning
+Distribution of Vision-Language Data
+General Data 78%
+Embodied Data 22%
+Visual Grounding & Counting
+General VQA
+Visual Grounding
+Affordance Grounding
+Scene Captioning
+Task Planning
+Vision-
+Language 
+Data
+Spatial Understanding
+Figure 2: Vision-language dataset. The corpus contains approximately 147 million samples before training-time
+resampling, comprising 78% general and 22% embodied vision-language data. Representative examples are shown on
+the right.
+This separation enables the system to retrieve information acquired in earlier tasks, suspend an objective whose
+prerequisites are temporarily unavailable, and resume it after the required conditions are restored.
+We evaluate the policy and agent under protocols matched to their respective roles. MR0 achieves 93.6% average
+success on RoboTwin 2.0 [24]. On RoboDojo [25], the history-augmented policy achieves an average success rate of
+15.73%. With approximately 13.6k hours of embodied training data, MR0 achieves competitive performance across the
+evaluated manipulation capabilities. Human-intervention data improve both MR0 and π0.5 across three real-robot tasks.
+Under matched HG-DAgger post-training, MR0 achieves higher average success rate and progress score than π0.5
+across the three tasks. In a separate comparison on Ethernet insertion, MR0 trained with CFG-DAgger reaches 70%
+success and a progress score of 0.90, outperforming HG-DAgger and RECAP on the same Rollback data. Qualitative
+agent deployments further illustrate cross-task event retrieval and task resumption following temporary interruptions.
+Together, these evaluations show how aligned data, continuous policy learning, real-world post-training, and event-level
+memory address complementary requirements of general-purpose desktop manipulation.
+2
+Data Curation
+Table 1: Ablation of embodied vision–language supervision in
+the CALVIN ABC→D setting. Bold indicates the highest Avg.
+Len. within each capability family.
+Capability
+family
+Training
+setting
+Avg.
+Len.
+Task
+1
+Task
+2
+Task
+3
+Task
+4
+Task
+5
+Baseline
+–
+3.832 91.0% 83.0% 76.2% 70.2% 62.8%
+Spatial
+localization
++ 2D Grounding
+3.941 91.3% 83.7% 78.1% 73.2% 67.8%
++ 2D Pointing
+3.806 90.8% 81.8% 74.8% 69.9% 63.3%
++ 3D Grounding
+4.037 92.4% 85.3% 79.6% 75.7% 70.7%
+Action-related
+understanding
++ 2D Target-Affordance
+Grounding
+4.102 93.3% 87.9% 82.5% 76.4% 70.1%
++ 3D Target-Affordance
+Grounding
+4.098 93.7% 89.9% 81.2% 73.9% 71.1%
++ 2D Trajectory
+3.987 92.0% 85.0% 79.2% 74.0% 68.5%
+Semantic and
+task reasoning
++ Subtask Prediction
+3.851 90.0% 82.2% 76.2% 71.7% 65.0%
++ Scene Captioning
+4.082 93.1% 87.1% 81.4% 76.2% 70.4%
+To equip MR0 with both broad visual-semantic understand-
+ing and diverse cross-embodiment manipulation experi-
+ence, we independently curate two complementary data re-
+sources: 147 million vision–language samples and 15,060
+hours of robot trajectories spanning 12 embodiments. The
+vision–language corpus provides supervision for general
+perception and embodied reasoning. Constructed through
+a separate pipeline, the robot corpus combines RoboDesk,
+licensed real-robot data, and open simulation data for ac-
+tion learning across heterogeneous hardware. We describe
+the two resources in Secs. 2.1 and 2.2, respectively.
+2.1
+Vision-Language Data
+Visual reasoning for manipulation requires both broad per-
+ceptual knowledge and embodied understanding grounded
+in robot interaction. As shown in Figure 2, we organize
+the 147M vision-language corpus into two complementary
+subsets. General-purpose data account for 78% and provide supervision for visual question answering, spatial under-
+standing, visual grounding, and counting. The remaining 22% consist of embodied data for scene captioning, task
+planning, visual grounding, and affordance grounding. Affordance grounding jointly localizes the manipulated object
+3
+
+
+Meituan-Robotics-0
+with a bounding box and identifies a 2D interaction point at which the robot should act. These corpus statistics are
+computed before training-time resampling.
+For the embodied VQA component, we augment the collected open-source datasets with a large-scale in-house corpus
+derived from real-robot trajectories. To determine which supervision types should be prioritized in this corpus, we
+conduct controlled CALVIN ABC-to-D ablations over eight candidate tasks and use the results to guide subsequent
+large-scale data construction, as shown in Table 1. The candidates span three capability families: spatial localization,
+action-related understanding, and semantic and task reasoning. All variants use the same StarVLA [26] configuration,
+are trained on environments A, B, and C, and are evaluated on environment D. Table 1 reports success rates for
+completing sequences of 1 to 5 consecutive subtasks, along with the average completed sequence length. The results
+support including 2D target-affordance grounding and scene captioning as the action-related and semantic supervision
+types, respectively. For spatial localization, we choose 2D grounding because it avoids costly geometric annotations and
+scales more readily than 3D grounding. Taken together, the empirical results and practical annotation considerations
+lead us to focus our in-house data expansion on three types: 2D target-affordance grounding, scene captioning, and 2D
+grounding.
+To ensure consistent and scalable data construction, we develop task-specific annotation pipelines for the selected
+supervision types. For 2D grounding, we apply Set-of-Mark prompting [27]: the Segment Anything Model (SAM) [28]
+proposes and marks candidate regions, and a vision-language model assigns an object identity to each region to form
+grounding question–answer pairs. For 2D affordance grounding, we obtain the target bounding box and interaction
+point from the key interaction frame of each action phase and propagate both annotations to earlier frames within that
+phase. For scene captioning, a vision-language model conditions on the robot observation and task context to describe
+task-relevant objects, spatial relations, gripper state, and execution progress.
+2.2
+Robotic Data
+(a) Embodiment Composition
+(b) Data Source
+Figure 3: Composition of the robot corpus.
+The 15,060-hour corpus spans 12 embodiments
+and comprises RoboDesk, a curated collection
+of open-source real-robot trajectories totaling
+3,235 hours (21.5%); 7,530 hours (50.0%) of li-
+censed real-robot data; and 4,295 hours (28.5%)
+of open simulation data.
+To provide diverse action supervision for robot control, we assem-
+ble 15,060 hours of tabletop trajectories spanning 12 embodiments.
+We restrict the corpus to stationary-base manipulation and exclude
+segments containing base motion. As summarized in Figure 3, the
+corpus consists of RoboDesk (3,235 hours; 21.5%), licensed real-
+robot data (7,530 hours; 50.0%), and open simulation data (4,295
+hours; 28.5%). RoboDesk denotes the six open-source real-world
+datasets retained after curation, which are listed together with the
+simulation sources in Table 2.
+2.2.1
+Data Curation Pipeline.
+Raw trajectories contain idle boundaries, inconsistent kinematic
+records, visual defects, embodiment-specific action conventions, and
+uneven language annotations. We address these issues with three fil-
+tering stages (S1–S3) followed by two alignment stages (A1–A2). S1
+removes static prefixes and suffixes, S2 rejects inconsistent joint–EEF
+recordings, and S3 removes corrupted visual segments. A1 canonical-
+izes actions across embodiments, while A2 aligns multi-granularity
+task annotations with the retained trajectories. Figure 4 summarizes
+the pipeline.
+Static-boundary filtering. Teleoperated recordings often begin be-
+fore manipulation and continue through task completion or reset,
+producing long intervals of near-zero motion at episode boundaries.
+Let qt ∈RJ be the recorded joint vector and ∆q(j)
+t
+= q(j)
+t
+−q(j)
+t−1. A
+time index is considered static only when every joint remains below
+a motion threshold for L consecutive steps:
+Static(t) ⇐⇒
+∆q(j)
+t+ℓ
+ < τstat,
+∀j ∈{1, . . . , J},
+∀ℓ∈{0, . . . , L −1}.
+(1)
+The persistence window prevents brief low-speed motions from being
+classified as idle. We trim only static runs connected to an episode
+4
+
+
+Meituan-Robotics-0
+S1. Static Frame Filtering
+A1. Cross-Embodiment Action Canonicalization
+S3. Video Defect Filtering
+global_task
+put apple into purple bowl
+scene
+skill
+curr_subtask
+tabletop with apple, blue 
+cup and purple bowl 
+pick-and-place
+① ② ③
+Raw Video
+①
+② 
+A2. Hierarchical Task Annotation
+③
+Pick up apple
+Place bowl in center
+Put apple into bowl
+Corrupted Videos
+Static Prefix 
+Joint Position Trajectories
+Static Suffix
+Joint-wise Absolute Differences
+Δ𝑞!
+" <  𝜏
+Δ𝑞!
+" <  𝜏
+• Repeated Bias  • Wasted Chunks  • Inconsistent Boundaries
+Static prefix/suffix → Biased action distribution
+Task Execution
+Masked
+Threshold τ + Persistence L → Boundary Mask
+Masked
+Retained
+𝑆𝑡𝑎𝑡𝑖𝑐𝑡⟺Δ𝑞!#ℓ
+"
+= 𝑞!#ℓ
+"
+−𝑞!#ℓ%&
+"
+< 𝜏, ∀𝑗, ℓ= 0, … , 𝐿−1
+Blurred Video
+Static Segment
+Black Frames
+Joint–EEF mismatch → Noisy action supervision
+
+	
+
+
+
+	
+
+
+
+
+
+	
+
+
+
+EEF–FK discrepancy > εₖᵢₙ → Filtered
+S2. Kinematic Consistency Filtering
+!𝑝6 =
+FK7 𝑞6
+𝑒6 =
+𝑝6 −!𝑝6 8
+Decode failure
+Sharpness < τ 
+Repeated for L 
+Mean intensity < τ
+Video defects → Visual–action misalignment → Degraded VLA learning
+Body Frame
+Cross-Embodiment Frame Alignment
+Body Frame
+End Effector Frame
+Aligned body/gripper frames → Consistent action semantics across embodiments
+Shoulder-Centered Absolute EEF Position
+Shoulder-centered absolute EEF positions → Reduced workspace offsets while preserving metric scale
+Hierarchical task annotations → Temporally grounded, stage-aware VLA supervision
+FK(Joint)
+EEF
+Figure 4: Robot trajectory curation and alignment pipeline. S1–S3 remove static boundaries, kinematic inconsisten-
+cies, and video defects; A1 canonicalizes actions across embodiments, and A2 aligns multi-granularity task annotations
+with the retained trajectories.
+boundary, preserving deliberate pauses during task execution. The corresponding video, state, and action intervals are
+removed jointly to maintain temporal synchronization.
+Kinematic-consistency filtering. For each embodiment, we reconstruct the end-effector position from the recorded
+joints using the corresponding URDF and compare it with the logged EEF position in a common frame. Samples
+exceeding an embodiment-specific error threshold are masked, and trajectories with persistent violations are discarded.
+Table 2: Open-source datasets retained after curation.
+Data source
+Hours Share
+RoboDesk (real-world): 3,235 h (21.5%)
+AgiBotWorld-Beta [8]
+2,174 14.4%
+Galaxea Open-World [9]
+333
+2.2%
+RoboCOIN [12]
+311
+2.1%
+LET [29]
+172
+1.1%
+DROID [10]
+164
+1.1%
+RoboMIND [30]
+81
+0.5%
+Simulation: 4,295 h (28.5%)
+InternData-A1 [11]
+3,967 26.3%
+Genie Sim 3.0 [31]
+213
+1.4%
+RoboTwin 2.0 [24]
+115
+0.8%
+Open-source total: 7,530 h (50%)
+Video-defect filtering. We detect decoding failures, blur, frozen seg-
+ments, and black frames. Corrupted intervals are removed from all
+synchronized streams, while episodes with persistent defects are dis-
+carded. Detection thresholds are calibrated separately by embodiment
+and data source.
+Cross-embodiment action canonicalization. To make action chan-
+nels physically consistent across embodiments, we define common
+right-handed body and gripper frames. The body axes point forward,
+left, and up. At the open-gripper zero pose, +z points from the
+mounting flange to the gripper tip, +y from the right finger to the left,
+and +x completes the frame. EEF poses are expressed in a canonical
+shoulder-centered frame, denoted SC. The frame is shared by both
+arms of a bimanual robot; for a single-arm embodiment without an
+explicit shoulder center, the arm-root frame is used instead. For arm i,
+the action contains the absolute EEF position SCp(i)
+EEF,t ∈R3, a con-
+tinuous 6D orientation representation r(i)
+t
+∈R6 [32], and normalized
+gripper closure g(i)
+t
+∈[0, 1], where 0 and 1 denote fully open and fully closed, respectively:
+a(i)
+t
+=
+h
+SCp(i)
+EEF,t
+
+,
+
+r(i)
+t
+
+, g(i)
+t
+i⊤
+∈R10,
+at =
+h
+a(L)
+t
+
+,
+
+a(R)
+t
+i⊤
+∈R20.
+(2)
+Single-arm samples use the 10-dimensional form. Let B be the source body frame, SCTB the embodiment-specific rigid
+transform from B to SC, and BT (i)
+EEF,t the source EEF target pose. Canonicalization is
+SCT (i)
+EEF,t = SCTB
+BT (i)
+EEF,t,
+r(i)
+t
+= ρ6D
+
+SCR(i)
+EEF,t
+
+.
+(3)
+5
+
+
+Meituan-Robotics-0
+The rotation and translation blocks of SCT (i)
+EEF,t provide the canonical orientation and metric absolute position target,
+respectively; the translation is not a temporal displacement.
+Hierarchical task annotation. Each episode receives an overall goal in global_task, while curr_subtask labels
+the interval in which each execution stage is active. The auxiliary scene field describes task-relevant objects and their
+spatial arrangement, and skill names the manipulation primitive. The resulting corpus pairs synchronized observations
+and canonical EEF actions with episode-level goals, time-aligned subtask labels, and scene and skill context, supporting
+mixed-granularity instruction conditioning during training.
+3
+Meituan-Robotics-0
+Meituan-Robotics-0 aims to transfer broad priors learned from heterogeneous multimodal data to precise and robust
+real-robot control. This transition requires the model to preserve its visual-semantic representations while adapting
+its action interface and supervision to continuous cross-embodiment control and policy-induced error states. We first
+describe the policy architecture in Section 3.1 and then present the three-stage training pipeline in Section 3.2: discrete
+multimodal pre-training, continuous cross-embodiment mid-training, and real-world policy optimization.
+3.1
+Policy Architecture
+……
+Projected VLM
+Hidden States
+Projected VLM
+Proprio State Token
+⨁
+…
+Joint Self-Attention
+MMDiT Blocks x N
+Feed-Forward Network
+AdaLN
+……
+Noisy Action Chunk
+⨁
+……
+Output Head
+……
+Target Velocity
+MSE Loss
+Flow
+Timestep
+MMDiT Action Head with JiT Parameters
+Figure 5: Continuous action head. MMDiT
+denoises action chunks through flow matching.
+MR0 formulates low-level desktop manipulation as reactive action-
+chunk prediction from the current observation. At this level, the
+policy maintains no temporal history and conditions only on the inputs
+available at the current decision step. Given multi-view observations
+ot = {I(c)
+t
+}C
+c=1, language instruction l, and proprioceptive state st at
+time t, MR0 predicts an H-step action chunk
+πθ(at:t+H−1 | ot, l, st) .
+(4)
+Following the common VLA design [4, 33, 34], MR0 realizes this
+mapping with a shared vision–language backbone and two stage-
+specific output heads, as summarized in Figure 1. The shared back-
+bone is initialized from Qwen3.5-4B [35] and remains trainable
+throughout the pipeline. During pre-training, FAST [36] applies
+a discrete cosine transform along the temporal axis and compresses
+the resulting coefficients with byte-pair encoding. The encoded action
+chunks share the backbone vocabulary and are predicted by the same
+autoregressive token head used for text.
+For mid-training and all downstream stages, MR0 replaces the dis-
+crete interface with a continuous MMDiT action head [15, 33]. As
+illustrated in Figure 5, the head jointly processes an observation
+stream containing projected backbone features and a proprioceptive-state token, and an action stream containing a
+noisy action chunk. Joint self-attention exchanges information between the two streams, while the flow timestep modu-
+lates block normalization through AdaLN. The state token remains on the observation side, providing condition-side
+proprioceptive context throughout action generation.
+3.2
+Progressive Training
+MR0 is trained progressively to separate three sources of difficulty: heterogeneous multimodal learning, continuous
+cross-embodiment control, and recovery from policy-induced errors.
+3.2.1
+Discrete Multimodal Pre-Training
+The shared token interface allows robot trajectories and vision–language samples to use the same autoregressive objective
+without a separate action decoder. FAST action tokens occupy a dedicated vocabulary block whose embeddings are
+initialized with the mean of the original embedding table. The remaining backbone parameters are inherited and trained
+end-to-end, and all camera views share the native vision encoder and aspect-preserving smart-resize policy.
+Each optimization step draws one batch from the VLA action pool and one from the vision–language pool. The joint
+objective is
+Lpre = λvlaLaction + λvlmLvqa,
+λvla = 1.0,
+λvlm = 0.1,
+(5)
+6
+
+
+Meituan-Robotics-0
+where both terms are next-token cross-entropy over their respective targets. The action loss grounds the backbone in
+robot behavior, while the VQA loss preserves perceptual and semantic supervision. We train the backbone and extended
+action-token embeddings end to end for 500,000 steps on 256 GPUs using AdamW with cosine learning-rate decay.
+The resulting checkpoint initializes mid-training. Because FAST tokenization [36] introduces action-reconstruction
+error, downstream stages discard the token interface in favor of continuous prediction.
+3.2.2
+Continuous Cross-Embodiment Mid-Training
+The second stage retains the token-pre-trained backbone and initializes the MMDiT action head [15] from scratch. This
+transfers the visual-semantic and behavioral representation learned during pre-training while replacing quantized action
+generation with continuous control.
+Continuous action objective. We train the MMDiT head with the JiT clean-sample parameterization [37]. Following
+flow matching [38], a clean chunk a0 is perturbed into a noisy sample aτ, from which the head predicts ˆa0 rather than
+velocity directly. Prediction and target are converted to velocity form using a shared clamped denominator dτ with
+tϵ = 0.05, and the model is optimized by mean squared error.
+Unified action representation. To apply the continuous objective across heterogeneous embodiments, MR0 maps
+each native action to the canonical end-effector convention defined in Section 2.2. Each action chunk has a fixed width
+dmax = 20, corresponding to two 10-dimensional end-effector actions, while a binary mask m ∈{0, 1}dmax identifies
+the valid channels for each embodiment:
+Lmasked =
+H
+X
+h=1
+dmax
+X
+j=1
+mjℓh,j
+.
+H
+dmax
+X
+j=1
+mj,
+(6)
+where ℓh,j is the element-wise JiT loss. Padded channels produce no gradient. For a downstream embodiment with a
+different action width, only the dimension-dependent projections are reinitialized.
+In this stage, we train on 128 GPUs using AdamW with cosine learning-rate decay, applying a lower learning rate to the
+transferred backbone and a higher rate to the newly initialized action head. The training mixture starts from the data
+pools summarized in Figure 3. We rebalance it by removing a 340-million-frame synthetic sub-corpus, retaining 10%
+of each of the two largest general-VQA sources, and sampling VLA datasets in proportion to the square root of their
+frame counts. To expose the model to different levels of linguistic abstraction, we sample the local subtask label or
+the episode-level goal with equal probability when both are available and otherwise use the available annotation. This
+langmix strategy pairs the same actions with both fine-grained and task-level instructions.
+3.2.3
+Real-World Policy Optimization
+We first fine-tune the mid-training checkpoint πmid on successful demonstrations to obtain an initial task policy. To
+address policy-induced distribution shift [39], we collect human-in-the-loop (HIL) corrections and compare three
+post-training algorithms. Human-gated DAgger [19] imitates demonstrations and corrections; RECAP [20] uses
+trajectory outcomes to learn advantage-conditioned behavior; and CFG-DAgger uses positive and negative segments
+supplied by Rollback. Each collection round adds to the cumulative dataset, and each policy is trained anew from πmid.
+All three methods execute action chunks through the asynchronous controller in Section 4.1.
+Human-gated DAgger. The policy controls the robot until an operator intervenes to correct a stall, error, or unsafe
+motion. Only human-controlled segments are retained as corrective supervision. Demonstrations cover the task
+procedure, while HIL corrections add recovery behavior in states encountered by the policy. Details are in Section C.1.
+Rollback data collection. We introduce Rollback to pair replaced policy segments with human corrections from a
+shared anchor. An operator pauses execution near failure, selects an earlier recorded state, returns the robot to it using
+action history, and supplies a corrective continuation. In Figure 6, each anchor (t1 or t2) pairs a replaced segment
+τ −with its human replacement τ +. Alongside demonstrations and human corrections, Rollback retains suboptimal
+segments to inform value learning and guide policy updates.
+RECAP policy optimization. RECAP trains its value model on both successful and failed trajectories reconstructed
+from Rollback episodes. A trajectory ending with a replaced policy segment τ −is assigned a failure label. Policy
+training uses only successful trajectories.2 The learned value model provides N-step advantages for assigning positive
+(I = 1) or base (I = ∅) conditions to policy-training chunks. Both branches share the flow-matching loss. At inference,
+action-space classifier-free guidance (CFG) combines base and positive predictions generated from the same initial
+noise. Details are in Section C.2.
+2We intentionally exclude failed trajectories from policy training because this yielded better performance in our setting.
+7
+
+
+Meituan-Robotics-0
+Figure 6: Rollback data collection. Dots mark the rollback anchors t1 and t2. Wavy blue branches (1) and (2) are
+replaced policy segments (τ −, I = 0); solid orange HIL segments are their human replacements (τ +, I = 1), with
+corrected execution continuing toward (3). These conditions are used by CFG-DAgger. Gray segments denote other
+autonomous execution.
+Current buffer
+Incoming chunk
+Merged buffer
+⋯
+⋯
+×
+×
+×
+×
+⋯
+⋯
+Current action
+k executed steps since the 
+previous update
+old: 1 →0    |    new: 0 →1
+1
+Drop stale prefix
+2
+Fused 𝐿overlapping steps
+3
+Append new suffix
+𝑑 = 𝑚𝑖𝑛(𝑘, 𝐾!"#)
+𝐿 = 𝑚𝑖𝑛(|𝑄$!%|, |𝑄&'([𝑑: ]|)
+After merge:  k ←0
+𝑄!"#
+𝑄$%&
+Figure 7: Asynchronous action-chunk merging. Predictions made stale during inference are removed from the chunk;
+the aligned overlap is blended with the residual buffer, and the suffix is appended for continuous execution.
+CFG-DAgger conditional policy training. CFG-DAgger directly trains the policy on demonstrations and τ + as
+positive data and τ −as negative data. A shared policy learns positive (I = 1), negative (I = 0), and unconditional
+(I = ∅) branches with the same flow-matching loss. At inference, CFG combines positive and negative predictions to
+favor corrective behavior and steer away from replaced actions. Details are in Section C.3.
+By obtaining labels directly through Rollback collection, CFG-DAgger avoids value learning and advantage labeling,
+while outperforming RECAP in our real-robot evaluation (Section 5.2.2).
+4
+Embodied Manipulation System
+MR0 augments the trained VLA policy with an inference-time system for continuous control and long-horizon task
+execution. An asynchronous execution layer aligns variable-latency action predictions with robot control, as detailed
+in Section 4.1. At a higher level, an event-driven agent retains task-relevant state beyond the policy’s current observation.
+As summarized in Figure 8, motor control remains with the VLA policy, and high-level planning is activated only by
+events that alter task progress or feasibility.
+4.1
+Asynchronous Policy Execution
+Action chunks amortize policy inference over multiple control steps, but inference latency requires coordinating
+chunk generation with ongoing execution [40, 41, 42]. Our EVA-Client based stack [43] keeps control continuous by
+decoupling the two: a background policy thread predicts a chunk from the latest observation at target rate fπ, while the
+control loop consumes one buffered command at rate fc.
+This concurrency creates a temporal offset. By the time a new chunk Qnew arrives, the controller has consumed k
+commands since the previous successful update. We denote the unexecuted remainder of the current buffer by Qold.
+8
+
+
+Meituan-Robotics-0
+High-Level Goal
+Task Scene
+Robot Skill Library
+Open
+Put every object on the 
+table in to the bottom 
+drawer, then close it
+Pick
+Close
+……
+…
+Rolling Frame Buffer
+t
+t −1
+t −2
+Visual Observation
+Vision-Language-
+Action Policy
+Open bottom 
+drawer
+Robot / Simulator
+Current
+Observation
+Robot Action
+Observation
+Sequence
+Monitor
+Monitor Loop · ≈ 2 Hz
+Summarize progress
+and visual changes
+Structured
+Captions
+Memory & Event
+Memory Track
+Scene
+Summary
+Caption
+History
+Event Track
+New /
+Extend Event
+Key Visual
+Evidence
+Planner
+CONTINUE
+Keep current subtask
+ADVANCE
+Mark current completed;
+activate next
+REVISE
+Regenerate remaining
+queue
+Task State
+COMPLETED
+None yet
+ACTIVE
+Open bottom drawer
+REMAINING
+Keys →Screwdriver →
+Pen →Pliers →Close
+TASK
+CONTEXT
+ASYNC 
+AGENT 
+LOOP
+HIGH-
+FREQUENCY 
+ACTION 
+EXECUTION
+Caption: 
+Robot arm 
+approach 
+the drawer
+Triggered
+Event
+Plans
+Task objective and scene
+Active Subtask
+New Visual Observation
+Retrieve
+Event
+Figure 8: Event-driven embodied-agent framework. The asynchronous agent loop converts visual observations into
+structured captions, consolidates them into events, and triggers the Planner when task-state reassessment is required;
+the active subtask conditions the high-frequency VLA control loop.
+Following the temporal chunk-wise smoothing of χ0 [44], we align the two sequences as shown in Figure 7. We first
+drop d = min(k, Klat) leading commands and compute the remaining overlap:
+¯Qnew = Qnew[d:],
+L = min
+ |Qold|, | ¯Qnew|
+
+.
+(7)
+Here Klat is a step-domain cap, set as Klat ≈⌈fcˆτe2e⌉, where ˆτe2e is the delay from observation capture to insertion of
+the processed chunk into the buffer, including communication, policy inference, post-processing, and inverse kinematics.
+For each position i = 0, . . . , L −1 in the overlapping region, the updated command is
+qfused
+i
+= (1 −αi)qold
+i
++ αi¯qnew
+i
+,
+αi =
+i
+max(L −1, 1).
+(8)
+The unused new suffix fills the future buffer, and k is reset after a successful update.
+The runtime parameters fc, fπ, and Klat jointly govern buffer consumption and responsiveness. When the inference
+pipeline meets its target rate, roughly fc/fπ commands are consumed between updates. If policy inference and
+sequential inverse kinematics together take longer than 1/fπ, the actual update rate falls below fπ, and more buffered
+commands are consumed before the next update. Updates that arrive too slowly can exhaust the buffer, whereas overly
+frequent updates repeatedly restart blending from the current buffer and can slow the physical response. The cap
+Klat balances removal of stale commands against the remaining executable horizon. The complete procedure and
+deployment settings are provided in Section B.
+4.2
+Event-Driven Embodied Agent
+The chunk merger stabilizes local policy execution but does not preserve information across subtasks or determine
+when a high-level plan should change. The embodied agent addresses these requirements through explicit task state,
+persistent event memory, and event-triggered planning.
+Task decomposition and execution. Given a user goal g, initial scene context s0, and skill library S, the Planner first
+produces an ordered sequence of executable subtasks Q(0) = Pplan(g, s0, S). During execution, the agent maintains
+the task state Xt = (qt, Rt), where qt is the active subtask and Rt is the remaining sequence. The active subtask serves
+as the language instruction to the low-level policy, which generates actions as πVLA(ot, qt). It remains active until the
+agent observes sufficient evidence of completion, failure, or a change in task feasibility. This state representation lets
+the VLA policy execute continuously while the Planner operates only at task-level transition points.
+9
+
+
+Meituan-Robotics-0
+Visual monitoring. The Monitor tracks local execution by mapping a short observation window Wt and the active
+subtask to a structured caption Ct = M(Wt, qt). Conditioning on qt focuses the description on relevant objects, spatial
+relations, interactions, and execution progress. The temporal window captures changes such as grasping, placement, or
+object removal that may be ambiguous in a single frame. The Monitor does not decide whether a subtask has finished or
+modify Xt; it only produces visually grounded evidence for event construction.
+Event construction and memory. Monitor outputs enter a caption buffer in observation-time order. At each memory
+update, Bt contains the captions that have not yet been processed, and the persistent history H<t stores ordered event
+summaries together with their supporting keyframes. The Memory Manager converts the new captions into an event
+and determines whether that event warrants high-level reassessment:
+(Et, zt) = G(Bt, H<t, Xt, g),
+zt ∈{0, 1}.
+(9)
+When the new evidence continues the same interaction, it is merged into the latest memory entry; a distinct state change
+creates a new entry. For each event, the keyframe set Kt is obtained by uniformly sampling frames from the observation
+windows associated with its captions. Memory insertion is independent of planner activation: routine observations can
+be recorded with zt = 0, while subtask completion, execution failure, and changes in task preconditions set zt = 1.
+This separation preserves information that may become relevant to a later instruction without repeatedly invoking the
+Planner over an unchanged state.
+Event-triggered planning. The Planner performs two related operations. Pplan constructs or revises a subtask sequence
+from the goal, scene context, task state, and available skills. When zt = 1, Pdecide instead evaluates the current event,
+its keyframes, relevant entries retrieved from H<t, the task state Xt, and the user goal g. The resulting decision may
+preserve the active subtask, advance to the next one, wait for a temporarily unsatisfied precondition, or invoke Pplan to
+regenerate the remaining sequence. The Planner judges progress from the observed task state rather than requiring the
+complete action trajectory. When the event or its visual evidence is inconclusive, it leaves Xt unchanged.
+Asynchronous coordination. The Monitor, Memory Manager, Planner, and VLA policy operate at different rates.
+Multiple Monitor requests may run concurrently, so their outputs can arrive out of order; captions are therefore
+committed according to observation time before event construction. Planner inference does not pause monitoring or
+low-level execution, and captions produced during planning remain buffered for the next memory update. Task-state
+mutations are serialized after each Planner decision, preventing concurrent decisions from modifying the same execution
+state. The system consequently preserves continuous perception and control while keeping event memory and task
+transitions temporally consistent.
+5
+Experiments
+5.1
+Simulation
+Table 3: RoboTwin 2.0 results. Success rate (%)
+over 50 tasks and 100 episodes per task in each split.
+Overall is the mean of Clean and Randomized; “–”
+denotes an unreported result. Bold and underlining
+indicate the best and second-best results.
+Method
+Clean Random. Overall
+π0 [33]
+65.9
+58.4
+62.2
+π0.5 [45]
+82.7
+76.8
+79.8
+X-VLA [7]
+72.8
+72.8
+72.8
+ABot-M0 [46]
+86.1
+85.1
+85.6
+Qwen-VLA-Instruct [4]
+86.1
+87.2
+86.7
+LingBot-VLA [6]
+86.5
+85.3
+85.9
+Motus [47]
+88.7
+87.0
+87.8
+StarVLA [5]
+88.7
+87.8
+88.3
+InternVLA-A1 [1]
+89.4
+89.6
+89.5
+Being-H0.7 [48]
+90.2
+89.6
+89.9
+Fast-WAM [49]
+91.9
+91.8
+91.8
+LingBot-VA [50]
+92.9
+91.5
+92.2
+InternVLA-A1.5 [3]
+93.3
+93.0
+93.2
+GalaxeaVLA (G0.5) [51]
+93.7
+92.8
+93.3
+Meituan-Robotics-0
+93.2
+93.9
+93.6
+RoboTwin2.0.
+RoboTwin2.0
+[24]
+is
+a
+bimanual
+desktop-
+manipulation benchmark comprising 50 tasks with a 14-dimensional
+joint-space action interface. Each task provides 50 demonstrations
+in the clean-scene split (demo_clean) and 500 demonstrations in the
+randomized split (demo_randomized), which varies the background,
+table clutter, table height, and lighting. We jointly fine-tune all 50
+tasks end-to-end from the stage-2 checkpoint using native-resolution
+inputs.
+Evaluation covers 100 episodes per task on each split,
+resulting in 5,000 episodes per split. We evaluate the VLA policy
+alone, without the agent system or RL post-training.
+As shown in Table 3, Meituan-Robotics-0 achieves the highest overall
+success rate among the compared methods at 93.6%, with 93.2%
+on Clean and 93.9% on Randomized, a difference of 0.7 percentage
+points. The comparison with ABot-M0 is particularly informative:
+both methods predict clean actions and optimize a velocity-space
+loss, yet MR0 achieves 8.0 points higher overall success. Since MR0
+adapts a shared stage-2 checkpoint learned from heterogeneous data
+and embodiments, these results demonstrate effective transfer to pre-
+cise bimanual control and show that action-head parameterization
+alone does not determine downstream performance.
+10
+
+
+Meituan-Robotics-0
+Table 4: RoboDojo simulation results. We compare selected WAM and VLA entries from the official leaderboard.
+Within each group, models are ordered by increasing average SR. Results are reported as Score/SR (%). Embodied Data
+reports disclosed embodied trajectory/video training hours before RoboDojo adaptation, including inherited pre-training
+where traceable; – denotes an unavailable verified duration. Bold indicates the best Score or SR among the displayed
+models in each column. Baseline results follow the official leaderboard; MR0 results are the equally weighted mean
+across three evaluation seeds. Generalization averages the standard and randomized settings.
+Model
+Embodied Data
+Avg. ↑
+Generalization ↑Precision ↑Long-Horizon ↑
+Memory ↑
+Open ↑
+WAM
+InternW0-∆[53]
+∼23.1k h†
+30.77/23.91
+30.09/22.78
+31.98/23.25
+46.29/29.33
+34.67/34.00 10.84/10.17
+Liber-0 Lite [54]
+–
+29.24/24.23
+25.36/19.11
+36.60/31.08
+45.50/32.92
+35.68/35.44
+3.06/2.58
+Awomo-0.5 [55]
+–
+35.34/29.64
+30.31/23.84
+39.65/33.50
+40.36/26.75
+42.27/41.22 24.09/22.92
+VPP2 [56]
+–
+39.26/32.26
+36.38/29.50
+43.03/35.17
+56.28/37.00
+56.01/55.56
+4.61/4.08
+VLA
+KinRT [57]
+–
+13.02/8.80
+14.02/8.61
+15.65/9.92
+26.40/18.08
+4.82/3.56
+4.23/3.83
+Hy-Embodied-0.5-VLA [13]
+>10k h
+13.07/8.80
+11.78/8.39
+13.81/8.00
+25.74/14.92
+13.37/12.11
+0.65/0.58
+SimpleMemVLA [58]
+–
+12.58/9.27
+6.36/3.95
+7.42/2.92
+14.58/5.50
+33.71/33.22
+0.85/0.75
+Xiaomi-Robotics-1 [59]
+> 100k h‡
+20.07/13.93
+23.54/17.00
+26.69/18.83
+38.39/23.67
+7.81/6.56
+3.94/3.58
+GalaxeaVLA (G0.5) [51]
+–
+20.23/14.88
+18.46/12.83
+28.25/20.42
+44.12/32.25
+8.61/7.33
+1.73/1.58
+Meituan-Robotics-0
+∼13.6k h
+21.68/15.73
+16.30/10.50
+21.24/11.17
+27.07/13.92
+39.52/39.22
+4.28/3.83
+DM0.5 [60]
+–
+24.90/19.34
+15.77/10.95
+24.82/16.75
+33.70/19.50
+47.74/47.44
+2.43/2.08
+Rex-M1 Preview [61]
+> 100k h‡
+33.79/27.44
+34.05/26.05
+32.82/23.83
+46.89/33.00
+48.53/48.22
+6.67/6.08
+Simate-beta [62]
+–
+33.95/27.96
+35.09/27.95
+34.35/26.92
+57.84/43.42
+33.33/33.00
+9.12/8.50
+WALL-OSS-1.0-lite [63]
+–
+42.59/34.97
+46.66/37.94
+38.16/29.08
+49.94/32.25
+57.42/56.00 20.76/19.58
+†InternW0-∆: 23,072.74 processed hours, including 5,633.77 Ego2Robot hours generated from human demonstrations. ‡ Xiaomi
+reports more than 100k hours of UMI pre-training data and approximately 10k hours of post-training data. We report only the
+pre-training lower bound because a deduplicated cross-stage total is unavailable. Rex-M1 inherits the Xiaomi checkpoint; its entry
+reports the same inherited lower bound, excluding any additional undisclosed training data.
+RoboDojo.
+RoboDojo [25] evaluates generalist manipulation policies on 42 bimanual simulation tasks spanning
+Generalization, Precision, Long-Horizon, Memory, and Open-vocabulary instruction following. We extend the base
+MR0 policy with an initial-scene reference and motion history to provide temporal context. The reference uses the
+first main-camera image, while a frozen CD-LAM encoder [52] extracts latent actions from historical image pairs. We
+aggregate these features into one-second intervals over the latest twenty seconds and project them into the backbone
+with absolute and relative time encodings. Together with the reference image, they complement the current observations
+and task instruction while preserving the original action-learning objective. The embodied-agent system and RL-based
+post-training are not used. Table 4 reports Score and Success Rate.
+With approximately 13.6k hours of embodied training data, the history-augmented MR0 achieves an average Score
+of 21.68 and an SR of 15.73%, ranking fifth by average success rate among the compared VLA models. These
+results highlight competitive overall performance at a relatively modest data scale, suggesting effective use of
+heterogeneous pre-training data. On the Open split, MR0 achieves a Score of 4.28 and an SR of 3.83%, outperforming
+Xiaomi-Robotics-1, GalaxeaVLA (G0.5), and DM0.5 on both metrics. Despite this relative advantage, the policy can
+still fall back on familiar actions when given an unfamiliar instruction. On Align_blocks, for example, it sometimes
+grasps the box instead of aligning it.
+5.2
+Real-Robot Evaluation
+We evaluate Meituan-Robotics-0 at two complementary levels. The policy evaluation measures manipulation perfor-
+mance and assesses the contributions of HIL data and, for Ethernet insertion, replaced policy segments retained by
+Rollback. The agent evaluation examines two history-dependent capabilities: retrieving information no longer available
+in the current observation and resuming an interrupted task when its execution conditions are restored.
+5.2.1
+Experimental Setup
+Tasks and metrics. We evaluate three tasks covering semantic grounding, deformable-object manipulation, and precise
+bimanual control (Figure 9). We report success rate (SR) and a task-specific progress score (PS):
+11
+
+
+Meituan-Robotics-0
+• Letter-block placement. The robot identifies, reorients, and places lettered blocks into target grooves to spell
+“MEITUAN”. Success requires all seven letters in the correct order and orientation; PSblock = k/7, where k counts
+consecutive correct placements before the first error.
+• Garment folding. The robot spreads and folds a garment into a target configuration. Success requires completion
+within 120 seconds. Evaluation continues for up to 300 seconds. Later completion counts as failure but retains
+its actual completion time for scoring. Trials unfinished at 300 seconds receive T = 300. The progress score is
+PSfold = clip((300 −T)/210, 0, 1), where T is the completion time in seconds.
+• Ethernet insertion. The robot grasps a cable, transfers it between arms, and aligns and inserts the connector into a
+port. Success requires full insertion; PSethernet = m/3, where m counts completed milestones: grasping, handover,
+and insertion.
+Each policy is evaluated autonomously for 30 trials per task, with matched initial conditions and the same rollout
+protocol within each comparison. We average SR and PS over evaluation trials.
+Random garment placement
+(b) 
+Garment 
+folding
+(c)
+Ethernet 
+insertion
+(a)
+ Letter-
+block 
+placement
+Move garment to center
+Spread garment flat
+Fold garment
+Straighten folded garment
+Approach
+Grasp
+Handover
+Release
+Insert
+Random block placement
+Grasp target block
+Reorient target block
+Insert block into slot
+Arrangement complete
+Figure 9: Real-robot evaluation tasks. Representative stages of (a) letter-block placement, (b) garment folding, and (c)
+Ethernet insertion.
+Post-training data. All tasks use successful teleoperated demonstrations. Letter-block placement and garment folding
+add corrections collected through standard HIL. Table 5 summarizes the data; setup and data preparation are detailed
+in Section A.
+Table 5: Real-world post-training data. Demo counts teleoperated demonstrations; HIL / Rollback counts correction
+episodes collected with each task’s mechanism. Training Samples counts valid 50-step action chunks after preprocessing.
+The Ethernet row applies to the HIL scaling and Rollback comparisons; the MR0 vs. π0.5 comparison uses over 1,400
+Ethernet episodes.
+Task
+Demo
+HIL / Rollback
+Total
+Training Samples
+Letter-block placement
+500
+200
+700
+∼900K
+Garment folding
+400
+400
+800
+∼1.1M
+Ethernet insertion
+200
+450
+650
+∼300K
+Compared policies. We compare MR0 with π0.5 [45] after SFT and HG-DAgger post-training on all three tasks.
+Both backbones use the same task data, observation and action representations, preprocessing pipeline, and inference
+settings. On Ethernet insertion, we compare MR0 trained with HG-DAgger, RECAP, and CFG-DAgger using the same
+demonstrations and Rollback episodes. All three methods are trained from the same mid-training checkpoint, πmid.
+5.2.2
+Policy Evaluation
+Main comparison. Under matched HG-DAgger post-training, MR0 and π0.5 achieve the same SR on letter-block
+placement, while MR0 completes more placements before failure (Figure 10). Garment-folding SR is also similar, with
+12
+
+
+Meituan-Robotics-0
+Letter-block
+Placement
+Garment
+Folding
+Ethernet
+Insertion
+Average
+0
+20
+40
+60
+80
+100
+Success Rate (%)
+20
+0
+0
+7
+30
+0
+27
+19
+83
+80
+43
+69
+83
+83
+70
+79
+Success Rate
+Letter-block
+Placement
+Garment
+Folding
+Ethernet
+Insertion
+Average
+0
+20
+40
+60
+80
+100
+Progression Score (%)
+46
+0
+13
+20
+58
+0
+33
+30
+90
+91
+75
+85
+96
+93
+85
+91
+Progress Score
+π0.5-SFT
+MR0-SFT
+π0.5-DAgger
+MR0-DAgger
+Figure 10: Real-robot SR and PS of π0.5 and MR0 after SFT and HG-DAgger post-training. PS is displayed as a
+percentage in the figures.
+0
+1
+2
+3
+Round
+20
+40
+60
+80
+Success Rate (%)
+(a)
+0
+1
+2
+3
+Round
+20
+40
+60
+80
+100
+Progress Score (%)
+(b)
+MR0 RECAP
+MR0 HG-DAgger
+MR0 CFG-DAgger
+Figure 11: Ethernet insertion performance across Rollback collection rounds. The demonstration set is fixed. Each
+collection round adds the same number of Rollback episodes. Round 0 is a shared SFT reference.
+slightly higher PS for MR0. On Ethernet insertion, MR0 achieves the largest improvements in both SR and PS over
+π0.5.
+Effect of HIL data. HIL corrections substantially improve both backbones (Figure 10). Neither SFT policy succeeds
+on garment folding, highlighting the limited coverage of failure and recovery states in successful demonstrations alone.
+As HIL data increase (Figure 12), letter-block placement and garment folding improve rapidly before plateauing, while
+Ethernet insertion continues to improve. The gains from additional corrections therefore depend on the task and existing
+data coverage.
+0
+1
+2
+3
+4
+5
+Round
+0
+20
+40
+60
+80
+100
+Progress Score
+(a)  Letter-block Placement
+0
+1
+2
+3
+4
+5
+Round
+0
+20
+40
+60
+80
+100
+(b)  Garment Folding
+0
+1
+2
+3
+Round
+0
+20
+40
+60
+80
+100
+(c)  Ethernet Insertion
+0
+20
+40
+60
+80
+100
+0
+20
+40
+60
+80
+100
+0
+20
+40
+60
+80
+100
+Success Rate (%)
+Progress Score
+Success rate
+Figure 12: Effect of accumulating HIL data on the three tasks. The initial point uses demonstrations only. For each task,
+each subsequent round adds the same number of HIL episodes. Each policy is trained independently from the same
+mid-training checkpoint.
+Learning from Rollback pairs. CFG-DAgger achieves higher SR and PS than both baselines after each collection
+round (Figure 11). With the full Rollback dataset, CFG-DAgger reaches 0.70 SR and 0.90 PS, compared with 0.60 SR
+and 0.67 PS for RECAP. CFG-DAgger uses direct segment labels from Rollback and requires neither value learning nor
+advantage labeling.
+13
+
+
+Meituan-Robotics-0
+5.2.3
+Embodied Agent Evaluation
+The policy experiments measure execution within a single task, but do not test whether the system can recover informa-
+tion that has disappeared from the current observation or preserve an objective across an interruption. We therefore
+conduct two controlled qualitative deployments: cross-task event retrieval and condition-aware task resumption.
+Agent setup. The Monitor, Memory Manager, and Planner use Qwen3.5-35B-A3B and share an SGLang inference pool
+with four instances. The Monitor runs at 2 Hz over an eight-frame, two-second observation window. Each persistent
+event stores a semantic summary and four to eight archived keyframes.
+Monitor
+The open bottom drawer is 
+stable and empty …
+Put every object on the table into
+the bottom drawer, then close it
+Open bottom drawer
+Place key from tabletop into bottom drawer
+Place screwdriver…
+Place marker…
+Place pliers …
+Close bottom drawer
+Organized 
+into events 
+Memory
+Record Event1
+Bottom drawer fully open
+Planner
+Complete and advance
+Trigger
+Monitor
+at 2Hz
+Event1
+Monitor
+Key placement is complete…
+Memory
+Record Event2
+Key placed in bottom drawer
+Planner
+Complete and advance
+Event2
+Event3
+Monitor
+A human hand removes the keys from 
+the bottom drawer…
+Memory
+Record Event3
+Human moved key to middle drawer
+Planner
+Continue
+Someone moves the key from the 
+bottom drawer to the middle drawer
+Monitor
+The screwdriver is visible inside the 
+bottom drawer…
+Memory
+Record Event4
+Screwdriver placed in bottom drawer
+Planner
+Complete and advance
+Event4
+Event5
+Monitor
+The black marker is now inside the 
+bottom drawer with the screwdriver…
+Memory
+Record Event5
+Marker placed in bottom drawer
+Planner
+Complete and advance
+Event6
+Monitor
+The pliers are being lowered into the 
+bottom drawer…
+Memory
+Record Event6
+Pliers placed in bottom drawer
+Planner
+Complete and advance
+Event7
+Monitor
+The left arm pushes the bottom drawer 
+inward…
+Memory
+Record Event7
+Bottom drawer closed
+Planner
+Retrieve the key from the drawer
+and place it on the table.
+Retrieve from event memory
+Event3
+Human moved key 
+to middle drawer
+Reset the robot arm
+Open middle drawer
+Place key from middle drawer to tabletop
+Event9
+Monitor
+The middle drawer is fully open…
+Memory
+Record Event9
+Middle drawer open
+Planner
+Complete and advance
+Event8
+Event10
+Monitor
+The keys have been lowered onto the 
+table …
+Memory
+Record Event10
+Key placed on table
+Planner
+Finish
+Case 1
+Event memory
+and cross-task
+retrieval
+Task Planning and 
+Skill Queueing
+Task Planning and 
+Skill Queueing
+Queue completed
+Figure 13: Event memory and cross-task retrieval. While screwdriver placement remains active, a person moves the
+previously placed key from the bottom drawer to the middle drawer. The stored event is later retrieved to locate the key
+for a new instruction.
+Cross-task event retrieval. In Figure 13, the initial instruction is to place the tabletop objects in the bottom drawer and
+close it. After the key has been placed and the screwdriver subtask has begun, a person moves the key to the middle
+drawer. The Monitor captures this state change, and the Memory Manager stores the event with its keyframes. Because
+the active screwdriver subtask remains feasible, execution continues through the remaining queue and the bottom
+drawer is closed. This case evaluates event retention and later retrieval, rather than the preservation of all previously
+satisfied goal conditions under external intervention. When the user later requests the key, neither the closed cabinet
+nor the empty table reveals its location. The agent retrieves the stored event, identifies the middle drawer as the key’s
+last observed location, and generates a plan to recover it. This case shows that event summaries and archived visual
+evidence can support a new task when the relevant state is no longer directly observable.
+Monitor
+The open bottom drawer is 
+fully open and empty …
+Put the key on the table into
+the bottom drawer, then close it
+Task Planning and 
+Skill Queueing
+Open bottom drawer
+Place key from tabletop into bottom drawer
+Close bottom drawer
+Organized 
+into events 
+Memory
+Record Event1
+Bottom drawer fully open
+Planner
+Complete and advance
+Trigger
+Monitor
+at 2Hz
+Monitor
+The keys are taken away by a 
+human hand…
+Memory
+Record Event2
+Human removed key from table
+Planner
+reset and wait
+Monitor
+No keys are available in the scene…
+Memory
+Record Event3
+Target unavailable and waiting
+Planner
+Wait for precondition recovery
+Someone removes the key
+from the table
+Monitor
+A human hand returns the keys to the 
+table…
+Memory
+Record Event4
+Key returned to the table
+Planner
+Resume subtask
+Case 2
+Subtask Waiting 
+and Recovery
+Event1
+Event2
+Event3
+Event4
+Someone returns the 
+key to the table
+Event5
+Monitor
+The keys are visible inside the open 
+bottom drawer…
+Memory
+Record Event5
+Key placed in the bottom drawer
+Planner
+Complete and advance
+Event6
+Monitor
+The cabinet is closed and the table is 
+clear…
+Memory
+Record Event6
+Bottom drawer closed
+Planner
+Finish
+Figure 14: Subtask waiting and condition recovery. Removing the key makes the active placement subtask temporarily
+infeasible. The agent retains the pending objective and resumes execution after the key returns.
+Interruption and condition recovery. In Figure 14, the agent is instructed to place the key in the bottom drawer
+and close it. A person removes the key after the drawer is opened but before the grasp is completed. The Monitor
+14
+
+
+Meituan-Robotics-0
+detects that the target is unavailable, while the Memory Manager records the condition change. The Planner retains the
+pending placement subtask and enters a waiting state rather than discarding or replanning the objective. When the key
+returns, a recovery event triggers reassessment against the latest observation, after which the robot places the key and
+completes the original instruction. This case demonstrates that persistent task state can preserve intent during temporary
+infeasibility and resume execution when the missing condition is restored.
+These qualitative deployments illustrate two uses of persistent context: retrieving information for a later task and
+preserving an objective during temporary infeasibility. Event memory supports retrieval when relevant state is no
+longer observable, while persistent task state allows execution to resume after the required conditions are restored.
+6
+Conclusion
+We presented Meituan-Robotics-0, a vision-language-action foundation model and embodied system for stationary-base
+desktop manipulation. MR0 combines heterogeneous data curation with a three-stage training recipe that connects
+multimodal pre-training, continuous cross-embodiment control, and real-world policy optimization. Rollback collection
+provides human corrections and replaced policy segments as direct supervision for CFG-DAgger, enabling policy
+improvement without value learning or advantage labeling. At deployment, asynchronous action-chunk merging
+supports continuous execution, while an event-driven agent maintains persistent context for task-level planning.
+Simulation and real-robot experiments demonstrate competitive manipulation performance, and qualitative deployments
+illustrate cross-task event retrieval and task resumption after temporary interruptions. These results support a systems
+approach in which aligned data, corrective learning, and persistent memory address complementary requirements of
+desktop manipulation. Future work will focus on agent and harness systems that interact more closely with VLA
+policies, using execution feedback to guide planning, memory updates, and policy adaptation for reliable long-horizon
+manipulation.
+15
+
+
+Meituan-Robotics-0
+7
+Contributions
+All people are cataloged alphabetically by first name. (†) indicates the project leader and (‡) indicates the sponsors.
+Contributors:
+Caicheng Wang
+Chen Zhao
+Chengpeng Jin
+Duo Xu
+Fengjiao Chen
+Guanglu Wan‡
+Heqing Yang
+Jia Wang
+Jiacong Zhou
+Jie Hu†
+Jiyuan Ru
+Lingfeng Zhang
+Linjiang Huang
+Manyuan Zhang
+Ningchu Liu
+Shijie Zhou
+Si Liu
+Shuo Li
+Tianyi Zhang
+Xi Zhang
+Xin Chen
+Xuezhi Cao
+Xunliang Cai‡
+Yanbin Zeng
+Yang Yang
+Yang Yi
+Yanli Tan
+Yifu Xu
+Yimeng Jia
+Yuchen Tang
+Yuchen Xie‡
+Yuxiang Zheng
+Zerwei Chng
+Zilong Huang
+Zipeng Ye
+Ziyuan Qin
+Ziqin Wang
+16
+
+
+Meituan-Robotics-0
+Table 6: Configuration of the asynchronous executor with temporal chunk-wise smoothing.
+Quantity or option
+Value
+Role
+fc
+30 Hz
+Command-consumption and publication rate of the control loop.
+fπ
+3 Hz
+Target background prediction rate.
+H
+50
+Action horizon returned by the policy server.
+Klat
+4
+Maximum number of leading commands removed from an incoming chunk.
+mmin
+8
+Minimum old-reference length used for short-buffer padding.
+Warm-up queries
+2
+Synchronous startup queries before the background loop begins.
+A
+Real-Robot Setup and Data Preparation
+Data collection and recording.
+Our bimanual AgileX PiPER setup contains two human-operated leader arms and two
+corresponding task-executing follower arms. The operator controls the follower arms through leader-arm teleoperation.
+Each trajectory records three camera streams, the observed follower-arm configuration, and the commands sent to
+the follower arms. These commands are supplied by the leader arms during human control and by the policy during
+autonomous execution.
+The demonstration dataset Ddemo, collected by teleoperation, contains only successful executions. The tasks and data
+quantities used in our experiments are specified in Section 5.2.
+Real-robot observation and action representation.
+The policy receives synchronized images from three RGB
+cameras: one head camera and two wrist cameras. Each camera captures images at a native resolution of 640 × 480.
+The policy uses 3 camera images at each timestep, without temporal history.
+We use Qwen3.5-VL’s Smart Resize during both post-training and inference. It preserves the aspect ratio and bounds
+the visual token count, resizing images to approximately 352 × 256 before visual encoding.
+The policy state is derived from the observed follower-arm configuration, and the action target from the command sent
+to the follower arms. Both are converted to the same 20-dimensional end-effector representation. For each arm, this
+representation contains a 3D Cartesian position, a 6D rotation, and a normalized gripper closure value, with 0 denoting
+fully open and 1 fully closed:
+xt =
+
+pL, rL
+6D, gL, pR, rR
+6D, gR
+∈R20,
+xt ∈{st, at}.
+(10)
+The policy predicts an action chunk:
+at:t+H−1 ∈RH×20,
+H = 50.
+(11)
+Static-interval trimming and training windows.
+Before constructing post-training samples, we remove sustained
+intervals in which changes in both observed arm configuration and commanded actions remain below task-specific
+thresholds. This limits the dominance of hold actions while preserving deliberate slow motion and corrections.
+After trimming and source selection, trajectories are split at episode and control-source boundaries. Each training
+window contains H = 50 consecutive recorded actions from one retained segment, without tail padding or crossing a
+takeover boundary. Each window contributes one training sample in Table 5. Method-specific data selection is detailed
+in Section C.
+Post-training implementation details.
+Small random crops and rotations augment the head-camera view; color jitter
+augments all three views. State and action dimensions are normalized using their 1st and 99th percentiles, with the
+same training-set statistics used to unnormalize actions during deployment.
+B
+Asynchronous Policy Execution Details
+This section gives the complete buffer-update procedure in Algorithm 1 for the asynchronous controller summarized
+in Section 4.1. The control and inference loops share a locked action buffer and run concurrently.
+The client retains all H = 50 returned actions before latency trimming. Two warm-up queries initialize the inference
+and IK pipeline. The buffer is then cleared, and the current robot state serves as the initial reference.
+17
+
+
+Meituan-Robotics-0
+Algorithm 1 Latency-Aware Asynchronous Policy Execution
+Require: Action horizon H, control rate fc, target inference rate fπ, latency cap Klat, minimum old-reference length
+mmin
+1: Shared state: buffer Q ←∅, counter k ←0, and qlast ←qcurrent
+2: Each pop and each complete buffer update are protected by the same lock.
+3: Run the following control and inference loops concurrently.
+4: Control loop (at fc):
+5: while the system is running do
+6:
+if Q̸ = ∅then
+7:
+q ←POPFRONT(Q); k ←k + 1
+8:
+if Q = ∅then
+9:
+qlast ←q
+10:
+end if
+11:
+PUBLISH(q)
+12:
+end if
+13: end while
+14: Inference loop (at target fπ):
+15: while the system is running do
+16:
+Qnew ←IK(PREDICT(OBSERVE()))
+▷|Qnew| = H
+17:
+if Qnew = ∅then
+18:
+continue
+19:
+end if
+20:
+d ←min(k, Klat)
+21:
+if d ≥|Qnew| then
+22:
+continue
+▷Q and k remain unchanged
+23:
+end if
+24:
+¯Qnew ←Qnew[d:]
+25:
+if Q = ∅∧qlast̸ = ∅then
+26:
+Qold ←[qlast]mmin; qlast ←∅
+27:
+else if Q = ∅then
+28:
+Q ←¯Qnew; k ←0
+29:
+continue
+30:
+else
+31:
+Qold ←Q
+32:
+if |Qold| < mmin then
+33:
+Extend Qold to mmin by repeating its terminal command
+34:
+end if
+35:
+end if
+36:
+L ←min(|Qold|, | ¯Qnew|)
+37:
+for i = 0 to L −1 do
+38:
+αi ←i/ max(L −1, 1)
+39:
+qfused
+i
+←(1 −αi)qold
+i
++ αi¯qnew
+i
+▷Linear transition
+40:
+end for
+41:
+Q ←[qfused
+0
+, . . . , qfused
+L−1 ] ∥¯Qnew[L:]
+42:
+k ←0
+43: end while
+C
+Real-World Post-Training Details
+Supervised fine-tuning on successful demonstrations initializes data collection. Each post-training policy is trained
+anew from πmid on the accumulated data. For the Ethernet Rollback comparison (Figure 11), In each round of the three
+rounds, each of the three methods contributes 50 episodes to a shared pool of 150 new Rollback episodes. Segment
+annotations identify replaced branches and human corrections. All methods use the interface in Section A.
+18
+
+
+Meituan-Robotics-0
+Algorithm 2 RECAP policy optimization with Rollback trajectories
+Require: πmid, value initialization Vinit, demonstrations Ddemo, Rollback batches 1, . . . , K
+1: for k = 1 to K do
+2:
+Reconstruct trajectories from Rollback batch k: prefix + τ + (success) and prefix + τ −(failure at intervention)
+3:
+Fit Vk from Vinit on the demonstrations and all trajectories reconstructed through batch k, using outcome-derived
+targets
+4:
+Assign It = 1 to τ + (human-correction) chunks; label other training windows using Equation (20)
+5:
+Train πRL
+k
+from πmid on the successful (prefix + τ +) trajectories with advantage conditioning
+6: end for
+Ensure: Final task policy πRL
+K
+C.1
+HG-DAgger Human Intervention
+Let π0 be the SFT policy trained on demonstrations Ddemo. During collection round k, the robot executes autonomously
+under πk−1 (gt = 0) until the operator takes control (gt = 1). The operator intervenes when execution stalls, errs, or
+becomes unsafe, and returns control to the policy after recovery.
+Only the human-controlled corrections τ + from successful episodes are retained (the samples with gt = 1), whether
+collected through standard HIL or Rollback. Across rounds, these corrections accumulate with the demonstrations to
+form the cumulative supervised dataset for training the next policy.
+HG-DAgger changes data collection and sample selection but retains the flow-matching action loss. All retained SFT
+and HG-DAgger samples receive equal sampling weight.
+C.2
+RECAP Policy Optimization
+Trajectory reconstruction and data selection.
+For each Rollback episode, we reconstruct full trajectories from
+the autonomous prefix preceding the anchor (Figure 6): the corrected continuation τ + gives a successful trajectory
+(prefix + τ +), and a replaced branch τ −, which terminates at the intervention, gives a failed one (prefix + τ −). Value
+learning uses the demonstrations together with both trajectory types, while policy training retains only the successful
+trajectories. The procedure is summarized in Algorithm 2.
+Outcome rewards and value targets.
+Trajectory outcome labels are converted into per-timestep rewards:
+rt =
+
+
+
+0,
+t = T and the trajectory is labeled successful,
+−Tmax,
+t = T and the trajectory is labeled failed,
+−1,
+otherwise,
+Rt =
+T
+X
+t′=t
+rt′,
+(12)
+where T is the terminal timestep of the reconstructed trajectory (the intervention point for a replaced branch) and Tmax
+is the maximum episode length. Nonterminal steps incur unit cost, and a failure label adds a terminal penalty of Tmax.
+Normalizing by D = 2Tmax gives the clipped value target
+yt = clip
+Rt
+D , −1, 0
+
+=
+
+
+
+
+
+
+
+clip
+
+−T −t
+D
+, −1, 0
+
+,
+success,
+clip
+
+−T −t + Tmax
+D
+, −1, 0
+
+,
+failure.
+(13)
+Targets lie in [−1, 0], with values closer to zero indicating shorter successful completions and the terminal penalty
+distinguishing failures.
+Distributional value prediction.
+The value network predicts a categorical distribution over B = 201 atoms:
+pϕ(V | ot, ℓ) ∈∆B,
+zi = Vmin + iVmax −Vmin
+B −1
+,
+i = 0, . . . , B −1,
+(14)
+where Vmin = −1, Vmax = 0, and the atom spacing is ∆z = 0.005. We project a scalar target onto its two neighboring
+atoms using
+19
+
+
+Meituan-Robotics-0
+bt = clip
+yt −Vmin
+∆z
+, 0, B −1
+
+,
+l = ⌊bt⌋,
+u = ⌈bt⌉.
+(15)
+When l < u, the target masses are ql = u −bt and qu = bt −l. When l = u, we set ql = 1; all other entries are zero.
+The value loss and continuous prediction are
+LV = −
+B−1
+X
+i=0
+qi log pϕ(V = zi | ot, ℓ),
+V (ot, ℓ) =
+B−1
+X
+i=0
+pϕ(V = zi | ot, ℓ)zi.
+(16)
+Value-model architecture.
+Following RLinf’s RECAP implementation [64], a SigLIP2-So400m/14 encoder maps
+each of the three RGB views to 256 tokens projected to 640 dimensions. An 18-layer Gemma 3 270M backbone
+encodes these visual tokens together with the instruction.
+A separate 18-layer value expert with hidden dimension 256 updates a learnable [CLS] token. It attends to the vision-
+language prefix through shared attention keys and values, while the prefix cannot attend back to it. A linear head
+predicts the value distribution:
+hCLS
+t
+∈R256 −→logitst = WV hCLS
+t
++ bV ∈R201.
+(17)
+The vision encoder and Gemma backbone use pretrained weights. The value expert and head are randomly initialized,
+while the [CLS] token is initialized to zero. All components are trained jointly.
+N-step advantage labeling.
+Transition rewards use the same scale as the normalized value targets:
+ert =
+yt −yt+1,
+t < T,
+yT ,
+t = T.
+(18)
+For a training window starting at frame t with a complete N-step horizon, the advantage is
+A(N)
+t
+=
+N−1
+X
+k=0
+ert+k + V (ot+N, ℓ) −V (ot, ℓ).
+(19)
+If t + N > T, rewards are accumulated through termination and the bootstrap value beyond the episode is set to zero.
+Before condition dropout, human-controlled (HIL) chunks are always assigned It = 1. For non-HIL chunks, we assign
+a conditioning state It ∈{1, ∅} using the advantage threshold:
+It =
+(
+1,
+A(N)
+t
+≥ϵ,
+∅,
+A(N)
+t
+< ϵ.
+(20)
+Here, N = H = 50 and ϵ is the 70th percentile of advantages over the aggregated dataset. Each non-HIL training
+window inherits the conditioning state of its first frame.
+Advantage-conditioned policy training.
+Before condition dropout, the conditioning state determines the suffix
+appended to the task instruction:
+ct =
+Advantage:
+positive,
+It = 1,
+∅,
+It = ∅.
+(21)
+For chunks with It = 1, the positive suffix is dropped with probability pdrop = 0.3; chunks with It = ∅always use the
+base instruction. All retained chunks use the flow-matching action loss.
+20
+
+
+Meituan-Robotics-0
+Action-space classifier-free guidance.
+At inference, we denoise a base prediction a∅(I = ∅) and a positive-
+conditioned prediction a+ (I = 1) from the same initial noise, then combine the completed action chunks once in
+action space:
+aCFG = a∅+ β (a+ −a∅) ,
+β = 1.75.
+(22)
+The base branch omits only the advantage condition, retaining the observation and task instruction.
+Training configuration.
+Table 7 summarizes the training configuration.
+Table 7: RECAP value learning, advantage labeling, and policy-training hyperparameters.
+Parameter
+Setting
+Value support [Vmin, Vmax]
+[−1, 0]
+Number of value atoms B
+201
+Value learning steps / batch size
+6,000 / 256
+Value peak learning rate
+5 × 10−5
+Value warm-up steps
+500
+Value final learning rate
+1 × 10−6
+Advantage horizon N / action horizon H
+50 / 50
+Advantage threshold ϵ
+Aggregated-data 70th percentile
+Policy conditions
+Positive and base; no explicit negative
+Condition-dropout rate pdrop
+0.3
+Policy training steps / batch size
+30,000 / 128
+Policy peak learning rate
+1 × 10−5
+Policy warm-up steps
+10,000
+Policy minimum learning rate
+5 × 10−7
+Inference guidance scale β
+1.75
+C.3
+CFG-DAgger Conditional Policy Training
+Data and labels.
+In Figure 6, each pair (τ −, τ +) shares an anchor but may diverge afterward; no frame-wise alignment
+is required. If the scene cannot be restored to an anchor, collection falls back to standard HIL and contributes only
+positive data.
+Unlike RECAP, CFG-DAgger uses these local segments directly, without the autonomous prefix: the positive data are
+the demonstrations and the human corrections τ + (label I = 1), and the negative data are the replaced segments τ −
+(label I = 0). Labels describe local segments, independent of episode outcomes.
+Conditional policy training.
+A shared policy πθ(at:t+H−1 | ot, ℓ, I) learns positive (I = 1), negative (I = 0), and
+unconditional (I = ∅) branches using the flow-matching loss. Positive samples (demonstrations and τ +) use condition
+dropout of 0.3 to train the unconditional branch while retaining the task instruction. Negative samples (τ −) always
+retain their condition. Other autonomous segments, rollback/reset motions, and segments shorter than H = 50 are
+excluded. Valid chunks are sampled without class rebalancing, and each round trains from πmid on the cumulative
+dataset.
+Action-space classifier-free guidance.
+At inference, we denoise a positive prediction a+ (I = 1) and a negative
+prediction a−(I = 0) from the same initial noise, then combine the completed action chunks once in action space:
+aCFG = a−+ γ (a+ −a−) .
+(23)
+We use γ = 1.25, extrapolating from the positive prediction away from the negative prediction. The unconditional
+branch is used only during training.
+References
+[1] Zhenyu Cai et al. InternVLA-A1: Unifying understanding and action via latent action modeling. arXiv preprint,
+2026.
+21
+
+
+Meituan-Robotics-0
+[2] Zi-Han Ding and Ziwei Wang. Skillplug: Unsupervised skill mining for few-shot adaptation in robotic manipula-
+tion. IEEE Robotics and Automation Letters, 2026.
+[3] Haoxiang Ma, Junhao Cai, Xiaoxu Xu, Hao Li, Yuyin Yang, Yang Tian, Jiafei Cao, Hongrui Zhu, Zherui Qiu,
+Zhaxizhuoma, Yuqiang Yang, Jiaqi Peng, Xueyuan Wei, Yangkun Zhu, Jiahao Jiang, Xing Gao, Hanqing Wang,
+Feng Yuan, Kailin Li, Xueyue Zhu, Tai Wang, Yan Ding, Jiangmiao Pang, Jia Zeng, Jingjing Zhang, Bowen Zhou,
+Yao Mu, Chunhua Shen, and Weinan Zhang. Internvla-a1.5: Unifying understanding, latent foresight, and action
+for compositional generalization, 2026.
+[4] Qwen Team. Qwen-VLA: Unifying vision-language-action modeling across tasks, environments, and robot
+embodiments. arXiv preprint arXiv:2605.30280, 2026.
+[5] StarVLA Community. StarVLA: A modular framework for vision-language-action research, 2026. https:
+//github.com/StarVLA.
+[6] Junjie Wu et al. LingBot-VLA: A vision-language-action model for robotic manipulation. arXiv preprint, 2026.
+[7] Jinliang Zheng, Jianxiong Li, Zhihao Wang, Dongxiu Liu, Xirui Kang, Yuchun Feng, Yinan Zheng, Jiayin Zou,
+Yilun Chen, Jia Zeng, Ya-Qin Zhang, Jiangmiao Pang, Jingjing Liu, Tai Wang, and Xianyuan Zhan. X-vla:
+Soft-prompted transformer as scalable cross-embodiment vision-language-action model, 2025.
+[8] AgiBot-World-Contributors et al. AgiBot World Colosseo: A large-scale manipulation platform for scalable and
+intelligent embodied systems. arXiv preprint arXiv:2503.06669, 2025.
+[9] Tao Jiang, Tianyuan Yuan, Yicheng Liu, Chenhao Lu, Jianning Cui, Xiao Liu, Shuiqi Cheng, Jiyang Gao,
+Huazhe Xu, and Hang Zhao. Galaxea Open-World Dataset and G0 Dual-System VLA Model. arXiv preprint
+arXiv:2509.00576, 2025.
+[10] Alexander Khazatsky, Karl Pertsch, Suraj Nair, et al. DROID: A large-scale in-the-wild robot manipulation dataset.
+In Proceedings of Robotics: Science and Systems, 2024.
+[11] Yang Tian, Yuyin Yang, Yiman Xie, Zetao Cai, et al. InternData-A1: Pioneering high-fidelity synthetic data for
+pre-training generalist policy. arXiv preprint arXiv:2511.16651, 2025.
+[12] Shihan Wu et al. RoboCOIN: An open-sourced bimanual robotic data collection for integrated manipulation.
+arXiv preprint arXiv:2511.17441, 2025.
+[13] He Zhang, Lingzhu Xiang, Haitao Lin, Zeyu Huang, Minghui Wang, Dingyan Zhong, Yubo Dong, Yihao Wu,
+Yongming Rao, Dongsheng Zhang, et al. Hy-embodied-0.5-vla: From vision-language-action models to a
+real-world robot learning stack. arXiv preprint arXiv:2606.14409, 2026.
+[14] Ziqin Wang, Hao Li, Weijun Wang, Junhao Cai, Jia Zeng, Yilun Chen, Jiangmiao Pang, and Si Liu. Robointer1.
+5: A holistic intermediate representation suite for embodied world modeling and robotic manipulation. arXiv
+preprint arXiv:2607.18709, 2026.
+[15] Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim Entezari, Jonas Müller, Harry Saini, Yam Levi, Dominik
+Lorenz, Axel Sauer, Frederic Boesel, Dustin Podell, Tim Dockhorn, Zion English, and Robin Rombach. Scaling
+rectified flow transformers for high-resolution image synthesis. In International Conference on Machine Learning,
+2024.
+[16] Haozhan Li, Yuxin Zuo, Jiale Yu, Yuhao Zhang, Yang Zhaohui, Kaiyan Zhang, Xuekai Zhu, Yuchen Zhang,
+Tianxing Chen, Ganqu Cui, et al. Simplevla-rl: Scaling vla training via reinforcement learning. In International
+Conference on Learning Representations, volume 2026, pages 125846–125869, 2026.
+[17] Hengtao Li, Pengxiang Ding, Runze Suo, Yihao Wang, Zirui Ge, Dongyuan Zang, Kexian Yu, Mingyang Sun,
+Hongyin Zhang, Donglin Wang, et al. Vla-rft: Vision-language-action reinforcement fine-tuning with verified
+rewards in world simulators. arXiv preprint arXiv:2510.00406, 2025.
+[18] Angen Ye, Zeyu Zhang, Boyuan Wang, Xiaofeng Wang, Dapeng Zhang, and Zheng Zhu. Vla-r1: Enhancing
+reasoning in vision-language-action models. arXiv preprint arXiv:2510.01623, 2025.
+[19] Michael Kelly, Chelsea Sidrane, Katherine Driggs-Campbell, and Mykel J. Kochenderfer. HG-DAgger: Interactive
+imitation learning with human experts. In 2019 International Conference on Robotics and Automation (ICRA),
+pages 8077–8083, 2019.
+[20] A. Amin, R. Aniceto, A. Balakrishna, et al.
+π∗
+0.6: A vla that learns from experience.
+arXiv preprint
+arXiv:2511.14759, 2025.
+[21] Dongjie Huo, Haoyun Liu, Guoqing Liu, Dekang Qi, Zhiming Sun, Maoguo Gao, Jianxin He, Yandan Yang,
+Xinyuan Chang, Feng Xiong, et al. Abot-claw: A foundation for persistent, cooperative, and self-evolving robotic
+agents. arXiv preprint arXiv:2604.10096, 2026.
+22
+
+
+Meituan-Robotics-0
+[22] Ruiying Li, Yunlang Zhou, YuYao Zhu, Kylin Chen, Jingyuan Wang, Sukai Wang, Kongtao Hu, Minhui Yu,
+Bowen Jiang, Zhan Su, et al. Roboclaw: An agentic framework for scalable long-horizon robotic tasks. arXiv
+preprint arXiv:2603.11558, 2026.
+[23] Yixian Zhang, Huanming Zhang, Feng Gao, Xiao Li, Zhihao Liu, Chunyang Zhu, Jiaxing Qiu, Yuchen Yan,
+Jiyuan Liu, Wenhao Tang, et al. Harness vla: Steering frozen vlas into reliable manipulation primitives via
+memory-guided agents. arXiv preprint arXiv:2607.08448, 2026.
+[24] Yao Mu, Tianxing Chen, Shijia Peng, Zanxin Chen, Zeyu Chen, Qiangyu Feng, Zhiqian Su, Weiliang Zhou,
+Guodong Ma, et al. RoboTwin 2.0: A scalable data generator and benchmark with strong domain randomization
+for robust bimanual robotic manipulation. arXiv preprint arXiv:2506.18088, 2025.
+[25] Tianxing Chen, Yue Chen, Zixuan Li, Junyuan Tang, Kailun Su, Weijie Wan, Baijun Chen, Haoran Lu, Haowen
+Yan, Honghao Su, et al. RoboDojo: A unified sim-and-real benchmark for comprehensive evaluation of generalist
+robot manipulation policies. arXiv preprint arXiv:2607.04434, 2026.
+[26] StarVLA Community. Starvla: A lego-like codebase for vision-language-action model developing. arXiv preprint
+arXiv:2604.05014, 2026.
+[27] Jianwei Yang, Hao Zhang, Feng Li, Xueyan Zou, Chunyuan Li, and Jianfeng Gao. Set-of-Mark prompting
+unleashes extraordinary visual grounding in GPT-4V. arXiv preprint arXiv:2310.11441, 2023.
+[28] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao,
+Spencer Whitehead, Alexander C. Berg, Wan-Yen Lo, Piotr Dollár, and Ross Girshick. Segment anything.
+arXiv:2304.02643, 2023.
+[29] LejuRobotics. LET: Full-size humanoid robot real-world dataset. Hugging Face dataset, 2025.
+[30] Kun Wu, Chengkai Hou, Jiaming Liu, Zhengping Che, Xiaozhu Ju, Zhuqin Yang, Meng Li, Yinuo Zhao, Zhiyuan
+Xu, Guang Yang, et al. RoboMIND: Benchmark on multi-embodiment intelligence normative data for robot
+manipulation. arXiv preprint arXiv:2412.13877, 2024.
+[31] Chenghao Yin et al. Genie Sim 3.0: A high-fidelity comprehensive simulation platform for humanoid robot. arXiv
+preprint arXiv:2601.02078, 2026.
+[32] Yi Zhou, Connelly Barnes, Jingwan Lu, Jimei Yang, and Hao Li. On the continuity of rotation representations
+in neural networks. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+pages 5745–5753, 2019.
+[33] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy
+Groom, Karol Hausman, Brian Ichter, et al. π0: A vision-language-action flow model for general robot control.
+arXiv preprint arXiv:2410.24164, 2024.
+[34] NVIDIA, Johan Bjorck, et al. GR00T N1: An open foundation model for generalist humanoid robots. arXiv
+preprint arXiv:2503.14734, 2025.
+[35] Qwen Team. Qwen3.5: Towards native multimodal agents, 2026. https://qwen.ai/blog?id=qwen3.5.
+[36] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn,
+and Sergey Levine. FAST: Efficient action tokenization for vision-language-action models. arXiv preprint
+arXiv:2501.09747, 2025.
+[37] Tianhong Li and Kaiming He. Back to basics: Let denoising generative models denoise. arXiv preprint
+arXiv:2511.13720, 2025.
+[38] Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le. Flow matching for generative
+modeling. In International Conference on Learning Representations, 2023.
+[39] Stéphane Ross, Geoffrey Gordon, and Drew Bagnell. A reduction of imitation learning and structured prediction
+to no-regret online learning. In Proceedings of the fourteenth international conference on artificial intelligence
+and statistics, pages 627–635. JMLR Workshop and Conference Proceedings, 2011.
+[40] Kevin Black, Manuel Y. Galliker, and Sergey Levine. Real-time execution of action chunking flow policies. In
+Advances in Neural Information Processing Systems, volume 38, pages 37596–37620, 2025.
+[41] Kevin Black, Allen Z. Ren, Michael Equi, and Sergey Levine. Training-time action conditioning for efficient
+real-time chunking. arXiv preprint arXiv:2512.05964, 2025.
+[42] Tony Z. Zhao, Vikash Kumar, Sergey Levine, and Chelsea Finn. Learning fine-grained bimanual manipulation
+with low-cost hardware. In Proceedings of Robotics: Science and Systems, Daegu, Republic of Korea, July 2023.
+23
+
+
+Meituan-Robotics-0
+[43] Heqing Yang, Yang Yi, Liyao Wang, Linqing Zhong, Donglin Yang, Ruipu Wu, Zitong Bai, Fengjiao Chen,
+Manyuan Zhang, Linjiang Huang, and Si Liu. EVA-Client: A unified data collection, inference, and deployment
+framework for embodied policies on real robots. arXiv preprint arXiv:2607.02646, 2026.
+[44] Checheng Yu, Chonghao Sima, Gangcheng Jiang, Hai Zhang, Haoguang Mai, Hongyang Li, Huijie Wang,
+Jin Chen, Kaiyang Wu, Li Chen, Lirui Zhao, Modi Shi, Ping Luo, Qingwen Bu, Shijia Peng, Tianyu Li, and
+Yibo Yuan. χ0: Resource-aware robust manipulation via taming distributional inconsistencies. arXiv preprint
+arXiv:2602.09021, 2026.
+[45] Kevin Black, Noah Brown, James Darpinian, Karan Dhariwal, Danny Driess, Adnan Esmail, Michael Equi,
+Chelsea Finn, Niccolo Fusai, et al. π0.5: A vision-language-action model with open-world generalization. arXiv
+preprint arXiv:2504.16054, 2025.
+[46] Yandan Yang, Shuang Zeng, Tong Lin, Xinyuan Chang, Dekang Qi, Junjin Xiao, Haoyun Liu, Ronghan Chen,
+Yuzhi Chen, Dongjie Huo, Feng Xiong, Xing Wei, Zhiheng Ma, and Mu Xu. Abot-m0: Vla foundation model for
+robotic manipulation with action manifold learning, 2026.
+[47] Kaiwen Bi et al. Motus: Motion priors improve vision-language-action models. arXiv preprint, 2025.
+[48] Zhiyu Luo et al. Being-H0.7: A vision-language-action model with hierarchical grounding. arXiv preprint, 2026.
+[49] Ye Yuan et al. Fast-WAM: World-aware manipulation with fast action generation. arXiv preprint, 2026.
+[50] Ruicheng Li et al. LingBot-VA: A vision-action model for robotic manipulation. arXiv preprint, 2026.
+[51] Yicheng Liu, Zibin Dong, Baijun Ye, Tianyuan Yuan, Tao Jiang, Anqi Yang, Shicheng Cao, Haonan Liu, Yue Sun,
+Zihan Guo, et al. G0.5: One autoregressive stream for robot reasoning and action. arXiv preprint arXiv:2608.11739,
+2026.
+[52] Yufan Wei, Kun Zhou, Lingjun Mao, Zijun Zhang, Ziming Xu, Ziqiao Xi, Shuang Liang, Ruobing Han, Yuchen
+Yan, Xinyue Wang, Fan Feng, and Biwei Huang. Causally debiased latent action model for embodied action
+conditioned world models. arXiv preprint arXiv:2607.09185, 2026.
+[53] Xingyu Miao, Zizun Li, Baole Fang, Kaiwen Song, Tenghui Wang, Hanxue Zhang, Yating Wang, Xudong Li,
+Yuping He, Xueyuan Wei, et al. InternW0-∆: A World Action Model Bridging Predictive Dynamics and Actions
+with 20K+ Hours of Open Data. arXiv preprint arXiv:2609.31394, 2026.
+[54] LiberAI. Liber-0 Lite: RoboDojo Policy Release. https://github.com/XPolicyLab/XPolicyLab/tree/
+main/policy/Liber_0_lite, 2026.
+[55] Awomo-WAM Team. Awomo-0.5 Technical Report. 2026.
+[56] Yanjiang Guo, Haodong Yan, Zhide Zhong, Zhongru Zhang, Qingyuan Yang, Qingzhou Lu, Xiaoyu Chen, Yen-Jen
+Wang, Shuying Deng, Chenghan Yang, et al. Video prediction policy 2: Predict better, act better. arXiv preprint
+arXiv:2610.10270, 2026.
+[57] Tianhang Yang, Yanze Zheng, Junjie Wang, Wei-Bin Kou, Ruotong Li, and Yujiu Yang. Route by kinematics, act
+by observation: Kinematics-supervised expert routing in moe-augmented vla. arXiv preprint arXiv:2607.26807,
+2026.
+[58] Cheng Yin, Wang Xu, Junpeng Yang, Sikyuen Tam, Hanyu Liu, Yuan Yao, Xiangrui Zeng, Junbo Cui, Yequan
+Wang, Zhouping Yin, et al. Simplememvla: A simple but effective native-video memory for vision-language-action
+models. arXiv preprint arXiv:2609.05533, 2026.
+[59] Xiaomi Robotics Team, Jun Guo, Piaopiao Jin, Jason Li, Peiyan Li, Yingyan Li, Futeng Liu, Wanli Peng, Optimus
+Qin, Yifei Su, et al. Xiaomi-robotics-1: Scaling vision-language-action models with over 100k hours of real-world
+trajectories. arXiv preprint arXiv:2607.15330, 2026.
+[60] Dexmal. DM0.5: Designed for the Open World, Where Generalization Emerges. https://www.dexmal.com/
+blog/dm0.5, 2026.
+[61] Futian Lab and VisIncept. Rex-M1 Preview: RoboDojo Policy Release. https://github.com/XPolicyLab/
+XPolicyLab/tree/main/policy/Rex_M1_preview, 2026.
+[62] SIPAILab. Simate-beta. https://github.com/SIPAILab/simate-beta, 2026.
+[63] X Square Robot. WALL-OSS-1.0-lite: RoboDojo checkpoint. https://huggingface.co/x-square-robot/
+wall-oss-1.0-lite-robodojo, 2026.
+[64] RLinf Team. RECAP: Offline advantage-based policy optimization. RLinf Documentation, 2026. Accessed
+August 19, 2026.
+24

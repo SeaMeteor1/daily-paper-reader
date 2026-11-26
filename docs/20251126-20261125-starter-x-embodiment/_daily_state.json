@@ -1,0 +1,809 @@
+{
+  "date": "20251126-20261125-starter-x-embodiment",
+  "date_label": "x-embodiment · 大礼包（截至 2026-11-25）",
+  "generated_at": "2026-11-26T12:39:36.624304+00:00",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2601.12993v1",
+      "route": "20251126-20261125-starter-x-embodiment/2601.12993v1-being-h05-scaling-human-centric-robot-learning-for-cross-embodiment-generalization",
+      "title": "Being-H0.5: Scaling Human-Centric Robot Learning for Cross-Embodiment Generalization",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "统一动作空间与30种具身数据实现跨具身泛化",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2601.15419v1",
+      "route": "20251126-20261125-starter-x-embodiment/2601.15419v1-learning-a-unified-latent-space-for-cross-embodiment-robot-control",
+      "title": "Learning a Unified Latent Space for Cross-Embodiment Robot Control",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "统一人类与多种人形平台的共享潜空间及目标条件跨具身策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.00919v2",
+      "route": "20251126-20261125-starter-x-embodiment/2602.00919v2-green-vla-staged-vision-language-action-model-for-generalist-robots",
+      "title": "Green-VLA: Staged Vision-Language-Action Model for Generalist Robots",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "统一的具身感知动作接口，跨类人与机械臂",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.05791v3",
+      "route": "20251126-20261125-starter-x-embodiment/2602.05791v3-scalable-and-general-whole-body-control-for-cross-humanoid-locomotion",
+      "title": "Scalable and General Whole-Body Control for Cross-Humanoid Locomotion",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "单一跨具身策略泛化到多种人形机器人并对齐观测与动作空间",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.10556v2",
+      "route": "20251126-20261125-starter-x-embodiment/2602.10556v2-lap-language-action-pre-training-enables-zero-shot-cross-embodiment-transfer",
+      "title": "LAP: Language-Action Pre-Training Enables Zero-shot Cross-Embodiment Transfer",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "语言-动作预训练实现VLA策略的零样本跨具身迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.13764v1",
+      "route": "20251126-20261125-starter-x-embodiment/2602.13764v1-motif-learning-action-motifs-for-few-shot-cross-embodiment-transfer",
+      "title": "MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "通过具身无关动作基元实现少样本跨具身迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2603.00182v1",
+      "route": "20251126-20261125-starter-x-embodiment/2603.00182v1-embedding-morphology-into-transformers-for-cross-robot-policy-learning",
+      "title": "Embedding Morphology into Transformers for Cross-Robot Policy Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "具身感知Transformer注入形态信息以学习单一跨机器人策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2603.14522v1",
+      "route": "20251126-20261125-starter-x-embodiment/2603.14522v1-one-policy-fits-all-geometry-aware-action-latents-for-cross-embodiment-manipulation",
+      "title": "One-Policy-Fits-All: Geometry-Aware Action Latents for Cross-Embodiment Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "通过几何感知共享潜动作空间实现跨具身单一策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2608.06374v1",
+      "route": "20251126-20261125-starter-x-embodiment/2608.06374v1-dypes-vla-learning-shared-dynamics-priors-and-embodiment-specific-control-for-cross-embodiment-manipulation",
+      "title": "DyPES-VLA: Learning Shared Dynamics Priors and Embodiment-Specific Control for Cross-Embodiment Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "单一通用跨具身VLA，具身特定控制并自动对齐动作空间",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.02546v2",
+      "route": "20251126-20261125-starter-x-embodiment/2609.02546v2-zeta-a-controlled-study-of-zero-shot-cross-embodiment-vla-transfer-for-tabletop-manipulation",
+      "title": "ZETA: A Controlled Study of Zero-Shot Cross-Embodiment VLA Transfer for Tabletop Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "零样本跨具身VLA迁移的受控基准与定义",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.34256v2",
+      "route": "20251126-20261125-starter-x-embodiment/2609.34256v2-umr-universal-manipulation-representation",
+      "title": "UMR: Universal Manipulation Representation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "统一动作表示实现跨具身零样本操作迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.13732v1",
+      "route": "20251126-20261125-starter-x-embodiment/2611.13732v1-ciallo-learning-shared-intent-representations-for-cross-embodiment-manipulation",
+      "title": "CIALLO: Learning Shared Intent Representations for Cross-Embodiment Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "用动作编解码器对齐不同具身动作，并由具身条件解码器还原",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.26376v1",
+      "route": "20251126-20261125-starter-x-embodiment/2611.26376v1-alignment-drives-reuse-learning-generalizable-robot-use-agents-from-heterogeneous-experience",
+      "title": "Alignment Drives Reuse: Learning Generalizable Robot-Use Agents from Heterogeneous Experience",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "对齐异构具身的感知、坐标约定与动作接口以学习共享技能集",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.33158v2",
+      "route": "20251126-20261125-starter-x-embodiment/2611.33158v2-omniact-one-policy-one-million-embodiments",
+      "title": "OmniAct: One Policy, One Million Embodiments",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "以机器人运动学为条件的单一跨具身策略覆盖百万具身",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper",
+      "route": "conference/cvpr-2025/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper-universal-actions-for-enhanced-embodied-foundation-models",
+      "title": "Universal Actions for Enhanced Embodied Foundation Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "通用动作空间对齐不同具身的动作空间",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2511.21690v1",
+      "route": "20251126-20261125-starter-x-embodiment/2511.21690v1-tracegen-world-modeling-in-3d-trace-space-enables-learning-from-cross-embodiment-videos",
+      "title": "TraceGen: World Modeling in 3D Trace Space Enables Learning from Cross-Embodiment Videos",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过3D轨迹空间从跨具身视频中学习",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2512.11609v2",
+      "route": "20251126-20261125-starter-x-embodiment/2512.11609v2-unibyd-a-unified-framework-for-learning-robotic-manipulation-across-embodiments-beyond-imitation-of-human-demonstrations",
+      "title": "UniBYD: A Unified Framework for Learning Robotic Manipulation Across Embodiments Beyond Imitation of Human Demonstrations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "跨多种机器人手部具身的统一操作策略学习框架",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2601.09163v1",
+      "route": "20251126-20261125-starter-x-embodiment/2601.09163v1-cei-a-unified-interface-for-cross-embodiment-visuomotor-policy-learning-in-3d-space",
+      "title": "CEI: A Unified Interface for Cross-Embodiment Visuomotor Policy Learning in 3D Space",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "统一接口对齐不同机械臂与末端执行器的轨迹",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.01067v1",
+      "route": "20251126-20261125-starter-x-embodiment/2602.01067v1-a-systematic-study-of-data-modalities-and-strategies-for-co-training-large-behavior-models-for-robot-manipulation",
+      "title": "A Systematic Study of Data Modalities and Strategies for Co-training Large Behavior Models for Robot Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "系统研究含跨具身数据的大型行为模型协同训练",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2602.18025v1",
+      "route": "20251126-20261125-starter-x-embodiment/2602.18025v1-cross-embodiment-offline-reinforcement-learning-for-heterogeneous-robot-datasets",
+      "title": "Cross-Embodiment Offline Reinforcement Learning for Heterogeneous Robot Datasets",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在16个平台的异构机器人轨迹上做离线强化学习",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2603.03960v1",
+      "route": "20251126-20261125-starter-x-embodiment/2603.03960v1-structural-action-transformer-for-3d-dexterous-manipulation",
+      "title": "Structural Action Transformer for 3D Dexterous Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过结构化动作表示实现高自由度灵巧手的跨具身技能迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2604.07993v2",
+      "route": "20251126-20261125-starter-x-embodiment/2604.07993v2-hex-humanoid-aligned-experts-for-cross-embodiment-whole-body-manipulation",
+      "title": "HEX: Humanoid-Aligned Experts for Cross-Embodiment Whole-Body Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "人形对齐通用状态表示支持跨异构具身可扩展学习",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2604.20100v2",
+      "route": "20251126-20261125-starter-x-embodiment/2604.20100v2-joyai-ra-01-a-foundation-model-for-robotic-autonomy",
+      "title": "JoyAI-RA 0.1: A Foundation Model for Robotic Autonomy",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向跨具身、显式动作空间统一的VLA基础模型",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2605.16743v1",
+      "route": "20251126-20261125-starter-x-embodiment/2605.16743v1-lace-latent-visual-representation-for-cross-embodiment-learning",
+      "title": "LACE: Latent Visual Representation for Cross-Embodiment Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "对齐人与机器人视觉表示以支持跨具身学习",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2605.20811v1",
+      "route": "20251126-20261125-starter-x-embodiment/2605.20811v1-demo-jepa-joint-embedding-predictive-architecture-for-one-shot-cross-embodiment-imitation",
+      "title": "Demo-JEPA: Joint-Embedding Predictive Architecture for One-shot Cross-Embodiment Imitation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "单样本跨具身模仿，解耦意图与具身执行",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2605.25044v2",
+      "route": "20251126-20261125-starter-x-embodiment/2605.25044v2-x-diffvla-x-embodied-diffusion-action-heads-for-vision-language-action-models",
+      "title": "X-DiffVLA: X-Embodied Diffusion Action Heads for Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "统一跨具身扩散动作头从跨具身数据学习通用策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2606.00702v1",
+      "route": "20251126-20261125-starter-x-embodiment/2606.00702v1-shape-your-body-value-gradients-for-multi-embodiment-robot-design",
+      "title": "Shape Your Body: Value Gradients for Multi-Embodiment Robot Design",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在多种机器人形态上训练单一具身感知策略与价值函数并复用",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2606.12965v1",
+      "route": "20251126-20261125-starter-x-embodiment/2606.12965v1-embodisteer-steering-embodiment-agnostic-visuomotor-policies-with-joint-space-guidance-for-zero-shot-cross-embodiment-deployment",
+      "title": "EmbodiSteer: Steering Embodiment-Agnostic Visuomotor Policies with Joint-Space Guidance for Zero-Shot Cross-Embodiment Deployment",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "引导具身无关视觉运动策略实现零样本跨具身部署",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2606.26095v1",
+      "route": "20251126-20261125-starter-x-embodiment/2606.26095v1-learning-action-priors-for-cross-embodiment-robot-manipulation",
+      "title": "Learning Action Priors for Cross-embodiment Robot Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在VLA跨模态对齐前用跨具身运动先验预训练动作模块",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2607.03570v1",
+      "route": "20251126-20261125-starter-x-embodiment/2607.03570v1-cross-embodiment-robot-manipulation-via-a-unified-hand-action-space",
+      "title": "Cross-Embodiment Robot Manipulation via a Unified Hand Action Space",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "基于球面的统一手部动作空间对齐不同机械手的动作",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2607.27549v1",
+      "route": "20251126-20261125-starter-x-embodiment/2607.27549v1-cross-embodiment-transfer-via-behavior-aligned-representations",
+      "title": "Cross-Embodiment Transfer via Behavior-Aligned Representations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "用行为对齐表示促进VLA模型的跨具身操作技能迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.15213v1",
+      "route": "20251126-20261125-starter-x-embodiment/2609.15213v1-x-wbc-a-cross-embodiment-foundation-model-for-humanoid-whole-body-control",
+      "title": "X-WBC: A Cross-Embodiment Foundation Model for Humanoid Whole-Body Control",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "跨具身基础模型，在多种人形机器人本体间共享单一策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.21948v1",
+      "route": "20251126-20261125-starter-x-embodiment/2609.21948v1-gala-geometry-aware-latent-action-modeling-for-vision-language-action-model-pretraining-across-embodiments",
+      "title": "GALA: Geometry-Aware Latent Action Modeling for Vision-Language-Action Model Pretraining across Embodiments",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向多具身VLA预训练的几何感知潜在动作建模",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.22521v1",
+      "route": "20251126-20261125-starter-x-embodiment/2609.22521v1-latent-policy-steering-an-efficient-and-flexible-framework-for-cross-embodiment-transfer",
+      "title": "Latent Policy Steering: An Efficient and Flexible Framework for Cross-Embodiment Transfer",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "复用其他具身经验、处理动作空间不匹配的跨具身迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.27095v1",
+      "route": "20251126-20261125-starter-x-embodiment/2609.27095v1-intelligence-across-embodiments",
+      "title": "Intelligence Across Embodiments",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "论述跨具身差异累积学习与更广具身迁移的立场文章",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2610.40401v1",
+      "route": "20251126-20261125-starter-x-embodiment/2610.40401v1-continuous-action-world-models-learning-cross-embodiment-spatiotemporal-dynamics-priors",
+      "title": "Continuous-Action World Models: Learning Cross-Embodiment Spatiotemporal Dynamics Priors",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "共享隐函数空间学习跨具身动作先验",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.08577v3",
+      "route": "20251126-20261125-starter-x-embodiment/2611.08577v3-meituan-robotics-0-a-vision-language-action-foundation-model-for-desktop-manipulation",
+      "title": "Meituan-Robotics-0: A Vision-Language-Action Foundation Model for Desktop Manipulation",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在12种具身上训练并实现跨具身连续控制迁移的视觉语言动作基础模型",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.10148v1",
+      "route": "20251126-20261125-starter-x-embodiment/2611.10148v1-batch-behavior-alignment-for-cross-embodiment-learning-from-humans",
+      "title": "BATCH: Behavior Alignment for Cross-Embodiment Learning from Humans",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "用于操作技能迁移的跨具身行为对齐",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2611.24816v1",
+      "route": "20251126-20261125-starter-x-embodiment/2611.24816v1-robomorpher-scaling-robot-morphology-representations-for-cross-embodiment-action-prediction",
+      "title": "RoboMorpher: Scaling Robot Morphology Representations for Cross-Embodiment Action Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "形态条件动作分词器实现跨具身动作预测",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "cvpr-2025-szot-from-multimodal-llms-to-generalist-embodied-agents-methods-and-lessons-cvpr-2025-paper",
+      "route": "conference/cvpr-2025/cvpr-2025-szot-from-multimodal-llms-to-generalist-embodied-agents-methods-and-lessons-cvpr-2025-paper-from-multimodal-llms-to-generalist-embodied-agents-methods-and-lessons",
+      "title": "From Multimodal LLMs to Generalist Embodied Agents: Methods and Lessons",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "多具身动作分词器使单一通用智能体能在多样化具身经验上训练",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "openreview-iclr-2025-twipsx9qhn",
+      "route": "conference/iclr-2025/openreview-iclr-2025-twipsx9qhn-cross-embodiment-dexterous-grasping-with-reinforcement-learning",
+      "title": "Cross-Embodiment Dexterous Grasping with Reinforcement Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "基于特征抓取空间的通用策略控制多种灵巧手",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2608.27033v1",
+      "route": "20251126-20261125-starter-x-embodiment/2608.27033v1-riemann-10-an-embodied-world-action-model-for-physical-ai",
+      "title": "Riemann-1.0: An Embodied World Action Model for Physical AI",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "统一建模具身特定动作的世界动作模型，兼具多具身策略与仿真器功能",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2608.27406v1",
+      "route": "20251126-20261125-starter-x-embodiment/2608.27406v1-clap-cross-embodiment-video-world-models-are-zero-shot-physical-simulators",
+      "title": "CLAP: Cross-Embodiment Video World Models are Zero-Shot Physical Simulators",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "跨具身动作条件视频模型，可在人类与机器人视频上训练",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2608.29242v2",
+      "route": "20251126-20261125-starter-x-embodiment/2608.29242v2-anyworld-factorized-egocentric-world-models-for-cross-embodiment-generalization",
+      "title": "AnyWorld: Factorized Egocentric World Models for Cross-Embodiment Generalization",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "跨具身世界模型，将人类视频扩展为多样的机器人本征轨迹",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.19923v2",
+      "route": "20251126-20261125-starter-x-embodiment/2609.19923v2-co-vla-consensus-based-federated-training-for-vision-language-action-models",
+      "title": "Co-VLA: Consensus-based Federated Training for Vision-Language-Action Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向分散异构机器人数据的联邦VLA训练",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2609.28984v2",
+      "route": "20251126-20261125-starter-x-embodiment/2609.28984v2-crosssafe-towards-cross-embodiment-latent-safety-filters",
+      "title": "CrossSafe: Towards Cross-Embodiment Latent Safety Filters",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "跨具身潜空间安全过滤器共享安全推理",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2610.36615v2",
+      "route": "20251126-20261125-starter-x-embodiment/2610.36615v2-humimimic-mimetic-embodiment-transfer-of-human-humanoid-interaction-from-in-the-wild-videos",
+      "title": "HumiMimic: Mimetic Embodiment Transfer of Human-Humanoid Interaction from In-the-Wild Videos",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从人类交互视频进行跨人形具身的模仿式迁移",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "2610.42021v1",
+      "route": "20251126-20261125-starter-x-embodiment/2610.42021v1-nexus-vla-bridging-human-and-robot-experiences-via-a-shared-hierarchical-semantic-latent-space",
+      "title": "Nexus-VLA: Bridging Human and Robot Experiences via a Shared Hierarchical Semantic Latent Space",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过共享语义潜空间对齐跨具身观测与动作的VLA策略",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper",
+      "route": "conference/cvpr-2025/cvpr-2025-li-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning-cvpr-2025-paper-maniptrans-efficient-dexterous-bimanual-manipulation-transfer-via-residual-learning",
+      "title": "ManipTrans: Efficient Dexterous Bimanual Manipulation Transfer via Residual Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "将人类双臂操作技能迁移至灵巧机器人手",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    },
+    {
+      "paper_id": "openreview-icml-2025-uhf0km7r5m",
+      "route": "conference/icml-2025/openreview-icml-2025-uhf0km7r5m-otter-a-vision-language-action-model-with-text-aware-visual-feature-extraction",
+      "title": "OTTER: A Vision-Language-Action Model with Text-Aware Visual Feature Extraction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "x-embodiment"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "视觉语言动作模型根据视觉观察和语言指令预测机器人动作",
+      "first_seen_at": "2026-11-26T12:39:36.624304+00:00",
+      "updated_at": "2026-11-26T12:39:36.624304+00:00"
+    }
+  ]
+}

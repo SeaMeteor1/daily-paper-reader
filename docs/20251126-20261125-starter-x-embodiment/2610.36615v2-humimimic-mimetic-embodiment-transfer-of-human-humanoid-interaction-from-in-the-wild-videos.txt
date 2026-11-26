@@ -1,0 +1,1276 @@
+HumiMimic: Mimetic Embodiment Transfer of Human–Humanoid
+Interaction from In-the-Wild Videos
+Nghia Le1, Khang Nguyen2, Ba Long Tran3, Thi Quynh Nhu Pham1, Binh X. Nguyen1, Tuong Do1,4,5,
+Erman Tjiputra1, Hoan Nguyen6, Tung D. Ta7, Baoru Huang4, Hai-Nguyen Nguyen3, Anh Nguyen4
+Fig. 1: Overview of HumiTransfer: Given an in-the-wild human–human interaction video, our mimetic embodiment transfer replaces one
+participant with a humanoid while preserving the interaction semantics and dynamics that characterize the original human behavior. Through
+this, HumiTransfer ensures that the resulting behavior is physically plausible and compatible with different humanoid embodiments.
+Abstract— Enabling a humanoid to interact naturally with
+human partners requires preserving not only individual mo-
+tions but also the spatial, semantic, and contact relationships
+underlying the interaction (i.e., hugging, dancing, hand-shaking,
+etc.). Furthermore, a practical solution should generalize across
+various humanoid embodiments with distinct morphologies
+and kinematic constraints. To tackle this challenge, we pro-
+pose HumiTransfer, a mimetic embodiment transfer frame-
+work that converts in-the-wild human-human interaction videos
+into physically plausible human-humanoid interactions. Hu-
+miTransfer first reconstructs 3D human motion with con-
+sistent foot-ground contact, then transfers one participant
+to a target humanoid embodiment via interaction modeling,
+using weighted joint-relative directions and anatomical offsets
+to prioritize interaction-critical inter-body relationships, while
+post-retargeting optimization enforces balance, contact, and
+collision avoidance. Subsequently, we apply HumiTransfer to
+1, 200 in-the-wild videos, producing approximately 500, 000
+frames of diverse interactions for the 26-DoF Unitree R1 Edu
+and the 23-DoF HighTorque Mini-hi humanoid robot, resulting
+in our HumiMimic dataset. Across both robots, HumiTrans-
+fer achieves superior motion fidelity, preserves inter-body rela-
+tionships, and maintains contact accuracy compared with exist-
+ing baselines. Moreover, we demonstrate that HumiMimic sup-
+ports motion generation methods for synthesizing interactive
+humanoid motions following a human partner. Finally, our
+real robot deployments confirm the physical executability of
+the transferred motions in real-world settings. Our project is
+available at https://aioznetwork.github.io/HumiMimic/.
+1 AIOZ Ltd., Singapore
+2 MBZUAI, Abu Dhabi, United Arab Emirates
+3 RMIT University, Vietnam Campus
+4 University of Liverpool, UK
+5 National Tsing Hua University, Taiwan
+6 University of Information Technology, VNUHCM, Vietnam.
+7 Keio University, Mita, Minato-ku, Tokyo, Japan
+I. INTRODUCTION
+Humans are adept at participating in the social world not
+only through explicit instruction but also by observing and
+responding to others’ behaviors [1]. Such a capacity is com-
+monly referred to as mimesis: the representation and commu-
+nication of experience through interaction in both semantic
+and dynamic manners [2], [3]. Indeed, interaction cannot be
+acquired by imitating isolated motions alone. Meaningful
+human-to-human interactions fundamentally arise from the
+evolving relationship between participants. For example,
+making a humanoid dance with another human requires not
+merely reproducing the learned whole-body motions, but also
+being aware of interpersonal spacing and orientation, syn-
+chronizing their rhythm and movement phase, coordinating
+contact, and continually adapting to the partner’s motion
+despite variations in embodiment. Herein, mimesis offers
+a natural account of how observed human behavior can
+translate into actions for humanoid robots, connecting motion
+recognition, motion generation, and embodied communica-
+tion, thus opening up a vast range of applications in human-
+humanoid interactions.
+In practice, existing humanoid motion datasets [10], [13],
+[14] are predominantly collected through high-fidelity tele-
+operation or motion-capture systems in controlled environ-
+ments. Although these pipelines provide accurate, robot-
+compatible motions, they are often tied to specific embod-
+iments and capture only a subset of interaction behaviors
+within limited environments. Advances in scene-aware and
+occlusion-robust human pose estimation [15], [16], mesh-
+based body fitting [17], and learning-based monocular re-
+construction [18] have made it possible to recover whole-
+body human motion from videos. Despite promising results,
+they often overlook human-human interactions due to the
+scarcity of suitable datasets. Publicly available videos, by
+arXiv:2610.36615v2  [cs.RO]  29 Oct 2026
+
+
+TABLE I: Key Attributes of Interaction Datasets: Comparisons of key attributes between HumiMimic dataset and existing human-
+motion and humanoid-motion datasets in terms of collection setting, scale, action diversity, and supported humanoid embodiments.
+Dataset
+Attribute
+No. Subjects and
+Means of Collection
+No. Sequences
+Type of Actions
+Multi-Person
+Interaction
+Robot/Humanoid
+Embodiment
+AMASS [4]
+344, MoCap
+11,265
+Daily/locomotion
+No
+No
+Human3.6M [5]
+11, MoCap
+∼3.6M frames
+15 daily
+No
+No
+KIT Whole-Body [6]
+238, MoCap
+2,972
+Whole-body everyday
+Some
+No
+3DPW [7]
+7, IMU + single-view RGB
+60 clips
+Walking, interacting
+Some
+No
+Harmony4D [8]
+24, multi-view RGB
+208
+Close interactions
+Yes
+No
+CHICO [9]
+20, multi-view RGB
+240 clips
+7 industrial interactions
+No
+KUKA
+H2O [10]
+AMASS
+∼10k
+Whole-body everyday
+No
+Unitree H1
+AgiBot World [11]
+Teleop
+∼3000 hours
+Dexterous/loco-manip
+No
+AgiBot G1
+CLONED [12]
+AMASS + MoCap
+345
+Whole-body loco-manip
+Some
+Unitree H1
+OmniH2O-6 [13]
+Teleop
+∼72k frames
+6 everyday tasks
+Some
+Unitree H1
+HumiMimic (Ours)
+Multiple (in-the-wild)
+500K frames
+Diverse (sports, daily, social)
+Yes
+Unitree R1 Edu & HighTorque Mini-hi
+contrast, contain abundant and diverse human-human inter-
+actions captured in real-world settings, offering a scalable
+source for deriving human-humanoid interaction motions.
+Recent advances in whole-body motion learning [19]–
+[21] have expanded the range of human-like behaviors that
+humanoids can synthesize. Still, learning behaviors such
+as human-to-human interactions remain fundamentally con-
+strained by the availability and diversity of training data:
+a humanoid must not only reproduce an individual motion
+but also coordinate with its human partner [22]. Meanwhile,
+retargeting methods offer a means of converting observed
+human behavior into embodiment-specific compatibility, yet
+existing approaches [23]–[25] primarily optimize single-
+agent motion, neither preserving the inter-body relationships
+underlying the interaction nor identifying which semantic
+cues to optimize across embodiments. Therefore, the central
+challenge of mimetic embodiment transfer is to translate
+one participant’s motion into a humanoid embodiment while
+preserving the interaction semantics with its human partner.
+To tackle this challenge, we propose HumiTransfer, a new
+mimetic embodiment transfer framework that translates in-
+the-wild human-human interactions into human-humanoid
+interactions, as shown in Fig. 1. HumiTransfer takes various
+interaction sequences as video frames to extract human
+motion, then transfers one human participant’s poses to
+two distinct humanoid embodiments: the 23-DoF High-
+Torque Mini-hi and the 26-DoF Unitree R1 Edu, resulting
+in our HumiMimic dataset. We also benchmark existing
+retargeting methods to showcase the diversity and complex-
+ity of interactions in HumiMimic. In summary, our main
+contributions are twofold as follows:
+• We propose HumiTransfer, a mimetic embodiment
+transfer framework that translates one human into a
+humanoid while preserving the semantics and distances
+underlying the interaction and satisfying embodiment-
+specific kinematic and physical constraints.
+• We introduce HumiMimic, a scalable embodied dataset
+that contains 1, 200 human-humanoid interaction se-
+quences (∼500, 000 frames) by extracting body frames
+from in-the-wild human-human interaction videos. Our
+code and dataset will be made publicly available.
+II. RELATED WORK
+Human Motion Datasets. Human motion datasets have
+traditionally relied on motion capture systems in controlled
+environments [26], [27]. Human3.6M [5] and CMU Mo-
+Cap [28] provide accurate 3D poses, while AMASS [4]
+unifies diverse MoCap sources in the SMPL represen-
+tation [29].
+Multi-person interaction
+datasets, such
+as
+CHI3D [30] and Harmony4D [8], introduce physical in-
+teractions, while 3DPW [7] and KIT Whole-Body [6] in-
+corporate more unconstrained settings. Recent humanoid
+datasets, H2O [10], AgiBot World [11], CLONED [12],
+and OmniH2O-6 [13], provide humanoid-compatible mo-
+tion but are primarily collected through teleoperation or
+controlled data acquisition. In general, existing datasets
+lack the joint provision of large-scale, in-the-wild multi-
+person interactions and humanoid-compatible motion. To fill
+this gap, this work introduces HumiMimic, a dataset of
+human-humanoid interactions featuring high-fidelity, phys-
+ically plausible poses/motions.
+Human-to-Humanoid
+Retargeting. Human-to-humanoid
+retargeting ranges from inverse kinematics and optimization-
+based methods [23], [31] to learning-based approaches [32],
+[33]. Optimization-based approaches primarily preserve the
+motion of the transferred agent through joint or end-effector
+alignment [10], [34], [35]. Uniform transfer [25] preserves
+relative geometry through scaling, yet it is sensitive to
+embodiment differences. Proportional transfer [10], [23]
+adapts motion to the target embodiment but introduces
+distortions due to morphological dissimilarities. Under the
+umbrella of interactive robotics, these methods fall short
+of determining the relational cues critical to interaction,
+making it difficult to maintain high-fidelity, embodiment-
+specific interactions. Meanwhile, physics-based approaches
+improve the geometric quality of interactions [36], where
+recent interaction-aware approaches [24], [37] explicitly
+consider relationships between interacting bodies, while
+graphics-oriented methods [38], [39] preserve interaction
+semantics. Within this research scope, HumiTransfer extends
+optimization-based human-to-humanoid retargeting, enabling
+embodiment-specific interaction with another human partic-
+ipant in in-the-wild settings.
+To recap, Table I summarizes our method with exist-
+ing human-motion and humanoid datasets, highlighting its
+
+
+unique combination of scale, in-the-wild multi-person inter-
+actions, and support for diverse humanoid embodiments.
+III. HUMITRANSFER: MIMETIC EMBODIMENT
+TRANSFER FOR HUMAN-HUMANOID INTERACTION
+As shown in Fig. 2, we introduce a three-stage framework:
+(i) a framework for human–humanoid interaction with recon-
+structed 3D interaction motions; (ii) HumiTransfer, a mimetic
+embodiment transfer for interaction-preserving human-to-
+humanoid motion retargeting; and (iii) a post-retargeting
+optimization stage. After which, we obtain HumiMimic, our
+human-humanoid interaction dataset.
+A. Human-Humanoid Interaction Data
+1) Data Collection & Statistics: We gather high-quality
+videos
+of
+in-the-wild
+human-human
+interactions
+from
+YouTube, TikTok, Facebook, and other Internet sources,
+involving only two participant subjects. As depicted in Fig. 3,
+our resulting dataset contains 1, 200 two-person interaction
+videos, yielding about 500, 000 processed frames (approxi-
+mately 4.6 video hours). Each sequence ranges from 100 to
+1, 000 frames, with more than half exceeding 300 frames.
+Regarding diversity, our dataset covers a broad spectrum of
+interactions, such as co-movement (29%), social exchanges
+(21%), dual sports (17%), and sparring (13%).
+2) Extraction of Human-Human Interaction Motion: As
+we noticed image-quality distortions, camera instability, and
+scene complexity in the collected in-the-wild videos, we per-
+form an automatic filtering step [40] to remove low-fidelity
+frames and re-encapsulate high-fidelity ones, retaining ap-
+proximately 73% of all frames. Next, in each re-encapsulated
+interaction sequence, we employ a multi-person tracker [41]
+to detect humans in each frame using bounding boxes. For
+each bounding box, a pre-trained keypoint detector [42] is
+used to detect the human’s key positions within the bounding
+box, which are subsequently used to perform SMPL recon-
+struction [43]. Thus, to ensure the physical plausibility of
+extracted poses, we optimize two complementary objectives
+in each video: (a) whole-body shape-fitting optimization and
+(b) foot-ground contact consistency fine-tuning.
+a) Whole-Body Shape Fitting: The pose parameter (α)
+and the body shape parameter (β) of the SMPL model [43]
+HSMPL are obtained by minimizing:
+Eshape = Ej + λαEα + λβEβ
+(1)
+where Ej represents the re-projection error between the
+detected and projected body joints, Eα and Eβ are pose and
+shape prior errors [43]; each is weighted with λα and λβ.
+b) Foot-Ground Contact Consistency Fine-tuning: To
+further enhance the quality of the reconstructed human model
+(Eq. 1), we minimize the contact error between the fitted
+SMPL and the ground, computed as the foot consistency
+error and a Zero Moment Point (ZMP) regularizer [44]:
+Econtact = Econsist + λzmp Ezmp,
+(2)
+with the foot consistency error Econsist formulated as:
+Econsist =
+X
+i∈F
+Ii,t
+h
+∥Ji,t −Ji,t−1∥+
+(Ji,t −f)⊤n∗2i
+,
+(3)
+where F
+⊂HSMPL denotes the set of foot joints of
+the SMPL model, Ii,t denotes the ground-contact indicator
+function for foot joint i, Ji,t denotes the position of joint
+i derived from its forward kinematics at time t, f is the
+reference foot position, and n∗is the estimated normal of the
+planar ground. Meanwhile, the second term in Eq. 2 enforces
+the mesh-based human body’s balance while maintaining
+consistent motion with the ground.
+By applying Eq. 1 and Eq. 2 to all detected humans,
+we obtain sets of SMPL models that serve as the frames
+{HSMPL}T
+t=0, forming our dataset for retargeting a hu-
+manoid’s motions interacting with a human partner.
+B. Interaction Modeling & Mimetic Embodiment Transfer
+Given the extracted sequence of human body frames
+{HSMPL,t}T
+t=0 and a humanoid embodiment R, our goal
+is to transfer this sequence into a humanoid’s motion while
+preserving interaction semantics and geometric relationships.
+1) Humanoid Poses Warm-Starting: As a warm start, we
+initialize humanoid poses {Rt}T
+t=0 by retargeting the human
+body frames {HSMPL,t}T
+t=0 through inverse kinematics, de-
+noted as EIK, similar to [23], [37]. Specifically, at each dis-
+crete timestep t, the human pose HSMPL,t is scaled according
+to the humanoid’s proportion. The humanoid embodiment R
+is then initialized in its default state; thus, its joint poses are
+optimized to match the scaled target frames while respecting
+the kinematic constraints and joint limits.
+2) Modeling of Human-Humanoid Interaction: To enable
+mimetic embodiment transfer for human-humanoid interac-
+tion, we model these interactions as two matrices: the joint-
+relative direction matrix and the anatomical offset matrix
+between the interacting subjects’ joints.
+a) Joint-Relative Direction Matrix: Let JH
+i,t, JR
+i,t, JP
+i,t
+be the i-th joint in the human body frame HSMPL, the
+humanoid embodiment R, and the interacting human partner
+P at the discrete timestep t. We, therefore, introduce the
+joint-relative directions of the humanoid R and its human
+partner P, written as an n × n square matrix:
+JR→P
+t
+=
+
+
+rR→P
+11,t
+rR→P
+12,t
+. . .
+rR→P
+1n,t
+...
+...
+...
+...
+rR→P
+n1,t
+rR→P
+n2,t
+. . .
+rR→P
+nn,t
+
+,
+(4)
+where R →P reads as the relation of R to P, and each
+entry in JR→P
+t
+is computed as rR→P
+ij,t
+= JR
+i,t −JP
+j,t. Eq. 4
+encodes the joint-based directional offset vectors between
+two interacting subjects. Similarly, JH→P
+t
+can be formulated
+as the joint-relative direction matrix between the human body
+frame HSMPL and the human partner P.
+b) Anatomical Offset Matrix: To reinforce the natu-
+ralness of the interaction, we also incorporate the matrix
+encoding anatomical offsets among the subjects R and P
+
+
+Mimetic Embodiment Transfer
+Post-Retargeting Optimization
+Stable Contact
+Grounded Feet
+Foot Consistency 
+Fine-tuning
+3D Motion Extraction
+Motion
+CLIP
+Motion
+CLIP
+Importance Weighting
+Distance Weighting
+Pairwise Joint
+Weighting
+A
+Foot Slipping
+Ground Penetration
+B
+C
+3D Pose 
+Estimation
+Human 
+Tracking
+In-the-Wild Videos
+Keypoint 
+Detection
+1
+2
+L_Hand
+R_Hand
+Mimetic Embodiment
+Transfer Objective
+Human-Humanoid Interaction Motion
+Self-Balancing & 
+Inter-body Collision Prevention
+Target Human Pose
+Naive Humanoid Pose
+Interaction 
+Lost
+Mimetic Humanoid Pose
+Interaction
+Preserved
+Interaction Modeling
+Joint-Relative Direction
+Anatomical Offset
+Fig. 2: Overview of HumiTransfer: (A) Given an in-the-wild video of a human-human interaction, HumiTransfer tracks human
+participants, detects body keypoints, reconstructs mesh-based full-body frames, and refines the resulting frames to ensure consistent
+ground-foot contact (Sec. III-A). (B) Next, the poses of one participant are initialized on the target humanoid through constrained inverse
+kinematics. HumiTransfer then represents the interaction semantics using joint-relative directions JR→P
+t
+and anatomical offsets AR→P
+t
+.
+Within this process, semantic and distance-based weights, WH→P
+sem
+and WH→P
+dis,t , are used to prioritize the inter-body relationships that are
+important to the observed interaction, allowing their alignment across human and humanoid embodiments (Sec. III-B). (C) The retargeted
+pose is further refined to maintain humanoid balance and suppress unintended inter-body collisions while preserving intended contacts
+and interaction dynamics, yielding the final human-humanoid interaction (Sec. III-C). By applying HumiTransfer onto the Unitree R1 Edu
+and the HighTorque Mini-hi, we obtain HumiMimic, our human-humanoid interaction dataset.
+100
+200
+300
+400
+500
+600
+700
+800
+900
+1000+
+Frame Count
+0%
+10%
+20%
+30%
+% of Samples
+25.2%
+13.7%
+10.5%
+19.5%
+4.4%
+7.1%
+10.7%
+4.5%
+3.3%
+1.1%
+29%
+21%
+17%
+13%
+8%
+11%
+Co-Movement
+Social Exchanges
+Dual Sports
+Sparring
+Partner Dance
+Others
+Fig. 3: Dataset Statistics: Distribution of interaction lengths (in
+frames) and interaction diversity (in percentages) from the collected
+in-the-wild human-human interaction videos.
+at each discrete timestep t. Its n × n square matrix is:
+AR→P
+t
+=
+
+
+aR→P
+11,t
+aR→P
+12,t
+. . .
+aR→P
+1n,t
+...
+...
+...
+...
+aR→P
+n1,t
+aR→P
+n2,t
+. . .
+aR→P
+nn,t
+
+,
+(5)
+where aR→P
+ij,t
+=
+ uR
+i,t
+⊤ JR
+i,t −JP
+j,t
+
+with uR
+i,t is the unit
+vector from the i-th joint to its immediate parent joint. Eq. 5
+represents the link-based (anatomical) offsets with respect to
+the human partner P while being aware of itself R.
+c) Joint Importance Weighting: As certain parts of the
+body are more involved in the interactions, we propose joint
+importance weighting to prioritize them when retargeting.
+We associate each joint JH
+i
+in the human H with a scalar
+weight using a softmax-normalized function [45] wH
+sem,i =
+exp(αi)/Pn
+j=1 exp(αj), where the cosine similarity αi =
+(zposes · zjoint)/(∥zposes∥∥zjoint∥) with zposes and zjoint
+respectively represent the embedding vectors of the poses
+throughout the interaction horizon and of the specific joint;
+both of which are obtained using MotionCLIP [46]. With
+the weight wsem along the interaction horizon, the pairwise
+weight between JH
+i
+and JP
+j applied to all poses is wH→P
+sem,ij =
+wH
+sem,i wP
+sem,j, which forms the n × n weighting matrix:
+WH→P
+sem
+=
+
+
+wH→P
+sem,11
+wH→P
+sem,12
+. . .
+wH→P
+sem,1n
+...
+...
+...
+...
+wH→P
+sem,n1
+wH→P
+sem,n2
+. . .
+wH→P
+sem,nn
+
+.
+(6)
+d) Joint-Relative Distance Weighting: We additionally
+weigh the joint-relative distance between JH
+i,t and JP
+j,t at
+each discrete time t, modeled as a modified normal distribu-
+tion: wH→P
+dis,ij,t = exp
+
+−∥rH→P
+ij,t
+∥
+2/2σ2
+, where σ2 denotes
+the distribution variance. Note that, since the joint-relative
+distances are non-negative while the normal distribution is
+infinitely two-sided, joints that are closer to each other are
+assigned a larger weight and vice versa. Similar to Eq. 6, the
+time-dependent distance-weighted matrix is:
+WH→P
+dis,t
+=
+
+
+wH→P
+dis,11,t
+wH→P
+dis,12,t
+. . .
+wH→P
+dis,1n,t
+...
+...
+...
+...
+wH→P
+dis,n1,t
+wH→P
+dis,n2,t
+. . .
+wH→P
+dis,nn,t
+
+.
+(7)
+3) Mimetic Embodiment Transfer Objective:
+At each
+discrete timestep t, given JH→P
+t
+, AH→P
+t
+, WH→P
+dis,t , and
+WH→P
+sem
+, we formulate the mimetic embodiment transfer
+term, Einteract(Rt, Pt, HSMPL,t), to align human-humanoid
+interaction with its human-human interaction as:
+(WH→P
+sem
+WH→P
+dis
+) ⊙(JR→P
+t
+−JH→P
+t
+)
+2
+2
++
+(WH→P
+sem
+WH→P
+dis
+) ⊙(AR→P
+t
+−AH→P
+t
+)
+2
+2 ,
+(8)
+where ⊙denotes element-wise multiplication. By incorporat-
+ing Eq. 8 with an enforced inverse kinematic term EIK and
+the Tikhonov regularization term Esmooth [47], we therefore
+use the mink solver [48] to solve for bRt in Eq. 9 at each
+discrete timestep t along the interaction horizon of T:
+bRt = arg min
+Rt Einteract(Rt, Pt, HSMPL,t)
++ EIK(Rt, HSMPL,t) + Esmooth(Rt, Rt−1)
+(9)
+
+
+to obtain { bRt}T
+t=0, preserving the interaction between the
+target human {HSMPL,t}T
+t=0 and its human partner {Pt}T
+t=0
+along the interaction horizon.
+C. Post-Retargeting Interaction Optimization
+Yet, these newly retargeted poses face challenges in self-
+balancing and inter-body collisions. We mitigate these arti-
+facts by optimizing post-retargeting interactions as we roll
+out their poses. For self-balancing, we follow the full-body
+compliant human-humanoid interaction mechanism [49]. To
+prevent inter-body collisions, we maintain an inter-body
+minimum safe distance of dmin,ij between JR
+i,t and JP
+j,t at
+each given discrete timestep t. We apply this post-retargeting
+optimization throughout the human-humanoid interaction
+horizon for all human-humanoid interaction sequences.
+Lastly, we apply the entire HumiTransfer framework to
+all human-human interaction sequences, yielding the fi-
+nal HumiMimic, which is used in our experiments.
+IV. EXPERIMENT
+We conduct intensive experiments to: (i) evaluate the
+effectiveness of HumiTransfer; (ii) demonstrate the utility of
+our HumiMimic dataset for a generative human-humanoid
+interaction task; and (iii) validate real-world deployment
+by using a trained policy on our HumiMimic dataset and
+executing it on a real humanoid robot.
+A. Assessment of Extraction & Retargeting in HumiTransfer
+First, we assess the performance of our HumiTransfer in
+the human-to-humanoid motion transfer task. As no training
+is involved, all experiments in this section run on our
+full HumiMimic dataset.
+1) Physical Plausibility of Extracted Human-Human In-
+teraction:
+We first evaluate the physical plausibility of
+extracted human-human interactions (Eq. 3) by computing
+their foot-slipping errors (Efoot) [50], ground penetration
+(Eground) [51], and static stability margin (SSM) [52]. As
+in [53], we compute SSM as the signed distance between the
+projected center of mass (CoM) and the support polygon.
+TABLE II: Effects of Foot-Ground Consistency Fine-tuning:
+Quantitative comparisons between SMPL-based fitting and itself
+with our proposed foot-ground consistency fine-tuning (Eq. (3)) in
+terms of Efoot, Eground, and SSM on HumiMimic.
+Method
+Metric
+Efoot
+(↓)
+Eground
+(↓)
+SSM
+(↑)
+SMPL Fitting [43]
+2.6125
+36.3547
+-1.9336
+SMPL Fitting [43] with Foot-
+Ground Consistency Fine-tuning
+0.6765
+0.9282
+2.0402
+As depicted in Table II, our method achieves lower
+error across the defined metrics compared to the tradi-
+tional SMPL-based fitting [43], notably with only Efoot of
+0.6765 cm/frame, Eground of 0.9282 cm/frame, and SSM
+of 2.0402 cm/frame lying inside the polygon, highlighting
+the importance of foot-ground consistency fine-tuning.
+2) Mimetic Embodiment Transfer: We evaluate the per-
+formance of our mimetic embodiment transfer against naive
+methods (i.e., inverse-kinematics [25] with uniform scaling)
+and optimization-based fitting methods (i.e., GMR [23] and
+PAIR [37]) on the 23-DoF HighTorque Mini-hi and the 26-
+DoF Unitree R1 Edu. In this experiment, we report MPJPE
+in cm as the joint position error, IRD cm as the mean
+absolute pairwise-distance error, CF1 as the F1 score for
+contact preservation at a distance threshold of d = 20 cm.
+TABLE III: Retargeting Performance on Different Humanoids:
+Quantitative evaluations in terms of MPJPE, IRD, and CF1
+on HumiMimic between our methods against naive IK [25],
+GMR [23], and PAIR [37] on the Unitree R1 Edu and the High-
+Torque Mini-hi. HumiTransfer−and HumiTransfer+ denote for
+without and with the weighting matrices (Eq. 6 and Eq. 7).
+Method
+Unitree R1 Edu
+HighTorque Mini-hi
+MPJPE (↓) IRD (↓) CF1 (↑) MPJPE (↓) IRD (↓) CF1 (↑)
+Naive IK [25]
+37.85
+16.82
+13.84
+41.31
+20.67
+11.42
+GMR [23]
+11.91
+5.73
+69.12
+10.49
+5.30
+61.97
+PAIR [37]
+9.37
+4.16
+74.54
+12.79
+6.24
+59.41
+HumiTransfer−
+10.13
+4.08
+80.90
+11.63
+6.14
+65.29
+HumiTransfer+
+6.31
+2.84
+81.97
+7.58
+3.67
+78.15
+In Table III, our method with semantic and distance-
+based weighting (HumiTransfer+) achieves the best MPJPE,
+IRD, and CF1 results across both the Unitree R1 Edu
+and
+the
+HighTorque
+Mini-hi.
+Meanwhile,
+GMR
+[23],
+PAIR [37], and our method without a weighting mechanism
+(HumiTransfer−) result in slight inconsistencies. The quali-
+tative results in Fig. 4 confirm the overall effectiveness of our
+weighting strategy for preserving high-fidelity, embodiment-
+specific human-to-humanoid interaction retargeting.
+3) Diversity of Retargeted Human-Humanoid Motion:
+We also measure the motion diversity via the diversity score
+proposed in [54]. As shown in Table IV, our dataset achieves
+higher diversity scores of 6.2427 and 6.2285 for Unitree
+R1 Edu and HighTorque Mini-hi, respectively, compared to
+AMASS [4]’s diversity scores of 5.4834 and 5.4859. These
+results indicate greater overall motion variability, thanks
+to the collection of in-the-wild human-human interaction
+videos. The diversity of interactions can be seen in our video.
+In addition, we show in Fig. 5 the eight most representative
+human-humanoid interaction motions in HumiMimic.
+TABLE IV: Motion Diversity of Datasets on Different Hu-
+manoids: Diversity scores [54] of human-humanoid interactions
+on HumiMimic compared to Human3.6M [5], AMASS [4], and
+3DPW [7] on the Unitree R1 Edu and the HighTorque Mini-hi.
+Method
+Unitree R1 Edu
+HighTorque Mini-hi
+Diversity (↑)
+Diversity (↑)
+Human3.6M [5]
+3.8251
+3.7963
+AMASS [4]
+5.4834
+5.4859
+3DPW [7]
+4.0173
+3.9130
+HumiMimic
+6.2427
+6.2285
+B. Generative Human-Humanoid Interaction Benchmarking
+Based on the concept of mimesis, we verify whether our
+HumiMimic dataset can serve as a benchmark for generative
+human-humanoid interaction tasks. In this experiment, we
+
+
+Naive IK
+GMR
+PAIR
+Ours
+Ours
+Human Pose
+incorrect pose
+contact lost
+distorted pose
+contact lost
+contact lost
+contact preserved
+contact preserved
+incorrect pose
+contact lost
+distorted pose
+Fig. 4: Qualitative Comparisons of Retargeting Results: Given the human-human interaction to retarget to different humanoids, naive
+IK [25] produces suboptimal leg and head poses on the Unitree R1 Edu and foot-ground penetration on the HighTorque Mini-hi. Meanwhile,
+GMR [23] and HumiTransfer−(Ours) preserve robot poses but lose contact with the human partner, whereas PAIR [37] introduces distorted
+poses on both humanoids. HumiTransfer+(Ours) preserves embodiment-specific poses and maintains contact with the human partner.
+Grappling
+Assisting
+Playing Basketball
+Strolling
+Underarm Turning
+Hugging
+Doing Capoeira
+Arm Locking
+Fig. 5: Qualitative Samples of Retargeted Human-Humanoid
+Interactions: By leveraging internet-scale human-human interac-
+tion videos, HumiMimic exhibits numerous human-humanoid in-
+teractions. More samples are available in our supplementary video.
+split our HumiMimic dataset into train and test sets in an
+8 : 2 ratio to train and test existing baselines. Given the
+human’s motion sequence, the generative human-humanoid
+interaction task aims to synthesize a responsive 3D motion
+for the humanoid to synchronize with the partner’s motion
+while maintaining physical and semantic coordination, in-
+cluding handling occlusions, rotations, and physical contacts.
+We evaluate on five architectures: ReMos [55], In-
+terFormer
+[56],
+ComMDM
+[57],
+InterGen
+[58],
+and
+Duolando [59], adapted to predict follower motion condi-
+tioned on partner’s 3D poses. For Duolando, RL fine-tuning
+further reduces artifacts such as foot slipping and pene-
+tration. Following [59], we evaluate the motion kinematic
+quality through the kinematic Fr´echet Inception Distance
+[60] (FIDk) from joint trajectories and interaction quality
+through cross-distance FID (FIDcd) between pairwise joints
+and frequency of contact consistency (fcontact) in terms of
+percentages of contact frames versus non-contact frames.
+Table V shows that Duolando achieves the best overall
+performance, with FIDk at 24.96 and 27.24, FIDcd at 9.07
+and 11.53, together with the fcontact of 51.75% and 46.77%.
+ReMos [55] exhibits improved contact frequency at 46.79%
+and 47.56%. Meanwhile, InterGen [58] achieves an FIDcd
+of 10.86 under HighTorque Mini-hi embodiment. Fig. 6
+presents a challenging sports sequence with a human partner.
+Duolando [59] produces more appropriate and synchronized
+responses, while InterGen [58] generates coherent motion but
+InterGen
+Duolando
+Fig. 6: Qualitative Samples of Generative Human-Humanoid
+Interaction: Qualitative comparison of humanoid-human interac-
+tion generation on the test set of HumiMimic. The context of the
+input is “A man is kicking a ball”; the humanoid is expected to
+move to receive the ball as it is passed. Duolando [59] achieves
+a more natural and reactive response to follower motions, while
+InterGen [58] either mimics the partner’s motion or responds with
+an unsuitable motion. More qualitative results of other baselines are
+provided in our supplementary video.
+often responds inappropriately, either closely mimicking the
+human partner or producing unnatural motions.
+TABLE V: Generating Humanoid Motion from Human Mo-
+tion Results. Quantitative results on humanoid-human interaction
+between ComMDM [57], InterFormer [56], InterGen [58], Re-
+Mos [55], and Duolando [59]. All experiments run on the test set
+of our HumiMimic dataset.
+Method
+Unitree R1 Edu
+HighTorque Mini-hi
+FIDk (↓) FIDcd (↓) fcontact (↑) FIDk (↓) FIDcd (↓) fcontact (↑)
+ComMDM [57]
+36.07
+15.93
+31.09%
+38.33
+18.30
+29.07%
+InterFormer [56]
+30.16
+14.66
+42.97%
+28.64
+13.78
+37.49%
+InterGen [58]
+34.62
+17.72
+48.91%
+30.98
+10.86
+39.37%
+ReMos [55]
+25.49
+11.66
+46.79%
+31.51
+12.94
+47.56%
+Duolando [59]
+24.96
+9.07
+51.75%
+27.24
+11.53
+46.77%
+C. Self-Balancing Evaluation & Real-Robot Deployment
+Finally, we examine the self-balancing capability of the
+Unitree R1 Edu and the HighTorque Mini-hi in simulation
+and physically demonstrate the interaction tasks on the real
+Unitree R1 Edu humanoid with a human partner.
+1) Self-Balancing Evaluation: We evaluate the balancing
+ability of the retargeted motions for both humanoid embodi-
+ments, considering their CoM heights relative to the ground’s
+
+
+Human
+Unitree 
+R1 Edu
+HighTorque 
+Mini-hi
+Fig. 7: Visualization of CoM Trajectories on Different Humanoid Embodiments: Qualitative comparison of the original human motion
+(top) and the retargeted motions to Unitree R1 Edu (middle) and HighTorque Mini-hi (bottom) during the kicking interaction. The yellow
+markers visualize CoM trajectories of humans and humanoids, showing their geometric similarities to the human’s CoM trajectories.
+(a) Hugging
+(b) Hand-shaking
+Fig. 8: Real-Robot Deployment on the Unitree R1 Edu: Two
+deployed human-humanoid interaction sequences on the Unitree R1
+Edu: (a) hugging and (b) hand-shaking with overlaid snapshots
+depict the temporal evolution of the interacting motion on both
+the humanoid and its human partner. The interacting sequences are
+safe, and the humanoid does not cause harm in either scenario.
+tangential plane, and we compare these profiles with those
+of the retargeted human along the interaction horizon.
+On the test set of HumiMimic in simulation, both hu-
+manoids, Unitree R1 Edu and HighTorque Mini-hi, maintain
+CoM-height differences of 2.9573 cm and 3.2021 cm, re-
+spectively, while preserving interaction-critical relationships
+with the human partner. Both the Unitree R1 Edu (middle)
+and HighTorque Mini-hi (bottom) in Fig. 7 are capable of
+reproducing the crouching motions while maintaining the re-
+targeted human’s CoM trajectories and remaining consistent
+with their respective morphologies, as shown in Fig. 7 (top).
+These results indicate that HumiTransfer can adapt human
+poses to each humanoid while maintaining self-balancing
+capabilities, which are well-suited for real-robot deployment.
+2) Real-Robot Deployment: To evaluate real-world exe-
+cutability, we deploy the retargeted motions on the 26-DoF
+Unitree R1 Edu. We use the sequences from HumiMimic to
+optimize and map to the robot’s joints, then check against
+the robot’s motion constraints before execution. In particular,
+we employ the Unitree R1 Edu motion-tracking controller
+in mjlab [61], thus optimizing a 26-action policy in 4096
+parallel environments for approximately 30, 000 iterations on
+an NVIDIA RTX 3090 GPU.
+The training stage samples initial motion phases, perturbs
+the robot’s initial pose and velocity, and randomizes phys-
+ical parameters, including foot friction and joint dynamics.
+Following DeepMimic [33] and BeyondMimic [62], we con-
+dition the actor on this command and proprioception, reward-
+ing the simulated robot for matching the reference. At each
+simulated step, a motion command samples joint positions
+and velocities to form the policy command, while anchor
+and whole-body states supply the corresponding tracking
+targets. The trained actor is then exported to ONNX and
+executed in the C++ mimic controller with ONNX Runtime.
+At 50 Hz, the controller reads the 26 motor states and IMU
+from Unitree low-state messages, reconstructs the training
+observation order, and finally evaluates the policy. For de-
+tails, the observations contain reference joint positions and
+velocities, torso orientation error, IMU angular velocity, and
+the previous motion. The torso orientation is reconstructed
+from the IMU quaternion and waist joints without global
+position estimation. A fixed mapping converts the common
+26-joint policy order to the sparse Unitree SDK motor IDs
+used on the robot platform. Fig. 8 shows that our framework
+preserves the characteristic spatial and contact relationships
+in retargeted human-human interactions. The demonstration
+video is available in our supplementary materials.
+D. Limitations & Future Work
+Nevertheless, HumiTransfer remains limited by substantial
+morphological differences between humans and humanoids,
+which can make certain motions kinematically infeasible. For
+example, in simulation, we found that the HighTorque Mini-
+hi’s broad shoulders and short arms prevent it from hugging
+
+
+a human partner as the Unitree R1 Edu can. Furthermore, our
+current real-robot deployment primarily relies on predefined
+motion sequences and does not yet explicitly account for
+human motion. An interesting direction for future work is
+therefore to develop methods that adapt humanoid motion
+in response to observed human behavior, leveraging motion
+data from our HumiMimic dataset.
+V. CONCLUSION
+In this paper, we have presented HumiTransfer for mimetic
+embodiment transfer from in-the-wild human-human inter-
+action videos. Our proposed method includes a data prepa-
+ration pipeline that extracts physically plausible human-
+human interaction poses from in-the-wild videos, followed
+by a mimetic embodiment transfer that translates one of the
+observed humans into a humanoid. Our HumiMimic dataset
+demonstrates higher quality in avoiding ground penetra-
+tion and foot slipping, while HumiTransfer allows human
+poses to be retargeted to different humanoids. Benchmarking
+on HumiMimic across motion generation methods and
+deployments on the Unitree R1 Edu humanoid showed that
+our work enables physical deployment and can serve as a
+benchmark for future human-humanoid interaction work.
+REFERENCES
+[1] A. Bandura, D. Ross, and S. A. Ross, “Transmission of aggression
+through imitation of aggressive models.” The Journal of Abnormal
+and Social Psychology, vol. 63, no. 3, p. 575, 1961.
+[2] T. Inamura, I. Toshima, H. Tanie, and Y. Nakamura, “Embodied sym-
+bol emergence based on mimesis theory,” The International Journal
+of Robotics Research, vol. 23, no. 4-5, pp. 363–377, 2004.
+[3] Y. Nakamura et al., “Mimetic communication theory for humanoid
+robots interacting with humans,” in Robotics Research: Results of the
+12th International Symposium ISRR.
+Springer, 2007, pp. 128–139.
+[4] N. Mahmood, N. Ghorbani, N. F. Troje, G. Pons-Moll, and M. J. Black,
+“Amass: Archive of motion capture as surface shapes,” in ICCV, 2019.
+[5] C. Ionescu et al., “Human3.6m: Large scale datasets and predictive
+methods for 3d human sensing in natural environments,” TPAMI, 2014.
+[6] C. Mandery, O. Terlemez, M. Do, N. Vahrenkamp, and T. Asfour,
+“The KIT whole-body human motion database,” in ICAR, 2015.
+[7] T. von Marcard, R. Henschel, M. Black, B. Rosenhahn, and G. Pons-
+Moll, “Recovering accurate 3d human pose in the wild using imus
+and a moving camera,” in ECCV, sep 2018.
+[8] R. Khirodkar, J.-T. Song, J. Cao, Z. Luo, and K. Kitani, “Harmony4d:
+A video dataset for in-the-wild close human interactions,” NeurIPS,
+2024.
+[9] A. Sampieri et al., “Pose forecasting in industrial human-robot col-
+laboration,” in ECCV, 2022.
+[10] T. He et al., “Learning human-to-humanoid real-time whole-body
+teleoperation,” in IROS, 2024.
+[11] Q. Bu, J. Cai, L. Chen, X. Cui, Y. Ding, S. Feng, S. Gao, X. He, X. Hu,
+X. Huang et al., “Agibot world colosseo: A large-scale manipulation
+platform for scalable and intelligent embodied systems,” ICRA, 2025.
+[12] Y. Li, Y. Lin, J. Cui, T. Liu, W. Liang, Y. Zhu, and S. Huang,
+“Clone: Closed-loop whole-body humanoid teleoperation for long-
+horizon tasks,” in 9th Annual Conference on Robot Learning, 2025.
+[13] T. He et al., “Omnih2o: Universal and dexterous human-to-humanoid
+whole-body teleoperation and learning,” arXiv, 2024.
+[14] S. Jiang et al., “Kaiwu: A multimodal manipulation dataset and
+framework for robot learning and human-robot interaction,” IEEE
+Robotics and Automation Letters, 2025.
+[15] Z. Luo, S. Iwase, Y. Yuan, and K. Kitani, “Embodied scene-aware
+human pose estimation,” NeurIPS, 2022.
+[16] Y. Cheng, B. Yang, B. Wang, W. Yan, and R. T. Tan, “Occlusion-aware
+networks for 3d human pose estimation in video,” in ICCV, 2019.
+[17] F. Bogo et al., “Keep it smpl: Automatic estimation of 3d human
+pose and shape from a single image,” in ECCV.
+Springer, 2016, pp.
+561–578.
+[18] S. Shin et al., “Wham: Reconstructing world-grounded humans with
+accurate 3d motion,” in CVPR.
+IEEE, 2024, pp. 2070–2080.
+[19] Z. Jiang et al., “Harmon: Whole-body motion generation of humanoid
+robots from language descriptions,” arXiv, 2024.
+[20] K. Nguyen, K. Nguyen, A. T. Le, J. Peters, M. Huber, N. A. Vien,
+and M. N. Vu, “Td-grpc: Temporal difference learning with group
+relative policy constraint for humanoid locomotion,” arXiv preprint
+arXiv:2505.13549, 2025.
+[21] K. Nguyen, A. T. Le, J. Peters, and M. N. Vu, “Doublyaware:
+Dual planning and policy awareness for temporal difference learning
+in humanoid locomotion,” IEEE Robotics and Automation Letters,
+vol. 11, no. 2, pp. 2162–2169, 2025.
+[22] T. Wang et al., “Magic: Mixed reality-enhanced active constraint
+generation and impedance control for human-robot co-manipulation,”
+IEEE Transactions on Automation Science and Engineering, 2026.
+[23] J. P. Araujo et al., “Retargeting matters: General motion retargeting for
+humanoid motion tracking,” arXiv preprint arXiv:2510.02252, 2025.
+[24] T.
+Huang
+et
+al.,
+“Human2humanoid:
+Physics-aware
+cross-
+morphology
+motion
+retargeting
+for
+humanoid
+robots,”
+arXiv
+preprint arXiv:2606.03476, 2026.
+[25] C. Tessler*, Y. Jiang* et al., “Protomotions3: An open-source frame-
+work for humanoid simulation and control,” 2025.
+[26] H. Joo et al., “Panoptic studio: A massively multiview system for
+social motion capture,” in ICCV, 2015.
+[27] M. Trumble et al., “Total capture: 3d human pose estimation fusing
+video and inertial sensors,” in BMVC, 2017.
+[28] CMU, “Cmu graphics lab motion capture database,” 2003.
+[29] M. Loper, N. Mahmood, J. Romero, G. Pons-Moll, and M. J. Black,
+“Smpl: A skinned multi-person linear model,” in TOG, 2015.
+[30] M. Fieraru et al., “Three-dimensional reconstruction of human inter-
+actions,” in CVPR, 2021.
+[31] A. Aristidou and J. Lasenby, “Fabrik: A fast, iterative solver for the
+inverse kinematics problem,” Graphical Models, 2011.
+[32] S. Choi et al., “Self-supervised motion retargeting with safety guar-
+antee,” in ICRA.
+IEEE, 2021, pp. 8097–8103.
+[33] X. B. Peng et al., “Deepmimic: Example-guided deep reinforcement
+learning of physics-based character skills,” in TOG, 2018.
+[34] A. Tang et al., “Humanmimic: Learning natural locomotion and
+transitions for humanoid robot via wasserstein adversarial imitation,”
+in ICRA.
+IEEE, 2024, pp. 13 107–13 114.
+[35] Z. Luo et al., “Perpetual humanoid control for real-time simulated
+avatars,” in ICCV, 2023, pp. 10 895–10 904.
+[36] C. Pan et al., “Spider: Scalable physics-informed dexterous retarget-
+ing,” arXiv preprint arXiv:2511.09484, 2025.
+[37] W.-J.
+Huang
+et
+al.,
+“Learning
+whole-body
+human-humanoid
+interaction
+from
+human-human
+demonstrations,”
+arXiv
+preprint
+arXiv:2601.09518, 2026.
+[38] T. Cheynel et al., “Reconform: Real-time contact-aware motion re-
+targeting for more diverse character morphologies,” in Computer
+Graphics Forum, vol. 44, no. 2.
+Wiley Online Library, 2025, p.
+e70028.
+[39] I. Jang et al., “Geometry-aware retargeting for two-skinned characters
+interaction,” TOG, vol. 43, no. 6, pp. 1–17, 2024.
+[40] N. Salazar et al., “Xmopipe: A pipeline for large-scale in-the-wild
+human motion dataset construction,” Computer Animation and Virtual
+Worlds, vol. 37, no. 4, p. e70156, 2026.
+[41] P. Sun et al., “Dancetrack: Multi-object tracking in uniform appearance
+and diverse motion,” in CVPR, 2022.
+[42] W. Yin et al., “Whac: World-grounded humans and cameras,” in
+ECCV, 2024.
+[43] G. Pavlakos et al., “Expressive body capture: 3d hands, face, and body
+from a single image,” in CVPR, 2019.
+[44] S. Kajita et al., “Biped walking pattern generation by using preview
+control of zero-moment point,” in ICRA, 2003.
+[45] D. Bahdanau et al., “Neural machine translation by jointly learning to
+align and translate,” arXiv preprint arXiv:1409.0473, 2014.
+[46] G. Tevet et al., “Motionclip: Exposing human motion generation to
+clip space,” in ECCV.
+Springer, 2022, pp. 358–374.
+[47] C. W. Wampler, “Manipulator inverse kinematic solutions based on
+vector formulations and damped least-squares methods,” IEEE Trans-
+actions on Systems, Man, and Cybernetics, vol. 16, no. 1, pp. 93–101,
+1986.
+[48] K. Zakka, “Mink: Python inverse kinematics based on MuJoCo,” 2026.
+
+
+[49] S. Hyon et al., “Full-body compliant human–humanoid interaction:
+balancing in the presence of unknown external forces,” IEEE Trans-
+actions on Robotics, vol. 23, no. 5, pp. 884–898, 2007.
+[50] D. Rempe et al., “Contact and human dynamics from monocular
+video,” in ECCV, 2020, pp. 71–87.
+[51] Y. Yuan et al., “Simpoe: Simulated character control for 3d human
+pose estimation,” in CVPR.
+IEEE, 2021, pp. 7155–7165.
+[52] M. F. Silva et al., “A historical perspective of legged robots,” Journal
+of Vibration and Control, vol. 13, no. 9-10, pp. 1447–1486, 2007.
+[53] A. Maoudj et al., “Spinder: an open-source 18-dof hexapod robot
+with hierarchical central pattern generator control and analytic inverse
+kinematics,” Scientific Reports, 2026.
+[54] C. Guo et al., “Generating diverse and natural 3d human motions from
+text,” in CVPR.
+IEEE, 2022, pp. 5142–5151.
+[55] A. Ghosh et al., “Remos: 3d motion-conditioned reaction synthesis
+for two-person interactions,” in ECCV, 2024.
+[56] B. Chopin et al., “Interaction transformer for human reaction genera-
+tion,” IEEE Transactions on Multimedia, 2023.
+[57] Y. Shafir, G. Tevet, R. Kapon, and A. H. Bermano, “Human motion
+diffusion as a generative prior,” arXiv, 2023.
+[58] H. Liang, W. Zhang, W. Li, J. Yu, and L. Xu, “Intergen: Diffusion-
+based multi-human motion generation under complex interactions,”
+International Journal of Computer Vision, 2024.
+[59] L. Siyao et al., “Duolando: Follower gpt with off-policy reinforcement
+learning for dance accompaniment,” in ICLR, 2024.
+[60] M. Heusel et al., “Gans trained by a two time-scale update rule
+converge to a local nash equilibrium,” NeurIPS, vol. 30, 2017.
+[61] K. Zakka, Q. Liao, B. Yi, L. L. Lay, K. Sreenath, and P. Abbeel,
+“mjlab: A lightweight framework for gpu-accelerated robot learning,”
+arXiv preprint arXiv:2601.22074, 2026.
+[62] Q. Liao, T. E. Truong, X. Huang, Y. Gao, G. Tevet, K. Sreenath, and
+C. K. Liu, “Beyondmimic: From motion tracking to versatile humanoid
+control via guided diffusion,” arXiv preprint arXiv:2508.08241, 2025.

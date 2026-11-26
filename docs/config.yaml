@@ -5,9 +5,9 @@ arxiv_paper_setting:
   mode: standard
   days_window: 9
   docs_dir: docs
-  prefer_supabase_read: false
+  prefer_supabase_read: true
 supabase:
-  enabled: false
+  enabled: true
   url: https://lyucdwgefyfbmaiopjbk.supabase.co
   anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
   papers_table: arxiv_papers
@@ -285,6 +285,52 @@ subscriptions:
             updated_at: '2026-10-02T17:09:10.370656+00:00'
       updated_at: '2026-10-02T17:05:42.321Z'
       paused: false
+    - tag: x-embodiment
+      description: 机器人与AI：跨具身智能
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: cross-embodiment learning
+          keyword_cn: 跨具身学习
+          query: learning control policies that generalize across different robot embodiments
+        - keyword: embodiment transfer
+          keyword_cn: 具身迁移
+          query: transferring skills and policies between robots with different physical embodiments
+        - keyword: action space alignment
+          keyword_cn: 动作空间对齐
+          query: aligning action spaces and control interfaces across different robots
+        - keyword: multi-embodiment learning
+          keyword_cn: 多具身学习
+          query: training robot agents on data collected from multiple embodiments
+        - keyword: vision-language-action model
+          keyword_cn: 视觉语言动作模型
+          query: vision language action models that map perception and instructions to robot actions
+      intent_queries:
+        - query: >-
+            Methods that learn a single control policy generalizing across robots with different morphologies and action
+            spaces.
+          query_cn: 学习可在不同形态和动作空间的机器人之间泛化的单一控制策略的方法。
+          enabled: true
+          source: manual
+          note: ''
+        - query: Cross embodiment transfer of manipulation skills between heterogeneous robot platforms.
+          query_cn: 异构机器人平台之间操作技能的跨具身迁移。
+          enabled: true
+          source: manual
+          note: ''
+        - query: Foundation models for robotics that align observations and actions across embodiments.
+          query_cn: 在不同具身之间对齐观测和动作的机器人基础模型。
+          enabled: true
+          source: manual
+          note: ''
+        - query: Training generalist robot agents using data from multiple embodiments.
+          query_cn: 使用来自多个具身的数据训练通用机器人智能体。
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-11-26T11:51:30.092Z'
+      paused: true
 source_backends:
   arxiv:
     papers_table: arxiv_papers
@@ -297,6 +343,6 @@ source_backends:
     sync_success_value: success
     schema: public
     kind: supabase
-    enabled: false
+    enabled: true
     url: https://lyucdwgefyfbmaiopjbk.supabase.co
     anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq

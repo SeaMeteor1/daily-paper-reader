@@ -1,0 +1,2589 @@
+CIALLO: Learning Shared Intent Representations for Cross-Embodiment
+Manipulation
+Choo Sin Wai*, Dake Zhong*, Jingye Zhang*, Zhifang Liu, Siyao Xiao, Zirong Ding, Yuhong Zhang,
+Kangjie Chen, Dongbin Zhang, Guorui Song, Guocun Wang, Peng Jiao, Haoqian Wang†
+Tsinghua University
+caosw25@mails.tsinghua.edu.cn
+*Equal contribution.
+†Corresponding author.
+Abstract
+Robot
+demonstrations
+contain
+reusable
+manipulation
+knowledge, but transferring this knowledge across embod-
+iments requires representations that bridge differences in
+control interfaces.
+Action reconstruction alone does not
+ensure that similar behaviors across robots share a rep-
+resentation. To address this gap, we introduce CIALLO,
+an action codec that aligns actions, visual changes, and
+observation-grounded language in a shared space of short-
+horizon behavioral intent. An embodiment-conditioned de-
+coder maps this intent back to robot-specific actions, allow-
+ing a shared representation to support different control in-
+terfaces. After pretraining on eight embodiments, CIALLO
+adapts to a new robot from one recording of at most 10
+seconds by updating only its embodiment embeddings. The
+calibrated codec then remains frozen while a policy learns
+to predict intent from observations and instructions. We
+instantiate this policy with Qwen3.5-4B to form Qwen-
+CIALLO, whose backbone requires no large-scale robot-
+action pretraining before policy finetuning. With 20 demon-
+strations per task, Qwen-CIALLO achieves 76.7% average
+success across real SO-101 and single-arm Piper robots,
+compared with 70.0% for fully finetuned π0.
+In simula-
+tion, we additionally finetune the action decoder, achieving
+97.3% success on LIBERO and 52.7% on RoboTwin 2.0.
+The LIBERO policy also achieves 80.8% on LIBERO-Plus
+without further finetuning. Together, these results support a
+shared action codec as a transferable control interface that
+separates embodiment calibration from task learning.
+1. Introduction
+A grasp demonstrated by one robot can teach another what
+to reach for and how an object should move, even when
+their joint coordinates and control rates differ.
+Cross-
+embodiment learning seeks to reuse experience from exist-
+ing robots to provide control knowledge for a new body [14,
+27, 32]. Pretrained vision-language models supply broad
+semantic knowledge [2, 22], but grounding that knowledge
+in an unfamiliar action interface still requires substantial
+amounts of robot demonstration data. A reusable action
+codec could make these demonstrations more useful for task
+learning by reducing the need to adapt the underlying con-
+trol representation.
+Recorded actions entangle behavior with the coordinates
+and control conventions used to execute it. Similar motions
+can be expressed as end effector displacements or joint an-
+gles, with different dimensions, numbers of arms, and tem-
+poral resolutions. Shared action layouts and embodiment-
+specific modules allow policies to consume heterogeneous
+data [14, 27, 46]. Yet action reconstruction alone, even with
+embodiment-conditioned encoding and decoding, does not
+require similar behaviors across robots to have similar rep-
+resentations. Visual changes and grounded language con-
+nect different control sequences that produce similar visual
+effects or serve compatible task goals. We therefore align
+action representations through these shared cues to learn a
+codec that transfers across embodiments with only brief cal-
+ibration.
+We introduce CIALLO (Cross-embodiment Intent All In
+One Space), an action codec for transferring control knowl-
+edge across robots. CIALLO separates a shared represen-
+tation of short-horizon behavior, intent, from the body and
+control schema used to realize it. Building on latent ac-
+tion learning and action–vision alignment [5, 6, 49, 52],
+CIALLO aligns actions, visual changes, and observation-
+grounded language in one space.
+The visual and text
+branches anchor actions to their effects and task context, en-
+couraging nearby representations for compatible behaviors
+across embodiments. A shared decoder reconstructs actions
+from all three representations, preserving the control infor-
+mation needed to execute them (Figure 1A). An essential
+vector E, arm and axis embeddings, and execution times
+supply the embodiment-specific context. The same codec
+1
+arXiv:2611.13732v1  [cs.RO]  10 Nov 2026
+
+
+B. Qwen-CIALLO
+E
+E
+GT Action
+Predicted Action
+GT Action
+L1 loss
+CS loss
+Qwen3.5-4B
+Vision & Instruction
+Success 
+Rate
+97.3%
+@LIBERO 
+80.8%
+@LIBERO-Plus
+52.7%
+@RoboTwin2.0 
+E
+𝑉𝑡+𝑇
+𝑉𝑡
+Visual
+Change
+E
+Action&
+Proprio
+Intent Space
+“Grab the banana.”
+Instruction
+“Grab the banana.”
+Instruction
+Shared
+E
+Action
+A. CIALLO
+：Contrastive Loss
+：Task-level Intent Decoding
+E : Embodiment Essential Vector
+C. Calibrate for a New Robot
+1. Collect a recording of up to 10s
+2. Calibrate E & arm/axis embeddings
+3. Finetune with frozen CIALLO
+~30 mins
+60
+70
+80
+Qwen-CIALLO
+PI0
+Success Rate (%)
+SO-101
+60
+70
+80
+Qwen-CIALLO
+PI0
+Success Rate (%)
+Piper
+Agilex
+E
+𝑬𝒏𝒄𝑽
+𝑬𝒏𝒄𝑨
+𝑫𝒆𝒄𝑨
+GT 
+Action
+L1 loss
+CS loss
+𝑬𝒏𝒄𝑨
+E
+GT Action
+Predicted 
+Action
+Qwen3.5-4B
+Vision & Instruction
+𝑫𝒆𝒄𝑨
+E
+Figure 1. Overview of CIALLO. (A) During pretraining, three encoders map an action chunk with proprioception, a pair of current and
+future frames, and an instruction grounded in the current frame into a shared intent space. We align their outputs with contrastive losses
+and train a shared decoder to reconstruct the demonstrated actions from each intent, conditioned on the robot’s embodiment parameters.
+(B) To learn a policy, Qwen-CIALLO predicts intent from observations and instructions, using the frozen action encoder as a teacher and
+the demonstrated actions to supervise the decoder output. CS denotes cosine similarity loss. (C) To transfer the codec to a new robot,
+we first calibrate its essential vector and arm and axis embeddings while keeping the shared weights fixed, then train the policy with the
+calibrated codec frozen.
+weights therefore support different action dimensions, con-
+trol rates, and single- or dual-arm configurations.
+The aligned action codec then provides the interface for
+policy learning. From one recording of at most 10 seconds,
+we fit only the new robot’s essential vector and arm and
+axis embeddings, keeping the shared network fixed. We
+freeze the calibrated codec and train a policy to predict in-
+tent from observations and instructions. The action encoder
+and decoder supervise this prediction (Figure 1B–C). Cali-
+bration establishes how the codec realizes behavior on the
+new body, while task demonstrations teach the policy which
+intent to produce. We pair the codec with Qwen3.5-4B [38]
+through StarVLA [43], forming Qwen-CIALLO without
+large-scale robot-action pretraining of the Qwen backbone.
+We pretrain CIALLO on eight embodiments and evalu-
+ate reuse on real SO-101 and single-arm Piper configura-
+tions absent from pretraining (Piper pretraining uses a sim-
+ulated dual-arm configuration). Calibration takes approxi-
+mately 30 minutes per robot, after which the codec remains
+frozen. With 20 demonstrations per task, Qwen-CIALLO
+achieves 76.7% average success, compared with 70.0% for
+fully finetuned π0.
+In simulation, where the action de-
+coder is also finetuned, Qwen-CIALLO reaches 97.3% on
+LIBERO after 10k policy steps and 80.8% on LIBERO-
+Plus without further training. One policy trained jointly on
+RoboTwin 2.0 achieves 52.7% after 40k steps. These evalu-
+ations test both adaptation to new robots and policy learning
+across tasks with the shared action codec.
+2. Related Work
+2.1. Vision-Language-Action Models and World
+Models
+Language-conditioned robot policies map observations and
+instructions to actions [3, 14].
+Vision-language-action
+(VLA) models often build on pretrained vision-language
+backbones [2, 22, 31, 37].
+World models learn dynam-
+ics for behavior learning [18] or controllable video gener-
+ation [4, 17, 25]. Video-action models jointly learn pre-
+diction and control [55], while JEPA-VLA transfers frozen
+video-predictive features into a policy [29].
+Fast-WAM
+studies the value of predictive representation learning with-
+out test-time future imagination [51].
+CIALLO focuses
+on a shared intent interface with explicit embodiment-
+conditioned encoding and decoding.
+2.2. Cross-Embodiment Policy Learning
+Pooling robot demonstrations [32] requires handling dif-
+ferent action dimensions, semantics, and control rates.
+Approaches include padded unified action spaces [27],
+embodiment- or action-space-specific modules [12, 14, 31],
+and embodiment-specific stems feeding a shared trunk [46].
+CIALLO conditions shared encoding and decoding net-
+works on an essential vector and control schema. Adap-
+tation fits the new robot’s essential vector and arm and axis
+embeddings, then freezes the calibrated codec during policy
+learning.
+2.3. Aligning Actions with Visual Change
+Inverse dynamics models recover actions from observation
+pairs, enabling video labeling from limited action super-
+vision [1]. Latent-action methods learn a bottleneck be-
+2
+
+
+tween frames without action labels [4, 40, 49]. UniVLA
+learns task-centered latent actions for transfer across em-
+bodiments [5]. CLAP uses contrastive action–vision align-
+ment [52], while UniT uses cross-reconstruction to unify
+visual and kinematic representations [6]. CIALLO aligns
+actions, visual change, and observation-grounded language,
+with a shared action decoder supervising all three paths un-
+der the target embodiment context.
+2.4. Action Representations
+Diffusion and flow-matching heads model action distribu-
+tions through iterative sampling [2, 9, 27]. Efficient alter-
+natives include direct regression [21].
+Compact policies
+such as TinyVLA reduce model cost while retaining dif-
+fusion decoding [47]. Discrete representations include per-
+dimension bins [3], frequency-domain action tokens [36],
+and hierarchical vector quantization [23]. Other approaches
+use spatially structured grids or heatmaps [15, 20, 41, 48].
+Drawing on SURE’s use of transposed convolutions across
+neighboring action bins [53], CIALLO decodes shared
+intent into continuous actions through an embodiment-
+conditioned head with a softmax expectation readout.
+3. Method
+3.1. Shared Intent and Embodiment Parameteriza-
+tion
+A training example contains an instruction, RGB obser-
+vations, proprioception, and an action chunk at:t+T −1 ∈
+RT ×A together with its execution times. The chunk length,
+control rate, and semantics of the A action axes vary across
+datasets. CIALLO therefore represents a chunk as a masked
+set of timestamped control scalars rather than assigning se-
+mantic meaning to the position of a value in one global ac-
+tion vector. It compresses this set into an intent z ∈RK×D,
+with K = 2 tokens of width D = 512 in our experiments.
+The compact bottleneck provides the same interface for ev-
+ery embodiment, while the encoders and decoder receive
+the body and control context separately. The text branch
+also maintains a four-token task-level intent that summa-
+rizes the instruction. Combining it with the current obser-
+vation produces a chunk-level intent.
+CIALLO makes the complementary, body-specific part
+of the factorization explicit. Each robot is assigned an es-
+sential vector E ∈Rn, with n = 128 in practice. Axis em-
+beddings identify whether a scalar controls an end effector
+component, a joint coordinate, or a gripper command. Arm
+embeddings further specify the manipulator to which the
+scalar belongs. Together, these codes provide the informa-
+tion needed to translate between a robot’s native signals and
+the shared intent space. They also provide the parameters
+used for adaptation. For an unseen robot, we estimate a new
+E together with its arm and axis embeddings while keeping
+the shared network fixed, as illustrated in Figure 1C.
+The three encoders produce representations of the same
+demonstrated chunk,
+za = qa(a, p, E),
+zv = qv(ot, ot+T −1, E),
+zt = qt(l, ot),
+(1)
+where p, o, and l denote proprioception, RGB observations,
+and the instruction. Execution times, axis and arm codes,
+and validity masks are omitted here for brevity. A shared
+action decoder reconstructs the chunk from each represen-
+tation,
+ˆam = pa(zm, p, E),
+m ∈{a, v, t}.
+(2)
+Contrastive alignment encourages agreement across the
+three representations, while reconstruction requires each to
+retain control information. The text path uses the current
+observation to ground the instruction and receives neither
+E nor proprioception. The four-token task-level intent is
+internal to this path and is distinct from its grounded output
+zt.
+We inject E through conditional normalization [19, 34,
+35]. A learned projection produces feature-wise scales and
+shifts (γ, β), which transform a normalized activation as
+CondNorm(x; E) = Norm(x)⊙(1+γ(E))+β(E). (3)
+The same operation appears on both sides of the intent bot-
+tleneck. In the action and visual encoders, it demodulates
+embodiment-specific signals into a shared representation.
+In the action decoder, it remodulates that representation into
+the coordinates of the target robot. This symmetry provides
+a common mechanism for the forward and inverse map-
+pings in Eq. 1 and Eq. 2. Architectural and initialization
+details are given in Supplementary Section A.1.
+3.2. The Action Codec
+The action codec implements both qa and pa with pa-
+rameters shared across embodiments, as illustrated in Fig-
+ure 2. The encoder represents each valid action scalar by
+its value, execution time, control axis type, and arm iden-
+tity. Embodiment-conditioned blocks map these tokens into
+the common feature space, after which the Query Pooling
+module compresses the entire chunk into K intent tokens.
+A separate proprioceptive encoder summarizes the current
+body state and injects it through a learned gate. The re-
+sulting intent is grounded primarily in the executed motion,
+while proprioception supplies the state and coordinate con-
+text needed to interpret that motion.
+The decoder reverses this mapping for a requested target
+interface. The Time Query module reads the intent at the
+target execution times. It combines the resulting features
+3
+
+
+Upsample Block
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 𝑅
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 4𝑅
+Depth-wise 
+ConvTranspose1d
+Conditioned 
+GroupNorm
+E
+𝛾, 𝛽
+MLP
++
+Refinement Block
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 𝑅
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 𝑅
+Depth-wise 
+ConvTranspose1d
+Conditioned 
+GroupNorm
+E
+𝛾, 𝛽
+MLP
++
+𝑇× 𝐴× 256
+𝐾× 𝐷
+Time
+Query
+𝑇× 𝐷
+𝑇, 𝑙𝑜𝑔(∆𝑡)
++
+Axis+Arm Embedding 𝐴× 𝐷
+Proprio Context 𝐷
+Conditioned
+MLP
+𝑇× 𝐴× 𝐷
+E
+TransConv
+Head
+× 𝟐
+Softmax
+& E(·)
++
+Axis+Arm Embedding 𝐴× 𝐷
+𝑇× 𝐴
+Action
+Chunk
+Linear
+𝑇× 𝐴× 𝐷
++
+Conditioned
+MLP
+× 𝟐
+Query
+Pooling
+𝐾× 𝐷
+𝑇, 𝑙𝑜𝑔(∆𝑡)
+Proprio 
+Context
+Axis Embedding 𝑃× 𝐷
+𝑃
+Proprio
+Linear
+𝑃× 𝐷
++
+Conditioned
+MLP
+× 𝟐
+Query
+Pooling
+×
+σ
+E
+E
+E
+𝑇× 𝐴
+Action 
+Chunk
+Intent
+𝐷
+Action 
+Encoder
+Action 
+Decoder
+Proprio 
+Encoder
+Conditioned MLP
+Conditioned
+LayerNorm
+MLP
++
+E
+𝛾, 𝛽
+TransConv Head
+𝑇× 𝐴× 𝐷
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 1
+Linear
+Upsample 
+Block
+Refinement 
+Block
+× 𝟒
+𝑇× 𝐴× 𝐷ℎ𝑒𝑎𝑑× 256
+Linear
+𝑇× 𝐴× 256
+E
+Figure 2. The action codec. The action encoder (middle) uses the essential vector E to map control signals into shared intent, incorporating
+context from the proprioceptive encoder (top). The decoder (bottom) combines this intent with the target action schema and current
+proprioception, remodulates the result for the target embodiment, and uses the TransConv Head to predict each control scalar on a shared
+basis of 256 ordered bins. The decoded action is the softmax expectation over the bin centers.
+Future
+Current
+C
+Frozen
+DINOv2
+ViT-base/14
+LN
+Conv
+GELU
+Conv
+Input Proj
+Conditioned 
+ConvNeXt
+E
+× 𝟒
+Stage 1
+Conditioned 
+ConvNeXt
+E
+× 𝟒
+Stage 2
+LN
+Conv
+Downsample
+Conv
+Flatten
+Output Proj
++
+Camera Embedding 𝐷
+Query
+Pooling
+Intent
+Vision 
+Encoder
+Text
+Codec
+Frozen
+BERT
+BERT-base-
+uncased
+“Grab the 
+banana.”
+Query
+Pooling
+Task
+Intent
+C
+Current Frame only
+Query
+Pooling
+Transformer
+Layer
+Intent
+× 𝟐
+𝐾× 𝐷
+𝐾× 𝐷
+𝐾𝑡𝑎𝑠𝑘× 𝐷
+“Grab the 
+banana.”
+Masked
+Masked
+Decoder
+Figure 3. Vision and text paths. The vision encoder compares current and future observations with a shared frozen DINOv2 backbone
+and an E-conditioned local interaction encoder, then pools valid tokens from multiple cameras into chunk-level intent. The text codec
+compresses the instruction into a task-level intent, grounds it using features reused from the current frame to form the same K × D intent
+interface, and reconstructs masked instruction tokens from the task-level intent.
+with target axis and arm codes and current proprioceptive
+context, then remodulates them under the target essential
+vector. The temporal schedule and action schema are inputs
+rather than fixed network properties. One decoder there-
+fore supports different horizons, control rates, action dimen-
+sions, and single- or dual-arm layouts. Padding is used only
+for batching and is removed by masks. It does not impose a
+shared semantic layout on otherwise unrelated control axes.
+For each output scalar, the TransConv Head predicts log-
+its over 256 uniformly spaced bins in [−1, 1], sharing local
+convolutional kernels along the value axis. A softmax ex-
+pectation converts these logits into a continuous action, fol-
+lowing integral pose regression [45] and DSNT [30]. The
+head is trained with masked ℓ1 regression and decodes in
+one forward pass. Supplementary Section A.2 gives the ar-
+chitecture and expectation readout.
+3.3. Vision Encoder
+The vision path recovers intent over a short horizon from
+the change between the current and future observations, as
+4
+
+
+illustrated in Figure 3.
+Both frames from every camera
+are processed by the same frozen DINOv2 backbone [33].
+Freezing this backbone preserves its semantic representa-
+tion while the interaction encoder learns from heteroge-
+neous robot data. These backbone features remain fixed
+during embodiment calibration, while the downstream vi-
+sual representation can change through its dependence on
+E. The paired patch features are concatenated along the
+channel dimension and processed by a two-stage Con-
+vNeXt interaction encoder conditioned on the essential vec-
+tor E [28]. This local hierarchy is well suited to the small
+visual changes produced over a short action chunk. It avoids
+patch-level global attention and a full cost volume while re-
+taining a sufficient receptive field to relate nearby changes.
+The resulting tokens from each available view receive a
+camera embedding. A validity mask removes absent cam-
+eras and padded tokens, so the same encoder handles vari-
+able camera counts. Query Pooling summarizes all valid
+views into the K ×D intent interface shared with the action
+path. Its learned queries select task-relevant changes across
+cameras without forming all patch pairs. The DINOv2 fea-
+tures for the current frame are also retained for the text path.
+Input resolution, stage dimensions, mask definitions, and
+complexity are detailed in Supplementary Section A.3.
+3.4. Text Codec
+An instruction usually describes an entire task, whereas
+chunk-level intent specifies what should happen over the
+next short horizon. The text path separates task understand-
+ing from temporal grounding to bridge these two scopes, as
+illustrated in Figure 3. A frozen BERT encoder [11] rep-
+resents the instruction, and Query Pooling compresses its
+valid token features into a task-level intent. These task-
+level tokens are fused with visual tokens extracted from
+the current frame by the frozen vision backbone. A sec-
+ond Query Pooling module extracts K grounded tokens,
+and two Transformer Layers refine them into a chunk-level
+intent in RK×D. This design uses the current observation
+to identify instruction content relevant to the present chunk,
+with little additional visual computation.
+The task-level intent bottleneck is trained through
+masked text reconstruction. The Masked Decoder receives
+an instruction with selected tokens hidden and attends to the
+task-level intent as its latent memory. The loss is evaluated
+only at the masked positions. Reconstructing the missing
+content encourages the task-level intent bottleneck to pre-
+serve distinctions expressed by the instruction.
+The text
+path intentionally differs from the action and vision paths
+in its conditioning inputs. It is neither conditioned on E nor
+given proprioception because language specifies the task in-
+dependently of the body that performs it. The current ob-
+servation supplies visual grounding, while alignment across
+modalities connects the resulting intent to an embodiment-
+relevant realization.
+Architectural details and the recon-
+struction objective are given in Supplementary Section A.4.
+3.5. Supervision
+The supervision structure is summarized in Figure 1A. The
+action, vision, and text paths each pass their intent through
+the same action decoder and reconstruct the demonstrated
+action chunk with masked ℓ1 loss.
+Sharing the decoder
+makes alignment functional rather than purely geometric.
+A visual or textual intent must expose the same informa-
+tion that the action codec needs to recover the embodiment-
+specific controls under the corresponding target context.
+The task-level intent is additionally supervised by
+masked text reconstruction, as described in Section 3.4. Fi-
+nally, symmetric InfoNCE losses [39] align the three pairs
+of representations using negatives from the global batch.
+The complete training objective is
+L =
+X
+m∈{a,v,t}
+Lm
+act + Ltext + 0.1La↔v
++ 0.05La↔t + 0.05Lv↔t.
+(4)
+Here, a, v, and t index the three paths, Lm
+act and Ltext are the
+masked action and text reconstruction losses, and Lp↔q is
+symmetric InfoNCE. Unit reconstruction weights keep re-
+construction primary, while the smaller alignment weights
+encourage a shared intent space.
+Inspired by FlashAttention and Inf-CL [8, 10], we eval-
+uate exact InfoNCE over the global batch by streaming log-
+sum-exp blocks and recomputing them during the backward
+pass. This avoids the full similarity matrix, as detailed in
+Supplementary Section A.5.
+3.6. Policy Learning and Embodiment Calibration
+With the action codec pretrained, we can train a policy to
+predict intent from observations and instructions, as illus-
+trated in Figure 1B. Qwen-CIALLO uses a Qwen3.5-4B
+backbone followed by an intent projector to produce this
+K × D representation. The frozen action encoder provides
+teacher tokens from the demonstrated actions, which super-
+vise the predicted intent through a cosine alignment loss.
+We also decode the predicted tokens and apply an action
+regression loss against the demonstrations, training the pol-
+icy to produce intent that supports accurate control. For the
+simulation benchmarks, we jointly finetune the backbone,
+projector, and action decoder. At inference, the backbone
+predicts intent directly, so the teacher encoder is no longer
+needed.
+When transferring to a new robot, we first fit the em-
+bodiment parameters that allow it to use the pretrained
+codec. As shown in Figure 1C, we calibrate its essential
+vector and arm and axis embeddings from a recording of at
+most 10 seconds while keeping the shared network weights
+5
+
+
+fixed. This optimization takes approximately 30 minutes
+on one GPU. We then freeze the calibrated codec and train
+the backbone and projector on demonstrations of the new
+robot’s tasks. Keeping the codec fixed during this second
+stage lets us evaluate whether it can support policy learning
+after calibration alone. The real-robot evaluation reports the
+calibration recording and the policy demonstrations sepa-
+rately to distinguish the data used for these two stages.
+4. Experiments
+We first evaluate whether the three intent paths align and
+retain information needed by the shared action decoder.
+We then evaluate policies trained through this interface on
+LIBERO and RoboTwin 2.0, with LIBERO-Plus testing the
+LIBERO policy under distribution shifts. Finally, we assess
+adaptation to real robots by calibrating the codec and keep-
+ing it frozen during policy training.
+4.1. CIALLO Pretraining
+We pretrain CIALLO on 125,434 episodes from eight em-
+bodiments, with balanced sampling across embodiments.
+The data span LIBERO [26], Bridge and Fractal as used
+by SimplerEnv [24], and RoboTwin 2.0 [7].
+On 2,048 held-out samples, action intent retrieves its
+paired visual or grounded language intent, and vice versa,
+with bidirectional top-1 accuracies of 96.68% and 91.94%,
+respectively. Retrieval between vision and grounded lan-
+guage reaches 96.88%.
+The shared decoder also recon-
+structs actions from each modality, with normalized masked
+MAE of 0.00761 from action, 0.01853 from vision, and
+0.02429 from grounded language.
+Supplementary Sec-
+tion B details training, evaluation, and results by embodi-
+ment.
+4.2. Contrastive Alignment Ablation
+We vary the contrastive terms while retaining all reconstruc-
+tion losses. Each model uses eight embodiments, two intent
+tokens, and the same 2,000-step training budget and valida-
+tion set. Action–vision alignment alone yields the lowest
+vision-to-action error (Table 1). The full objective yields
+the lowest action-to-action error, a 7.1% reduction relative
+to reconstruction alone, and also improves vision-to-action
+reconstruction over that baseline.
+4.3. Embodiment Conditioning
+If E merely selected a matched encoding and decoding con-
+vention for compressing actions, using the same E at both
+ends should largely preserve reconstruction. We test this
+prediction on 2,048 held-out samples by substituting an-
+other robot’s E while keeping the inputs and target action
+schema fixed. Action-to-action MAE rises from 0.00761
+to 0.04506 when we change only the encoder’s E, and to
+0.19124 when we change only the decoder’s. Giving both
+Table 1. Effect of contrastive alignment on reconstruction. MAE
+is averaged equally over eight embodiments. A, V, and T denote
+action, vision, and grounded text.
+Contrastive terms
+A→A MAE ↓
+V→A MAE ↓
+None
+0.03917
+0.05750
+A–V
+0.04042
+0.05465
+A–V, A–T
+0.03809
+0.05495
+A–V, A–T, V–T
+0.03639
+0.05614
+stages the same substitute E lowers the error to 0.16470,
+still more than 21 times the original error. Agreement be-
+tween the two stages is therefore insufficient for accurate
+reconstruction. In this test, E must also match the robot
+whose actions the codec encodes and decodes.
+Chang-
+ing only the encoder’s E affects reconstruction less for vi-
+sual intent than for action intent. Supplementary Table 10
+reports reconstruction errors for all paths and substitution
+conditions. This lower sensitivity supports our hypothesis
+that changes in the observed scene provide cues to intent
+that different robots can share despite differences in their
+action spaces.
+4.4. Number of Pretraining Embodiments
+With the training objective and step budget fixed, both
+action-to-action and vision-to-action MAE decrease on
+each of the three original embodiments (Panda, WidowX,
+and Google Robot) as pretraining expands from three to five
+to eight embodiments. For Panda, action-to-action MAE
+falls from 0.0807 to 0.0339 to 0.0136. Each expansion also
+introduces more diverse demonstrations from RoboTwin.
+We hypothesize that training on more embodiments and a
+wider range of demonstrations helps the shared codec rep-
+resent a broader range of actions, which could explain the
+lower reconstruction errors even on the original three em-
+bodiments. Supplementary Table 8 gives per-embodiment
+results and five-embodiment validation counts.
+4.5. Direct Closed-Loop Control
+For closed-loop control without policy finetuning, we feed
+the intent produced by CIALLO’s pretrained text encoder
+directly to its pretrained action decoder.
+This CIALLO-
+Direct setting reaches 73.4% success on LIBERO Spatial,
+52.2% on Object, 65.6% on Goal, and 17.8% on Long. It
+establishes a direct control baseline for the pretrained rep-
+resentation before coupling the codec to Qwen3.5.
+4.6. Qwen-CIALLO
+4.6.1. Implementation Details
+We use Qwen3.5-4B with the intent prediction and action
+supervision described in Section 3.6.
+For LIBERO and
+RoboTwin 2.0, the action encoder remains frozen while
+6
+
+
+Table 2. LIBERO success rates in %. Results marked with † are averages over three seeds. CLAP-RF and Qwen-CIALLO are trained
+jointly on all four task suites for 30k and 10k optimization steps, respectively.
+Method
+Steps
+Spatial
+Object
+Goal
+Long
+Avg.
+Diffusion Policy† [9]
+100–250k
+78.3
+92.5
+68.3
+50.5
+72.4
+Octo† [14]
+100–250k
+78.9
+85.7
+84.6
+51.1
+75.1
+OpenVLA† [22]
+50–150k
+84.7
+88.4
+79.2
+53.7
+76.5
+OpenVLA-OFT† [21]
+50–150k
+97.6
+98.4
+97.9
+94.5
+97.1
+GR00T-N1† [31]
+–
+94.4
+97.6
+93.0
+90.6
+93.9
+π0
+† [2]
+–
+96.8
+98.8
+95.8
+85.2
+94.2
+StarVLA-PI [43]
+30k
+98.8
+99.6
+95.8
+88.4
+95.7
+StarVLA-OFT
+30k
+97.8
+98.6
+96.2
+93.8
+96.6
+StarVLA-GR00T
+30k
+97.8
+98.8
+97.4
+92.0
+96.5
+CLAP-RF [52]
+30k
+98.6
+99.2
+98.0
+93.0
+97.2
+Qwen-CIALLO
+10k
+98.4
+98.4
+98.2
+94.0
+97.3
+Table 3. LIBERO-Plus success rates in %. Total reports overall success across all evaluation tasks for every method. Qwen-CIALLO uses
+its LIBERO checkpoint without further finetuning.
+Method
+Camera
+Robot
+Language
+Light
+Background
+Noise
+Layout
+Total
+π0
+15.8
+6.6
+61.0
+79.6
+78.5
+79.4
+70.4
+53.6
+UniVLA [5]
+1.8
+46.2
+69.6
+69.0
+81.0
+21.2
+31.9
+42.9
+OpenVLA
+0.8
+3.5
+23.0
+8.1
+34.8
+15.2
+28.5
+15.6
+OpenVLA-OFT
+56.4
+31.9
+79.5
+88.7
+93.3
+75.8
+74.2
+69.6
+Fast-WAM [51]
+16.3
+44.1
+66.8
+79.8
+52.6
+38.5
+61.4
+49.9
+DreamWAM [50]
+53.8
+63.6
+94.8
+96.7
+71.6
+67.2
+80.7
+74.6
+Qwen-CIALLO
+57.5
+66.7
+90.5
+95.1
+94.6
+88.9
+80.7
+80.8
+the backbone, intent projector, and action decoder are fine-
+tuned. Supplementary Section C.1 lists hyperparameters.
+4.6.2. LIBERO
+Evaluation protocol.
+We evaluate Qwen-CIALLO on
+the four standard LIBERO task suites, namely LIBERO-
+Spatial, LIBERO-Object, LIBERO-Goal, and LIBERO-
+Long.
+Together, these suites assess spatial reasoning,
+object-centric generalization, goal understanding, and long-
+horizon manipulation [26]. Baseline results in Table 2 come
+from sources that use different statistical protocols.
+Re-
+sults marked with † are averaged over three random seeds,
+with 500 evaluation trials per suite and 50 trials for each
+of the 10 tasks. Diffusion Policy, Octo, OpenVLA, and
+OpenVLA-OFT results are taken from the OpenVLA-OFT
+evaluation [21]. The GR00T-N1 and π0 results are reported
+by Hume [42], and the StarVLA results come from its of-
+ficial evaluations [43]. CLAP-RF results are taken from
+its reported LIBERO evaluation [52], using joint training
+across all four suites for 30k steps. Both the StarVLA vari-
+ants and Qwen-CIALLO use single-seed evaluations.
+Results.
+Qwen-CIALLO attains 97.3% average success
+across the four LIBERO suites, the highest average in Ta-
+ble 2. It exceeds CLAP-RF by 0.1%, OpenVLA-OFT by
+0.2%, and all reported StarVLA variants.
+Both Qwen-
+CIALLO and CLAP-RF use joint training across all four
+suites, with 10k and 30k policy finetuning steps, respec-
+tively.
+StarVLA also uses 30k steps.
+This compari-
+son concerns downstream optimization steps and excludes
+CIALLO pretraining. It is consistent with the motivation
+that a pretrained action codec can reduce the burden of
+learning robot control during policy finetuning, although the
+comparison does not isolate that mechanism.
+4.6.3. LIBERO-Plus
+Evaluation protocol. LIBERO-Plus extends LIBERO with
+controlled perturbations to camera viewpoints, robot ini-
+tial states, language instructions, light conditions, back-
+ground textures, sensor noise, and object layouts [13]. We
+evaluate the LIBERO checkpoint without further finetun-
+ing. Following the standard protocol, we run one trial per
+task across the four task suites for each perturbation cate-
+gory. Baseline results in Table 3 are taken from LIBERO-
+Plus, except for Fast-WAM and DreamWAM, reported by
+DreamWAM [50].
+Results. The same LIBERO checkpoint achieves 80.8%
+overall success, exceeding DreamWAM by 6.2% (Table 3).
+Qwen-CIALLO has the highest camera, robot, background,
+7
+
+
+Table 4. RoboTwin 2.0 success rates (%) under the clean-to-clean protocol. Single Task uses one checkpoint per task, and Co-Train uses
+one checkpoint jointly trained on all 50 tasks.
+Method
+Protocol
+Avg.
+Method
+Protocol
+Avg.
+Diffusion Policy
+Single Task
+28.0
+π0
+Single Task
+46.4
+ACT [54]
+Single Task
+29.7
+StarVLA
+Co-Train
+46.5
+RDT [27]
+Single Task
+34.5
+Qwen-CIALLO
+Co-Train
+52.7
+Table 5. Real robot task success rates (%) on SO-101 and single-arm Piper, with 20 training demonstrations and 20 evaluation trials per
+method and task on each robot. Qwen-CIALLO uses a frozen codec after calibration from one recording per robot, while π0 is fully
+finetuned.
+SO-101
+Piper
+Method
+Water bottle
+Pour beer
+Wooden fish
+Water bottle
+Pour beer
+Wooden fish
+Avg.
+Qwen-CIALLO
+85
+80
+70
+90
+95
+40
+76.7
+π0
+90
+80
+35
+100
+95
+20
+70.0
+and noise scores among the listed methods and ties on lay-
+out. This performance is obtained without training specifi-
+cally for these perturbations. We hypothesize that the short
+policy finetuning schedule helps preserve the backbone’s
+pretrained capabilities and that intent pretraining across em-
+bodiments and environments contributes to scene general-
+ization. The current evaluation measures overall robustness
+and does not separate these two possible contributions.
+4.6.4. RoboTwin 2.0
+Evaluation protocol.
+We evaluate Qwen-CIALLO on
+RoboTwin 2.0 using the official clean-to-clean protocol [7].
+The benchmark contains 50 tasks, each with 50 demonstra-
+tions for training. We train a single policy jointly across all
+tasks. In Table 4, Single Task methods use one checkpoint
+per task, while Co-Train methods use a single checkpoint
+jointly trained across all 50 tasks. All baseline results are
+taken from the official RoboTwin 2.0 leaderboard.
+Results.
+After 40k policy finetuning steps, one Qwen-
+CIALLO checkpoint achieves 52.7% overall success across
+all 50 tasks, the highest score in Table 4. It exceeds the
+jointly trained StarVLA baseline by 6.2% and the strongest
+listed task-specific baseline, π0, by 6.3%. The gains over
+RDT, ACT, and Diffusion Policy are 18.2%, 23.0%, and
+24.7%, respectively. These results show that a single pol-
+icy trained through the shared intent interface can handle
+diverse manipulation tasks, outperforming both the jointly
+trained StarVLA baseline and task-specific policies.
+4.7. Adaptation to New Embodiments
+Evaluation protocol. We evaluate adaptation on two real
+robot platforms, SO-101 and a single-arm Piper, using three
+manipulation tasks with 20 demonstrations per task on each
+robot. Supplementary Section E provides the task instruc-
+tions and example observations.
+Codec calibration.
+From one recording of at most 10
+seconds per robot, we fit only its essential vector E and
+axis and arm embeddings, keeping all shared codec weights
+frozen (Figure 1C). The frozen DINOv2 features are inde-
+pendent of E, and visual reconstruction is less sensitive to
+encoder mismatch than action reconstruction (Supplemen-
+tary Table 10). Aligning the new robot’s action intent to
+this visual reference is designed to largely preserve the pre-
+trained intent space.
+Task learning. We have not pretrained a generalist policy to
+predict CIALLO intents. With the calibrated codec frozen,
+we therefore train only the Qwen3.5-4B backbone and in-
+tent projector on the 20 demonstrations per task to predict
+the next intent from the current observation and instruction.
+We compare against full finetuning of pretrained π0 [2] on
+the same demonstrations and evaluate each method over 20
+trials per task on each robot (Table 5). Supplementary Sec-
+tion C.2 gives the optimization settings.
+Results. With 20 demonstrations per task, Qwen-CIALLO
+achieves 76.7% average success, compared with 70.0% for
+π0 (Table 5).
+The methods tie on beer pouring on both
+robots. On water-bottle placement, π0 leads by 5 percentage
+points on SO-101 and 10 on Piper. On the wooden-fish task,
+Qwen-CIALLO achieves higher success, reaching 70% ver-
+sus 35% on SO-101 and 40% versus 20% on Piper. This
+task requires grasping a thin screwdriver before striking the
+wooden fish, demanding greater grasp precision.
+These
+results compare two routes to cross-embodiment transfer.
+π0 transfers a policy pretrained on large-scale, multi-robot
+action data and then fully finetuned on the target tasks.
+Qwen-CIALLO transfers the intent space of a separately
+pretrained codec and uses the target demonstrations to train
+only Qwen3.5-4B and its intent projector to select intents
+for the frozen, calibrated codec.
+8
+
+
+5. Conclusion
+We presented CIALLO, an action codec that separates
+shared behavioral intent from embodiment-specific control.
+During pretraining, visual changes and grounded language
+connect actions through shared effects and task context. The
+aligned action codec then supports policy learning across
+embodiments. On each of two real robots, one short record-
+ing calibrates the codec, which remains frozen during pol-
+icy learning from 20 demonstrations per task. Together with
+the simulation results, these findings support separating em-
+bodiment calibration from task learning. Future work will
+align human egocentric videos with humanoid actions in the
+shared intent space and scale CIALLO pretraining to larger,
+more diverse datasets. We also aim to pretrain generalist
+vision-language-action policies from vision-language mod-
+els using the codec.
+LLM Usage Statement
+We used OpenAI Codex for language editing, manuscript
+organization, LATEX formatting, and summarizing experi-
+ment records provided by the authors for presentation in
+the manuscript. We did not use generative AI tools to de-
+sign the methodology, write or modify experimental code,
+run experiments, or generate experimental data or results.
+We reviewed all work produced with AI assistance. The
+authors checked text produced with AI assistance against
+the manuscript plan and original experiment records, ver-
+ified citation metadata against primary sources, and com-
+piled and visually inspected the affected pages. We take
+responsibility for the final content of this work, including
+text, claims, or artifacts produced with the aid of generative
+AI.
+References
+[1] Bowen Baker, Ilge Akkaya, Peter Zhokhov, Joost Huizinga,
+Jie Tang, Adrien Ecoffet, Brandon Houghton, Raul Sampe-
+dro, and Jeff Clune. Video PreTraining (VPT): Learning to
+act by watching unlabeled online videos.
+In Advances in
+Neural Information Processing Systems, 2022. 2
+[2] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail,
+Michael Robert Equi, Chelsea Finn, Niccolo Fusai, Lachy
+Groom, Karol Hausman, Brian Ichter, Szymon Jakubczak,
+Tim Jones, Liyiming Ke, Sergey Levine, Adrian Li-Bell,
+Mohith Mothukuri, Suraj Nair, Karl Pertsch, Lucy Xi-
+aoyang Shi, Laura Smith, James Tanner, Quan Vuong, Anna
+Walling, Haohuan Wang, and Ury Zhilinsky. π0: A vision-
+language-action flow model for general robot control. In Pro-
+ceedings of Robotics: Science and Systems, 2025. 1, 2, 3, 7,
+8
+[3] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen
+Chebotar, Joseph Dabis, Chelsea Finn, Keerthana Gopalakr-
+ishnan, Karol Hausman, Alexander Herzog, Jasmine Hsu,
+Julian Ibarz, Brian Ichter, Alex Irpan, Tomas Jackson,
+Sally Jesmonth, Nikhil Joshi, Ryan Julian, Dmitry Kalash-
+nikov, Yuheng Kuang, Isabel Leal, Kuang-Huei Lee, Sergey
+Levine, Yao Lu, Utsav Malla, Deeksha Manjunath, Igor
+Mordatch, Ofir Nachum, Carolina Parada, Jodilyn Peralta,
+Emily Perez, Karl Pertsch, Jornell Quiambao, Kanishka Rao,
+Michael S. Ryoo, Grecia Salazar, Pannag R. Sanketi, Kevin
+Sayed, Jaspiar Singh, Sumedh Sontakke, Austin Stone, Clay-
+ton Tan, Huong Tran, Vincent Vanhoucke, Steve Vega, Quan
+H Vuong, Fei Xia, Ted Xiao, Peng Xu, Sichun Xu, Tianhe
+Yu, and Brianna Zitkovich. RT-1: Robotics transformer for
+real-world control at scale. In Proceedings of Robotics: Sci-
+ence and Systems, 2023. 2, 3
+[4] Jake Bruce, Michael D Dennis, Ashley Edwards, Jack
+Parker-Holder, Yuge Shi, Edward Hughes, Matthew Lai,
+Aditi Mavalankar, Richie Steigerwald, Chris Apps, Yusuf
+Aytar, Sarah Maria Elisabeth Bechtle, Feryal Behbahani,
+Stephanie C.Y. Chan, Nicolas Heess, Lucy Gonzalez, Simon
+Osindero, Sherjil Ozair, Scott Reed, Jingwei Zhang, Kon-
+rad Zolna, Jeff Clune, Nando De Freitas, Satinder Singh,
+and Tim Rockt¨aschel. Genie: Generative interactive envi-
+ronments.
+In Proceedings of International Conference on
+Machine Learning, 2024. 2, 3
+[5] Qingwen Bu, Yanting Yang, Jisong Cai, Shenyuan Gao,
+Guanghui Ren, Maoqing Yao, Ping Luo, and Hongyang Li.
+Learning to act anywhere with task-centric latent actions. In
+Proceedings of Robotics: Science and Systems, 2025. 1, 3, 7
+[6] Boyu Chen, Yi Chen, Lu Qiu, Jerry Bai, Yuying Ge, and
+Yixiao Ge. UniT: Toward a unified physical language for
+human-to-humanoid policy learning and world modeling.
+CoRR, 2026. 1, 3
+[7] Tianxing Chen, Zanxin Chen, Baijun Chen, Zijian Cai, Yibin
+Liu, Zixuan Li, Qiwei Liang, Xianliang Lin, Yiheng Ge,
+Zhenyu Gu, Weiliang Deng, Yubin Guo, Tian Nian, Xuan-
+bing Xie, Qiangyu Chen, Kailun Su, Tianling Xu, Guodong
+Liu, Mengkang Hu, Huan-ang Gao, Kaixuan Wang, Zhix-
+uan Liang, Yusen Qin, Xiaokang Yang, Ping Luo, and Yao
+Mu. RoboTwin 2.0: A scalable data generator and bench-
+mark with strong domain randomization for robust bimanual
+robotic manipulation. In Proceedings of International Con-
+ference on Machine Learning, 2026. 6, 8, 16
+[8] Zesen Cheng, Hang Zhang, Kehan Li, Sicong Leng,
+Zhiqiang Hu, Fei Wu, Deli Zhao, Xin Li, and Lidong Bing.
+Breaking the memory barrier of contrastive loss via tile-
+based strategy. In Proceedings of IEEE/CVF Conference on
+Computer Vision and Pattern Recognition, 2025. 5, 16
+[9] Cheng Chi, Siyuan Feng, Yilun Du, Zhenjia Xu, Eric
+Cousineau, Benjamin CM Burchfiel, and Shuran Song. Dif-
+fusion Policy: Visuomotor policy learning via action dif-
+fusion. In Proceedings of Robotics: Science and Systems,
+2023. 3, 7
+[10] Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, and
+Christopher R´e. FlashAttention: Fast and memory-efficient
+exact attention with IO-awareness. In Advances in Neural
+Information Processing Systems, 2022. 5, 16
+[11] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+Toutanova. BERT: Pre-training of deep bidirectional trans-
+formers for language understanding. In Proceedings of 2019
+9
+
+
+Conference of the North American Chapter of the Associa-
+tion for Computational Linguistics: Human Language Tech-
+nologies, Volume 1 (Long and Short Papers), pages 4171–
+4186, 2019. 5
+[12] Ria Doshi, Homer Walke, Oier Mees, Sudeep Dasari, and
+Sergey Levine. Scaling cross-embodied learning: One policy
+for manipulation, navigation, locomotion and aviation. In
+Proceedings of Conference on Robot Learning, 2025. 2
+[13] Senyu Fei, Siyin Wang, Junhao Shi, Zihao Dai, Jikun Cai,
+Pengfang Qian, Li Ji, Xinzhe He, Shiduo Zhang, Zhaoye Fei,
+Jinlan Fu, Jingjing Gong, and Xipeng Qiu. LIBERO-Plus:
+A progressive robustness benchmark for visual-language-
+action models.
+In Proceedings of IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 38574–
+38583, 2026. 7
+[14] Dibya Ghosh, Homer Rich Walke, Karl Pertsch, Kevin
+Black, Oier Mees, Sudeep Dasari, Joey Hejna, Tobias
+Kreiman,
+Charles Xu,
+Jianlan Luo,
+You Liang Tan,
+Lawrence Yunliang Chen, Quan Vuong, Ted Xiao, Pannag R.
+Sanketi, Dorsa Sadigh, Chelsea Finn, and Sergey Levine.
+Octo: An open-source generalist robot policy. In Proceed-
+ings of Robotics: Science and Systems, 2024. 1, 2, 7
+[15] Ankit Goyal, Jie Xu, Yijie Guo, Valts Blukis, Yu-Wei Chao,
+and Dieter Fox. RVT: Robotic view transformer for 3D ob-
+ject manipulation. In Proceedings of Conference on Robot
+Learning, pages 694–710, 2023. 3
+[16] Kerui Gu, Linlin Yang, Michael Bi Mi, and Angela Yao.
+Bias-compensated integral regression for human pose esti-
+mation. IEEE Transactions on Pattern Analysis and Machine
+Intelligence, 45(9):10687–10702, 2023. 14
+[17] Yanjiang Guo, Lucy Shi, Jianyu Chen, and Chelsea Finn.
+Ctrl-World: A controllable generative world model for robot
+manipulation. In Proceedings of International Conference
+on Learning Representations, pages 6121–6138, 2026. 2
+[18] Danijar Hafner, Timothy Lillicrap, Jimmy Ba, and Moham-
+mad Norouzi. Dream to control: Learning behaviors by la-
+tent imagination. In Proceedings of International Conference
+on Learning Representations, 2020. 2
+[19] Xun Huang and Serge Belongie. Arbitrary style transfer in
+real-time with adaptive instance normalization. In Proceed-
+ings of IEEE/CVF International Conference on Computer Vi-
+sion, 2017. 3
+[20] Stephen James, Kentaro Wada, Tristan Laidlow, and An-
+drew J. Davison. Coarse-to-Fine Q-attention: Efficient learn-
+ing for visual robotic manipulation via discretisation. In Pro-
+ceedings of IEEE/CVF Conference on Computer Vision and
+Pattern Recognition, pages 13739–13748, 2022. 3
+[21] Moo Jin Kim, Chelsea Finn, and Percy Liang. Fine-tuning
+vision-language-action models: Optimizing speed and suc-
+cess.
+In Proceedings of Robotics: Science and Systems,
+2025. 3, 7, 19
+[22] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao,
+Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan P
+Foster, Pannag R Sanketi, Quan Vuong, Thomas Kollar,
+Benjamin Burchfiel, Russ Tedrake, Dorsa Sadigh, Sergey
+Levine, Percy Liang, and Chelsea Finn.
+OpenVLA: An
+open-source vision-language-action model. In Proceedings
+of Conference on Robot Learning, pages 2679–2713, 2025.
+1, 2, 7
+[23] Seungjae Lee, Yibin Wang, Haritheja Etukuru, H. Jin Kim,
+Nur Muhammad Mahi Shafiullah, and Lerrel Pinto. Behav-
+ior generation with latent actions. In Proceedings of Interna-
+tional Conference on Machine Learning, 2024. 3
+[24] Xuanlin Li, Kyle Hsu, Jiayuan Gu, Oier Mees, Karl Pertsch,
+Homer Rich Walke, Chuyuan Fu, Ishikaa Lunawat, Isabel
+Sieh, Sean Kirmani, Sergey Levine, Jiajun Wu, Chelsea
+Finn, Hao Su, Quan Vuong, and Ted Xiao. Evaluating real-
+world robot manipulation policies in simulation. In Confer-
+ence on Robot Learning, 2025. 6, 16
+[25] Yue Liao, Pengfei Zhou, Siyuan Huang, Donglin Yang,
+Shengcong Chen, Yuxin Jiang, Yue Hu, Si Liu, Jianlan Luo,
+Liliang Chen, Shuicheng YAN, Maoqing Yao, and Guanghui
+Ren. Genie Envisioner: A unified world foundation platform
+for robotic manipulation.
+In Proceedings of International
+Conference on Learning Representations, 2026. 2
+[26] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu,
+Yuke Zhu, and Peter Stone. LIBERO: Benchmarking knowl-
+edge transfer for lifelong robot learning. In Advances in Neu-
+ral Information Processing Systems, 2023. 6, 7, 16
+[27] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan,
+Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and Jun Zhu.
+RDT-1B: a diffusion foundation model for bimanual manipu-
+lation. In Proceedings of International Conference on Learn-
+ing Representations, 2025. 1, 2, 3, 8
+[28] Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feicht-
+enhofer, Trevor Darrell, and Saining Xie. A ConvNet for the
+2020s. In Proceedings of IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition, 2022. 5
+[29] Shangchen Miao, Ningya Feng, Jialong Wu, Ye Lin, Xu He,
+Dong Li, and Mingsheng Long. JEPA-VLA: Video predic-
+tive embedding is needed for VLA models. CoRR, 2026. 2
+[30] Aiden Nibali, Zhen He, Stuart Morgan, and Luke Prender-
+gast.
+Numerical coordinate regression with convolutional
+neural networks. CoRR, 2018. 4, 14
+[31] NVIDIA, Johan Bjorck, Fernando Casta˜neda, Nikita Cherni-
+adev, Xingye Da, Runyu Ding, Linxi Jim Fan, Yu Fang, Di-
+eter Fox, Fengyuan Hu, Spencer Huang, Joel Jang, Zhenyu
+Jiang, Jan Kautz, Kaushil Kundalia, Lawrence Lao, Zhiqi
+Li, Zongyu Lin, Kevin Lin, Guilin Liu, Edith Llontop, Loic
+Magne, Ajay Mandlekar, Avnish Narayan, Soroush Nasiri-
+any, Scott Reed, You Liang Tan, Guanzhi Wang, Zu Wang,
+Jing Wang, Qi Wang, Jiannan Xiang, Yuqi Xie, Yinzhen Xu,
+Zhenjia Xu, Seonghyeon Ye, Zhiding Yu, Ao Zhang, Hao
+Zhang, Yizhou Zhao, Ruijie Zheng, and Yuke Zhu. GR00T
+N1: An open foundation model for generalist humanoid
+robots. CoRR, 2025. 2, 7
+[32] Open X-Embodiment Collaboration, Abby O’Neill, Abdul
+Rehman, Abhiram Maddukuri, Abhishek Gupta, Abhishek
+Padalkar, Abraham Lee, Acorn Pooley, Agrim Gupta, Ajay
+Mandlekar, Ajinkya Jain, Albert Tung, Alex Bewley, Alex
+Herzog, Alex Irpan, Alexander Khazatsky, Anant Rai, An-
+chit Gupta, Andrew Wang, Anikait Singh, Animesh Garg,
+Aniruddha Kembhavi, Annie Xie, Anthony Brohan, An-
+tonin Raffin, Archit Sharma, Arefeh Yavary, Arhan Jain,
+10
+
+
+Ashwin Balakrishna, Ayzaan Wahid, Ben Burgess-Limerick,
+Beomjoon Kim, Bernhard Sch¨olkopf, Blake Wulfe, Brian
+Ichter, Cewu Lu, Charles Xu, Charlotte Le, Chelsea Finn,
+Chen Wang, Chenfeng Xu, Cheng Chi, Chenguang Huang,
+Christine Chan, Christopher Agia, Chuer Pan, Chuyuan Fu,
+Coline Devin, Danfei Xu, Daniel Morton, Danny Driess,
+Daphne Chen, Deepak Pathak, Dhruv Shah, Dieter B¨uchler,
+Dinesh Jayaraman, Dmitry Kalashnikov, Dorsa Sadigh, Ed-
+ward Johns, Ethan Foster, Fangchen Liu, Federico Ceola,
+Fei Xia, Feiyu Zhao, Freek Stulp, Gaoyue Zhou, Gau-
+rav S. Sukhatme, Gautam Salhotra, Ge Yan, Gilbert Feng,
+Giulio Schiavi, Glen Berseth, Gregory Kahn, Guanzhi Wang,
+Hao Su, Hao-Shu Fang, Haochen Shi, Henghui Bao, Heni
+Ben Amor, Henrik I Christensen, Hiroki Furuta, Homer
+Walke, Hongjie Fang, Huy Ha, Igor Mordatch, Ilija Ra-
+dosavovic, Isabel Leal, Jacky Liang, Jad Abou-Chakra, Jae-
+hyung Kim, Jaimyn Drake, Jan Peters, Jan Schneider, Jas-
+mine Hsu, Jeannette Bohg, Jeffrey Bingham, Jeffrey Wu,
+Jensen Gao, Jiaheng Hu, Jiajun Wu, Jialin Wu, Jiankai Sun,
+Jianlan Luo, Jiayuan Gu, Jie Tan, Jihoon Oh, Jimmy Wu,
+Jingpei Lu, Jingyun Yang, Jitendra Malik, Jo˜ao Silv´erio,
+Joey Hejna, Jonathan Booher, Jonathan Tompson, Jonathan
+Yang, Jordi Salvador, Joseph J. Lim, Junhyek Han, Kaiyuan
+Wang, Kanishka Rao, Karl Pertsch, Karol Hausman, Kee-
+gan Go, Keerthana Gopalakrishnan, Ken Goldberg, Kendra
+Byrne, Kenneth Oslund, Kento Kawaharazuka, Kevin Black,
+Kevin Lin, Kevin Zhang, Kiana Ehsani, Kiran Lekkala,
+Kirsty Ellis, Krishan Rana, Krishnan Srinivasan, Kuan Fang,
+Kunal Pratap Singh, Kuo-Hao Zeng, Kyle Hatch, Kyle Hsu,
+Laurent Itti, Lawrence Yunliang Chen, Lerrel Pinto, Li Fei-
+Fei, Liam Tan, Linxi Jim Fan, Lionel Ott, Lisa Lee, Luca
+Weihs, Magnum Chen, Marion Lepert, Marius Memmel,
+Masayoshi Tomizuka, Masha Itkina, Mateo Guaman Cas-
+tro, Max Spero, Maximilian Du, Michael Ahn, Michael C.
+Yip, Mingtong Zhang, Mingyu Ding, Minho Heo, Mo-
+han Kumar Srirama, Mohit Sharma, Moo Jin Kim, Naoaki
+Kanazawa, Nicklas Hansen, Nicolas Heess, Nikhil J Joshi,
+Niko Suenderhauf, Ning Liu, Norman Di Palo, Nur Muham-
+mad Mahi Shafiullah, Oier Mees, Oliver Kroemer, Osbert
+Bastani, Pannag R Sanketi, Patrick Tree Miller, Patrick
+Yin, Paul Wohlhart, Peng Xu, Peter David Fagan, Peter
+Mitrano, Pierre Sermanet, Pieter Abbeel, Priya Sundare-
+san, Qiuyu Chen, Quan Vuong, Rafael Rafailov, Ran Tian,
+Ria Doshi, Roberto Mart´ın-Mart´ın, Rohan Baijal, Rosario
+Scalise, Rose Hendrix, Roy Lin, Runjia Qian, Ruohan
+Zhang, Russell Mendonca, Rutav Shah, Ryan Hoque, Ryan
+Julian, Samuel Bustamante, Sean Kirmani, Sergey Levine,
+Shan Lin, Sherry Moore, Shikhar Bahl, Shivin Dass, Shub-
+ham Sonawani, Shuran Song, Sichun Xu, Siddhant Hal-
+dar, Siddharth Karamcheti, Simeon Adebola, Simon Guist,
+Soroush Nasiriany, Stefan Schaal, Stefan Welker, Stephen
+Tian, Subramanian Ramamoorthy, Sudeep Dasari, Suneel
+Belkhale, Sungjae Park, Suraj Nair, Suvir Mirchandani,
+Takayuki Osa, Tanmay Gupta, Tatsuya Harada, Tatsuya Mat-
+sushima, Ted Xiao, Thomas Kollar, Tianhe Yu, Tianli Ding,
+Todor Davchev, Tony Z. Zhao, Travis Armstrong, Trevor
+Darrell, Trinity Chung, Vidhi Jain, Vincent Vanhoucke, Wei
+Zhan, Wenxuan Zhou, Wolfram Burgard, Xi Chen, Xiaolong
+Wang, Xinghao Zhu, Xinyang Geng, Xiyuan Liu, Xu Liang-
+wei, Xuanlin Li, Yao Lu, Yecheng Jason Ma, Yejin Kim,
+Yevgen Chebotar, Yifan Zhou, Yifeng Zhu, Yilin Wu, Ying
+Xu, Yixuan Wang, Yonatan Bisk, Yoonyoung Cho, Young-
+woon Lee, Yuchen Cui, Yue Cao, Yueh-Hua Wu, Yujin Tang,
+Yuke Zhu, Yunchu Zhang, Yunfan Jiang, Yunshuang Li, Yun-
+zhu Li, Yusuke Iwasawa, Yutaka Matsuo, Zehan Ma, Zhuo
+Xu, Zichen Jeff Cui, Zichen Zhang, and Zipeng Lin. Open
+X-Embodiment: Robotic learning datasets and RT-X mod-
+els. In Proceedings of International Conference on Robotics
+& Automation, pages 6892–6903, 2024. 1, 2
+[33] Maxime Oquab, Timoth´ee Darcet, Th´eo Moutakanni, Huy
+Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez,
+Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, Mah-
+moud Assran, Nicolas Ballas, Wojciech Galuba, Russell
+Howes, Po-Yao Huang, Shang-Wen Li, Ishan Misra, Michael
+Rabbat, Vasu Sharma, Gabriel Synnaeve, Hu Xu, Herv´e Je-
+gou, Julien Mairal, Patrick Labatut, Armand Joulin, and Pi-
+otr Bojanowski. DINOv2: Learning robust visual features
+without supervision. Transactions on Machine Learning Re-
+search, 2024. 5
+[34] William Peebles and Saining Xie. Scalable diffusion mod-
+els with transformers. In Proceedings of IEEE/CVF Interna-
+tional Conference on Computer Vision, 2023. 3
+[35] Ethan Perez, Florian Strub, Harm de Vries, Vincent Du-
+moulin, and Aaron Courville. FiLM: Visual reasoning with
+a general conditioning layer. In Proceedings of AAAI Con-
+ference on Artificial Intelligence, 2018. 3
+[36] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess,
+Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and
+Sergey Levine.
+FAST: Efficient action tokenization for
+vision-language-action models. In Proceedings of Robotics:
+Science and Systems, 2025. 3
+[37] Physical Intelligence, Kevin Black, Noah Brown, James
+Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Manuel Y. Gal-
+liker, Dibya Ghosh, Lachy Groom, Karol Hausman, Brian
+Ichter, Szymon Jakubczak, Tim Jones, Liyiming Ke, Devin
+LeBlanc, Sergey Levine, Adrian Li-Bell, Mohith Mothukuri,
+Suraj Nair, Karl Pertsch, Allen Z. Ren, Lucy Xiaoyang Shi,
+Laura Smith, Jost Tobias Springenberg, Kyle Stachowicz,
+James Tanner, Quan Vuong, Homer Walke, Anna Walling,
+Haohuan Wang, Lili Yu, and Ury Zhilinsky.
+π0.5:
+a
+vision-language-action model with open-world generaliza-
+tion. CoRR, 2025. 2, 19
+[38] Qwen Team. Qwen3.5: Towards native multimodal agents,
+2026. 2
+[39] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen
+Krueger, and Ilya Sutskever.
+Learning transferable visual
+models from natural language supervision. In Proceedings
+of International Conference on Machine Learning, 2021. 5
+[40] Dominik Schmidt and Minqi Jiang. Learning to act with-
+out actions. In Proceedings of International Conference on
+Learning Representations, 2024. 3
+[41] Mohit Shridhar, Lucas Manuelli, and Dieter Fox. Perceiver-
+Actor: A multi-task transformer for robotic manipulation. In
+11
+
+
+Proceedings of Conference on Robot Learning, pages 785–
+799, 2023. 3
+[42] Haoming Song, Delin Qu, Yuanqi Yao, Qizhi Chen, Qi Lv,
+Yiwen Tang, Modi Shi, Guanghui Ren, Maoqing Yao, Bin
+Zhao, Dong Wang, and Xuelong Li.
+Hume: Introducing
+system-2 thinking in visual-language-action model. CoRR,
+2025. 7
+[43] StarVLA Community. StarVLA: A Lego-like codebase for
+vision-language-action model developing. CoRR, 2026. 2, 7
+[44] Jiaming Sun, Zehong Shen, Yuang Wang, Hujun Bao, and
+Xiaowei Zhou. LoFTR: Detector-free local feature matching
+with transformers. In Proceedings of IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 8922–
+8931, 2021. 14
+[45] Xiao Sun, Bin Xiao, Fangyin Wei, Shuang Liang, and Yichen
+Wei. Integral human pose regression. In Proceedings of Eu-
+ropean Conference on Computer Vision, 2018. 4, 14
+[46] Lirui Wang, Xinlei Chen, Jialiang Zhao, and Kaiming He.
+Scaling proprioceptive-visual learning with heterogeneous
+pre-trained transformers. In Advances in Neural Information
+Processing Systems, 2024. 1, 2
+[47] Junjie Wen, Yichen Zhu, Jinming Li, Minjie Zhu, Zhibin
+Tang, Kun Wu, Zhiyuan Xu, Ning Liu, Ran Cheng, Chaomin
+Shen, Yaxin Peng, Feifei Feng, and Jian Tang. TinyVLA: To-
+ward fast, data-efficient vision-language-action models for
+robotic manipulation. IEEE Robotics and Automation Let-
+ters, 2025. 3
+[48] Pei Yang, Hai Ci, Yanzhe Chen, Qi Lv, Han Cai, and
+Mike Zheng Shou. ActionMap: Robot policy learning via
+voxel action heatmap. CoRR, 2026. 3
+[49] Seonghyeon Ye, Joel Jang, Byeongguk Jeon, Se June Joo,
+Jianwei Yang, Baolin Peng, Ajay Mandlekar, Reuben Tan,
+Yu-Wei Chao, Bill Yuchen Lin, Lars Liden, Kimin Lee, Jian-
+feng Gao, Luke Zettlemoyer, Dieter Fox, and Minjoon Seo.
+Latent action pretraining from videos. In Proceedings of In-
+ternational Conference on Learning Representations, 2025.
+1, 3
+[50] Shanglin Yuan, Weiheng Zhao, Xin Shi, Haoyi Jiang, Xianda
+Guo, Liu Liu, Wenyu Liu, Wei Sui, and Xinggang Wang.
+DreamWAM: Beyond RGB future prediction for world ac-
+tion models. CoRR, 2026. 7
+[51] Tianyuan Yuan, Zibin Dong, Yicheng Liu, and Hang Zhao.
+Fast-WAM: Do world action models need test-time future
+imagination? CoRR, 2026. 2, 7
+[52] Chubin Zhang, Jianan Wang, Zifeng Gao, Yue Su, Tianru
+Dai, Cai Zhou, Jiwen Lu, and Yansong Tang.
+CLAP:
+Contrastive latent action pretraining for learning vision-
+language-action models from human videos. CoRR, 2026.
+1, 3, 7
+[53] Jingye Zhang, Choo Sin Wai, Dake Zhong, Zhifang Liu,
+Yuhong Zhang, Siyao Xiao, Guorui Song, Guocun Wang,
+Dongbin Zhang, Peng Jiao, and Haoqian Wang. SURE: Spa-
+tiotemporal uncertainty representation for efficient vision-
+language-action learning. arXiv:2611.09684, 2026. 3
+[54] Tony Z. Zhao, Vikash Kumar, Sergey Levine, and Chelsea
+Finn.
+Learning fine-grained bimanual manipulation with
+low-cost hardware. In Proceedings of Robotics: Science and
+Systems, 2023. 8
+[55] Pengfei Zhou, Shengcong Chen, Di Chen, Jiaxu Wang,
+Rongjun Jin, Bingwen Zhu, Yike Pan, Songen Gu, Kuanning
+Wang, Shufeng Nan, Xingyu Qiu, Chenhao Qiu, Pu Yang,
+Yunuo Cai, Jianxiong Gao, Yifan Li, Yanwei Fu, Xiangyu
+Yue, Zhi Chen, and Jianlan Luo. τ0-WM: A unified video-
+action world model for robotic manipulation. CoRR, 2026.
+2
+12
+
+
+A. Model Details
+A.1. Embodiment Conditioning
+Each essential vector is a row of a learned embedding table
+initialized from N(0, n−1/2). We set n = 128 in practice.
+A conditioned residual block takes the form
+FE(x) = x + MLP(LN(x) ⊙(1 + γ(E)) + β(E)) . (5)
+LayerNorm has no affine parameters. The projection that
+produces (γ, β) and the final linear layer of the MLP are
+zero-initialized, so FE begins as an identity map.
+The
+TransConv Head uses GroupNorm in place of LayerNorm
+and applies the same E-conditioned scale and shift.
+A.2. Action Codec
+A.2.1. Action Normalization and Chunk Construction
+For action axis j, the raw command ai,j is normalized with
+a positive scale sj defined for each source according to
+˜ai,j = clip
+ai,j
+sj
+, −1, 1
+
+,
+ˆai,j = sjˆ˜ai,j.
+(6)
+This zero-preserving transform keeps every valid axis on
+the shared interval [−1, 1]. Let f be the native control fre-
+quency and H the selected physical horizon. We choose
+the number of steps as T = max(1, ⌊Hf + 0.5⌋). Table 6
+lists the values used by the final eight-embodiment mixture.
+Most sources use a horizon of 0.5 seconds. Bridge and Frac-
+tal operate at only 5 Hz and 3 Hz, respectively, so we manu-
+ally extend their horizons to 1 and 2 seconds to retain 5 and
+6 action steps.
+A.2.2. Action and Proprioceptive Encoders
+The codec uses token width D = 512 and eight attention
+heads. For normalized action ˜ai,j at time step i and axis j,
+the input token is
+xi,j = Wa˜ai,j + ψ(τi) + eaxis
+j
++ earm
+j
+.
+(7)
+Here, Wa is a learned scalar projection, τi denotes the tem-
+poral metadata of step i, and eaxis
+j
+and earm
+j
+are the axis and
+arm embeddings. The embedding ψ parameterizes continu-
+ous time through the normalized phase ui ∈[0, 1] and con-
+trol period ∆ti,
+ψ(τi) = MLP
+ [ui, log ∆ti, {vi,k}7
+k=0]
+
+,
+vi,k =
+ sin(2π2kui), cos(2π2kui)
+
+.
+(8)
+Let X = {xi,j} collect all action tokens and let Ma ∈
+{0, 1}T ×A denote their validity mask. An entry of Ma is
+one only when the corresponding time step and action axis
+are both valid. Two Conditioned MLP blocks, each with ex-
+pansion ratio four, demodulate X. The proprioceptive path
+adds an axis embedding to each projected scalar and applies
+two Conditioned MLP blocks with the same architecture.
+Its Query Pooling module uses a single learned query to
+produce the context vector cp. With Q = {qk}K
+k=1 denoting
+the K learned action queries, the action path is
+¯za = QueryPoolingQ
+
+F (2)
+E (X), Ma
+
+,
+za = LN(¯za + σ(g)cp) .
+(9)
+The operator QueryPoolingQ(·, Ma) performs attention
+from Q to the valid tokens selected by Ma, while σ(g) is the
+learned proprioceptive gate shown in Figure 2. The pool-
+ing queries are initialized from N(0, D−1/2). We initialize
+g = −2 and drop the complete proprioceptive context with
+probability 0.1 during training. The embedding tables sup-
+port 128 action axis types, eight arms, and 64 proprioceptive
+coordinates.
+A.2.3. Action Decoder and TransConv Head
+During decoding, the Time Query module combines the re-
+quested timestamps, encoded by Eq. 8, with a chunk-level
+intent z ∈RK×D. It uses two attention blocks to produce
+one temporal feature per requested step. The resulting fea-
+tures are specialized for each target action axis and remod-
+ulated by two Conditioned MLP blocks,
+r1:T = TimeQuery
+ z, {ψ(τi)}T
+i=1
+
+,
+yi,j = G(2)
+E
+ ri + eaxis
+j
++ earm
+j
++ cp
+
+.
+(10)
+Here, ri is the temporal feature conditioned on intent and
+G(2)
+E
+denotes the two Conditioned MLP blocks. Both the
+temporal and action axis masks are retained throughout this
+computation.
+The TransConv Head first uses a linear layer to lift yi,j
+to Dhead = 128 channels. It then repeats an Upsample
+Block followed by a Refinement Block 4 times, expanding
+the value axis as 1 →4 →16 →64 →256. Each Up-
+sample Block applies a depthwise transposed convolution
+with kernel size and stride 4, followed by E-conditioned
+GroupNorm, GELU, and a residual MLP. Each Refinement
+Block follows the same structure with a depthwise trans-
+posed convolution of kernel size 4 and stride 1. A final lin-
+ear layer produces the bin logits. Writing HE for the com-
+plete TransConv Head, the projection and soft expectation
+are
+ℓi,j = HE(yi,j) ∈R256,
+pi,j,b = softmaxb(ℓi,j),
+(11)
+ˆ˜ai,j = Eb∼pi,j[cb] =
+256
+X
+b=1
+pi,j,bcb,
+cb ∈[−1, 1].
+(12)
+The symbols ℓi,j and pi,j,b denote the bin logits and the cor-
+responding softmax probabilities, and cb is the center of bin
+13
+
+
+Table 6. Action normalization and chunk construction. Scale vectors follow the native axis order, and ×2 denotes a vector shared by both
+arms. RT2 denotes RoboTwin 2.0. The 4 LIBERO suites share one entry.
+Source / embodiment
+f (Hz)
+T
+H (s)
+Scale s
+LIBERO / Panda
+20
+10
+0.5
+(1, 1, 1, 0.375, 0.375, 0.375, 1)
+Bridge / WidowX
+5
+5
+1.0
+(0.05, 0.075, 0.075, 0.15, 0.15, 0.3, 1)
+Fractal / Google
+3
+6
+2.0
+(0.3, 0.25, 0.375, 0.75, 0.6, 0.75, 1)
+RT2 / Aloha AgileX
+30
+15
+0.5
+(1.25, 3, 3, 2, 1.5, 3, 1) × 2
+RT2 / Franka
+30
+15
+0.5
+(2, 2, 2, 3, 3, 3.75, 3, 1) × 2
+RT2 / ARX X5
+30
+15
+0.5
+(1.5, 3, 2.5, 2, 1.5, 3, 1) × 2
+RT2 / Piper
+30
+15
+0.5
+(1, 3, 2.5, 2, 1.25, 3, 1) × 2
+RT2 / UR5
+30
+15
+0.5
+(2.5, 3, 2.5, 2, 3, 3, 1) × 2
+b. With output validity mask M ∈{0, 1}T ×A, the action
+reconstruction objective is
+Lact =
+P
+i,j Mi,j
+ˆ˜ai,j −˜ai,j
+
+P
+i,j Mi,j
+.
+(13)
+The bin logits are supervised only through this expected ac-
+tion. They form a structured decoding basis rather than a
+calibrated estimate of action uncertainty. Dropout is set to
+0.1 in the attention and residual MLP blocks.
+A.2.4. Connection to Integral Coordinate Regression
+Our readout follows an established approach to coordi-
+nate regression. Integral pose regression [45] shows that
+a softmax expectation over a heatmap can be trained with
+coordinate ℓ1 loss alone, without direct heatmap supervi-
+sion.
+Expectation-based coordinate readout also appears
+in LoFTR’s fine matching stage [44].
+DSNT [30] sim-
+ilarly provides a parameter-free expectation operator that
+connects convolutional heatmaps to continuous coordinates.
+These results motivate learning the bin representation indi-
+rectly through the decoded action.
+The convolutional parameterization supplies a separate
+design motivation. Nibali et al. [30] argue that spatial pa-
+rameter sharing helps coordinate models generalize across
+image locations and that a learned fully connected readout
+can compromise this property. In CIALLO, the correspond-
+ing axis indexes numerical action values, and the TransConv
+Head reuses local kernels along that axis as it expands the
+bin resolution. This introduces locality and weight sharing
+into the output representation. The analogy motivates our
+architecture, but does not establish the image-translation
+generalization studied by DSNT for robot actions.
+Coordinate supervision does not uniquely determine the
+intermediate representation.
+DSNT discusses this am-
+biguity and explores additional regularization to control
+heatmap shape [30]. Bias-Compensated Integral Regres-
+sion further identifies decoding bias from the softmax–
+expectation combination and slower convergence under im-
+plicit heatmap supervision in pose estimation [16]. These
+findings caution against interpreting a differentiable readout
+as a guarantee of faithful distribution learning or efficient
+optimization. CIALLO uses neither heatmap regularization
+nor bias compensation. We treat its bin weights as a learned
+decoding basis and evaluate the resulting actions, without
+assuming a particular distribution shape, number of modes,
+or calibrated uncertainty.
+Figure 4 illustrates how the bin weights evolve under
+scalar supervision in a simplified setting. We pass a fixed in-
+put through two transposed convolution layers and a shared
+linear projection to produce logits over 16 ordered bins. We
+train the network by applying an ℓ1 loss to the softmax ex-
+pectation, using noisy labels around a fixed nominal target
+of 0.75.
+A.3. Vision Encoder
+The vision encoder compares the observations at the two
+endpoints of the same action chunk.
+For camera c, we
+denote the current frame by ot
+c and the future frame by
+ot+T −1
+c
+, reusing the time index and chunk length T from
+the action path. Both frames are resized to 252 × 252 and
+processed by the same frozen DINOv2-base backbone Φ.
+With a patch size of 14 and the class token removed, the
+resulting features are
+F t
+c = Φ(ot
+c),
+F t+T −1
+c
+= Φ(ot+T −1
+c
+),
+F t
+c, F t+T −1
+c
+∈R18×18×768.
+(14)
+The same Φ is shared across times and cameras, and its pa-
+rameters receive no gradient updates.
+For each camera, we concatenate the two 18 × 18 fea-
+ture grids along the channel dimension and process them
+through the modules shown in Figure 3.
+Input Proj ap-
+plies LayerNorm, convolution, GELU, and convolution to
+produce features with 256 channels. Stage 1 contains four
+E-conditioned ConvNeXt blocks at this resolution. Down-
+sample uses LayerNorm and a convolution with stride 2 to
+obtain a 9 × 9 grid with 384 channels, which is processed
+by the E-conditioned blocks in Stage 2. Output Proj maps
+14
+
+
+0.0
+0.2
+0.4
+0.6
+0.8
+Step 0   expectation = -0.0046
+Step 20   expectation = 0.6744
+Step 40   expectation = 0.8293
+−1.00 −0.75 −0.50 −0.25 0.00
+0.25
+0.50
+0.75
+1.00
+0.0
+0.2
+0.4
+0.6
+0.8
+Step 60   expectation = 0.7902
+−1.00 −0.75 −0.50 −0.25 0.00
+0.25
+0.50
+0.75
+1.00
+Step 80   expectation = 0.7522
+−1.00 −0.75 −0.50 −0.25 0.00
+0.25
+0.50
+0.75
+1.00
+Step 100   expectation = 0.7293
+Bin center
+Softmax probability
+Expectation
+Nominal label = 0.75
+Figure 4. Evolution of bin weights under scalar supervision. Bars show the softmax weights at six training steps. The blue line indicates
+the predicted scalar, computed as their expectation, and the red cross marks the nominal target of 0.75. The prediction approaches the
+target as the weights change, although no loss is applied directly to the bin weights.
+the result to width D = 512 and flattens it into 81 tokens
+per camera.
+We support up to 4 camera slots. The 81 tokens from
+each slot receive its learned camera embedding, and a cam-
+era validity mask excludes every token from an absent view.
+Query Pooling attends from K = 2 learned queries to the
+remaining tokens and returns the visual intent in RK×D.
+For fixed K, this pooling cost grows linearly with the num-
+ber of visual tokens. The encoder therefore avoids both
+global self-attention across patches and a pairwise cost vol-
+ume between the two frames.
+A.4. Text Codec
+The frozen BERT encoder produces one feature per instruc-
+tion token. A learned linear projection maps these features
+to width D = 512, while the instruction attention mask re-
+moves padding. Query Pooling uses four learned queries to
+compress the valid features into a four-token task-level in-
+tent. The projection and pooling modules are trained while
+BERT remains frozen.
+To ground each chunk, the text path reuses the DINOv2
+features F t
+c from the current frame in Eq. 14, before the
+interaction encoder for the frame pair. Each camera con-
+tributes 324 patch tokens from the current frame. These
+tokens are projected to width D, augmented with camera
+and visual modality embeddings, and concatenated with the
+task-level intent after adding a task modality embedding.
+The combined validity mask keeps all four task-level in-
+tent tokens and only the patches from available cameras.
+A second Query Pooling module reduces this sequence to
+K = 2 tokens, and two Transformer Layers produce the
+chunk-level intent in RK×D. This path receives neither the
+essential vector E nor proprioception.
+The two-layer Masked Decoder receives the corrupted
+instruction with learned position embeddings and attends
+to the task-level intent as memory. Its vocabulary projec-
+tion is tied to the frozen BERT input embedding, and cross-
+entropy is averaged only over the selected masked positions.
+The chunk-level intent is not used as decoder memory. This
+direct reconstruction path forces the task-level intent to pre-
+serve instruction content rather than only the identity of a
+task class.
+A.5. Memory-Efficient Contrastive Alignment
+For modalities p and q, we mean-pool each valid chunk-
+level intent and apply ℓ2 normalization to obtain hp
+i , hq
+i ∈
+RD. A differentiable gather across all devices provides B
+global pairs. With a learnable inverse temperature α initial-
+ized to 1/0.07, the directional loss is
+Lp→q = 1
+B
+B
+X
+i=1
+
+log
+B
+X
+j=1
+exp(sij) −sii
+
+,
+sij = α (hp
+i )⊤hq
+j.
+(15)
+Diagonal pairs are positive, and all other samples are nega-
+tives. We symmetrize the objective as Lp↔q = 1
+2(Lp→q +
+15
+
+
+Lq→p).
+The dense evaluation of Eq. 15 stores B2 similarities in
+order to compute log PB
+j=1 exp(sij) for each row. Follow-
+ing FlashAttention and Inf-CL [8, 10], we implement this
+log-sum-exp as an exact blockwise streaming computation.
+We split both axes into blocks of at most C samples and
+never materialize the full similarity matrix. Let Jc denote
+the indices in column block c. For an active row i, we first
+compute the largest similarity µ(c)
+i
+in this block and use it
+to evaluate the block log-sum-exp without exponentiating
+unshifted logits.
+µ(c)
+i
+= max
+j∈Jc sij,
+λ(c)
+i
+= µ(c)
+i
++ log
+X
+j∈Jc
+exp
+
+sij −µ(c)
+i
+
+.
+(16)
+Here λ(c)
+i
+is the exact log-sum-exp over column block c. We
+merge it with the running normalization using a second max
+shift. Starting from L(0)
+i
+= −∞, define
+ρ(c)
+i
+= max
+
+L(c−1)
+i
+, λ(c)
+i
+
+,
+(17)
+L(c)
+i
+= ρ(c)
+i
++ log
+h
+exp
+
+L(c−1)
+i
+−ρ(c)
+i
+
++ exp
+
+λ(c)
+i
+−ρ(c)
+i
+i
+.
+(18)
+Here ρ(c)
+i
+is the larger of the previous running normal-
+ization and the current block contribution. After process-
+ing blocks 1 through c, the recurrence satisfies L(c)
+i
+=
+log Pc
+d=1
+P
+j∈Jd exp(sij). The final Li is therefore ex-
+actly the dense log-sum-exp for row i, giving the loss
+B−1 P
+i(Li −sii). It is accumulated in FP32 while retain-
+ing only the current similarity block and one normalization
+per row.
+The backward pass recomputes Li and revisits the same
+tiles. Let H(r)
+p
+and H(c)
+q
+be the normalized feature blocks,
+and define Gij = [exp(sij −Li)−I(i = j)]/B. The feature
+gradients accumulate as
+∇H(r)
+p
++= αG(r,c)H(c)
+q ,
+∇H(c)
+q
++= α
+ G(r,c)⊤H(r)
+p .
+(19)
+The reverse direction exchanges p and q, and the same tiles
+yield ∇α. This exact reordering reduces memory for the
+similarity matrix from B × B to C × C while retaining
+quadratic computational complexity.
+B. Pretraining Diagnostics
+Data and training setup. We pretrain CIALLO on 125,434
+episodes comprising 1,354 Panda episodes from the four
+LIBERO suites [26], 45,541 WidowX episodes from Bridge
+and 69,339 Google Robot episodes from Fractal as used by
+SimplerEnv [24], and 9,200 episodes from five RoboTwin
+2.0 embodiments [7]. The RoboTwin portion covers Aloha
+AgileX, Franka Dual, ARX X5, Piper, and UR5. Every
+source uses only its main camera. We balance sampling
+across the eight embodiments. The maximum and mini-
+mum sample counts differ by 0.30% of the mean count.
+Training runs for 16,000 optimizer steps with a global
+batch size of 1,024, which processes 16.38 million exam-
+ples. We use AdamW with weight decay 0.01, a peak learn-
+ing rate of 3 × 10−4, 400 warmup steps, cosine decay, and
+BF16 precision. The model has 262.05M parameters, of
+which 65.99M are trainable because DINOv2 and BERT re-
+main frozen. Training takes 15.7 hours on 8 NVIDIA H20
+GPUs, including validation and checkpoint writes.
+B.1. Pretraining Results
+We evaluate the final checkpoint from one pretraining seed
+using an episode-level validation split. The evaluation in-
+cludes 2,048 held-out samples from 1,575 episodes and 512
+tasks. Each 2×512 intent is flattened in slot order, and exact
+nearest neighbors are found with raw ℓ2 distance. Cross-
+modal retrieval measures how accurately each representa-
+tion retrieves its paired demonstration sample. We denote
+reconstruction from action, visual, and grounded language
+intent by AA, VA, and TA, respectively. The language rep-
+resentation is the chunk-level intent conditioned on the cur-
+rent observation, distinct from the four-token task-level in-
+tent used for instruction reconstruction.
+Table 7 reports retrieval within each embodiment and
+reconstruction through the shared decoder.
+The higher
+VA and TA errors for Panda, WidowX, and Google Robot
+may reflect differences in task coverage, camera setup,
+control rate, action normalization, and environment. Per-
+embodiment MAE should therefore not be interpreted as
+a ranking of representation quality. In the All row, MAE
+is aggregated over valid action elements, while retrieval
+searches the complete sample pool.
+B.2. Number of Pretraining Embodiments
+We compare pretraining on three, five, and eight embodi-
+ments using the same training objective and number of op-
+timization steps. The three-embodiment setting uses Panda,
+WidowX, and Google Robot. The five-embodiment setting
+adds Aloha AgileX and Franka Dual from RoboTwin 2.0,
+and the eight-embodiment setting further adds ARX X5,
+Piper, and UR5. Table 8 reports AA and VA reconstruc-
+tion errors for each setting, with eight-embodiment results
+taken from Table 7.
+AA and VA MAE decrease for each of the three orig-
+inal embodiments as the number of training embodiments
+increases from three to five to eight. Both errors also de-
+crease for Aloha AgileX and Franka Dual when training ex-
+16
+
+
+Table 7. Intent retrieval and action reconstruction at the final pretraining checkpoint. Retrieval entries report mean top-1 accuracy across
+both directions in %. Per-embodiment retrieval uses candidates from the same embodiment, while the final row uses the complete pool.
+Reconstruction entries are normalized masked MAE.
+Top-1 retrieval
+Action MAE
+Embodiment
+Samples
+A↔V
+A↔T
+V↔T
+AA
+VA
+TA
+Panda
+245
+94.90
+89.18
+95.31
+0.01363
+0.06924
+0.08772
+WidowX
+263
+98.86
+94.87
+98.86
+0.02245
+0.08469
+0.11743
+Google Robot
+269
+98.88
+93.49
+99.07
+0.01851
+0.09376
+0.11423
+Aloha AgileX
+259
+97.68
+94.98
+97.88
+0.00572
+0.00840
+0.01098
+Franka Dual
+267
+95.88
+89.51
+95.51
+0.00691
+0.01198
+0.01510
+ARX X5
+257
+95.14
+90.27
+95.33
+0.00580
+0.00919
+0.01346
+Piper
+245
+95.71
+91.02
+95.31
+0.00670
+0.01093
+0.01580
+UR5
+243
+96.30
+92.18
+97.53
+0.00620
+0.00943
+0.01201
+All
+2,048
+96.68
+91.94
+96.88
+0.00761
+0.01853
+0.02429
+Table 8. AA and VA MAE with increasing numbers of pretraining embodiments. Dashes indicate embodiments absent from the corre-
+sponding training setting. Lower values are better. The five-embodiment evaluation uses 819, 857, 799, 814, and 807 validation samples
+for the first five rows, respectively.
+3 embodiments
+5 embodiments
+8 embodiments
+Embodiment
+AA
+VA
+AA
+VA
+AA
+VA
+Panda
+0.0807
+0.1002
+0.0339
+0.0766
+0.0136
+0.0692
+WidowX
+0.0920
+0.1107
+0.0331
+0.0986
+0.0225
+0.0847
+Google Robot
+0.0899
+0.1129
+0.0336
+0.1074
+0.0185
+0.0938
+Aloha AgileX
+–
+–
+0.0467
+0.0493
+0.0057
+0.0084
+Franka Dual
+–
+–
+0.0506
+0.0553
+0.0069
+0.0120
+ARX X5
+–
+–
+–
+–
+0.0058
+0.0092
+Piper
+–
+–
+–
+–
+0.0067
+0.0109
+UR5
+–
+–
+–
+–
+0.0062
+0.0094
+pands from five to eight embodiments. This trend suggests
+that greater embodiment diversity, together with the addi-
+tion of RoboTwin data, helps CIALLO learn shared cross-
+embodiment intent representations.
+B.3. Intent Capacity Ablation
+We compare intent capacities of K = 1, 2, and 4 tokens,
+keeping the token width fixed at D = 512. All other train-
+ing settings remain fixed, including the full three-modal ob-
+jective in Eq. 4. We evaluate each run after 2,000 optimiza-
+tion steps. Table 9 reports validation losses, macro AA and
+VA MAE, and peak GPU memory. Macro MAE averages
+the per-embodiment MAEs equally across all eight embod-
+iments, regardless of action dimensionality or horizon.
+Two tokens yield the lowest total, AA, and VA valida-
+tion losses and the lowest macro VA MAE. One token per-
+forms similarly and yields a slightly lower macro AA MAE.
+Four tokens increase total validation loss by 16.7% relative
+to two tokens and increase both macro MAEs. Peak mem-
+ory is nearly unchanged across capacities, with ranges of
+0.006 GiB for allocated memory and 0.014 GiB for reserved
+memory. These results support our choice of K = 2.
+B.4. Contrastive Alignment Ablation
+We compare four combinations of contrastive losses while
+retaining AA, VA, TA, and masked text reconstruction in
+every setting.
+All models are trained on eight embodi-
+ments with K = 2 for 2,000 optimization steps, using the
+same validation set and otherwise identical training settings.
+The configurations comprise reconstruction alone, recon-
+struction with action–vision alignment, additional action–
+text alignment, and the full objective with vision–text align-
+ment. Table 1 reports macro AA and VA MAE. The full-
+model values are taken from the K = 2 setting in Table 9.
+B.5. Intent Geometry
+Figure 5 provides a complementary view of the learned
+geometry.
+The five RoboTwin embodiments occupy a
+17
+
+
+Table 9. Intent capacity comparison after 2,000 training steps. Lower values are better for all metrics. Losses follow the aggregation
+used by the validation objective, whereas macro MAE weights embodiments equally. Memory is reported in GiB. Bold values indicate the
+lowest loss or MAE in each column.
+Validation loss
+Macro MAE
+Peak memory (GiB)
+K
+Total
+AA
+VA
+AA
+VA
+Allocated
+Reserved
+1
+0.264283
+0.024807
+0.036571
+0.035501
+0.056521
+37.412
+38.494
+2
+0.261221
+0.023484
+0.034908
+0.036392
+0.056142
+37.414
+38.500
+4
+0.304822
+0.033762
+0.045132
+0.044961
+0.065114
+37.418
+38.508
+broad shared region, consistent with their common task set
+and similar simulated environments. Panda, WidowX, and
+Google Robot occupy more distinct, partially overlapping
+regions, which may reflect differences in their tasks and
+environments. Within each embodiment, the three modali-
+ties exhibit similar local structure. These observations agree
+with the retrieval results in Table 7, but the t-SNE axes and
+global cluster distances have no direct meaning and do not
+establish strict embodiment invariance.
+B.6. Embodiment Conditioning
+We test the functional role of the essential vector on the
+same 2,048 validation samples used in Section 4.1. Each
+sample is assigned the next embodiment in a fixed cycle
+from Panda through WidowX, Google Robot, Aloha Ag-
+ileX, Franka Dual, ARX X5, Piper, and UR5 before return-
+ing to Panda. We keep the action, observations, instruc-
+tion, proprioception, timestamps, masks, and target action
+schema unchanged. The wrong encoder condition replaces
+E only in the action or visual encoder and its propriocep-
+tive context. The wrong decoder condition replaces E only
+in the shared action decoder. The all wrong condition ap-
+plies both replacements. This protocol tests conditioning
+under a controlled mismatch. It does not retarget an action
+to another robot.
+Table 10 shows that the wrong decoder condition raises
+MAE for all three paths to approximately 0.19–0.21. The
+wrong action encoder also raises AA MAE from 0.00761
+to 0.04506. Replacing the visual encoder condition has a
+smaller effect on VA, whose MAE rises from 0.01853 to
+0.02189. The text path does not consume E or propriocep-
+tion, so its wrong encoder value is unchanged by construc-
+tion. These results show that the action encoder and decoder
+use the essential vector, while the visual path remains sen-
+sitive to it to a lesser degree. The errors need not increase
+monotonically across conditions because simultaneous en-
+coder and decoder mismatches can partially compensate for
+one another.
+C. Training Details
+C.1. Qwen-CIALLO
+For LIBERO, we train a single Qwen-CIALLO policy
+jointly on all four task suites for 10,000 optimization steps
+on 8 NVIDIA H20 GPUs. The per-device batch size is 16.
+We use AdamW with weight decay 10−8, 5,000 warmup
+steps, and cosine annealing. The Qwen3.5-4B backbone,
+CIALLO action decoder, and intent projector use learning
+rates of 2 × 10−5, 2 × 10−6, and 1 × 10−4, respectively.
+For RoboTwin 2.0, we train a single Qwen-CIALLO pol-
+icy jointly across all 50 tasks for 40,000 optimization steps
+on 8 NVIDIA H20 GPUs. The per-device batch size is 4.
+We otherwise use the LIBERO training configuration, in-
+cluding AdamW with weight decay 10−8, 5,000 warmup
+steps, cosine annealing, and learning rates of 2 × 10−5 for
+the Qwen3.5-4B backbone, 2×10−6 for the CIALLO action
+decoder, and 1 × 10−4 for the intent projector.
+C.2. Adaptation to New Embodiments
+Calibration settings. We optimize masked ℓ1 action recon-
+struction from action and visual intents and a contrastive
+loss between the two intents (Section 3.5). The text branch
+is unused. The 128-dimensional essential vector and the
+axis and arm embeddings comprise 174.08k parameters.
+For each robot, we run 5,000 AdamW steps with a batch
+size of 64 and a learning rate of 10−2, taking approximately
+30 minutes on one NVIDIA H20 GPU. The action chunk
+size and execution horizon are both 15 steps.
+Qwen-CIALLO. After calibration, we freeze the entire
+action codec and train the policy for 30,000 steps on 8
+NVIDIA H20 GPUs with a per-device batch size of 4. We
+use AdamW with 2,500 warmup steps and learning rates of
+2×10−5 for the Qwen3.5-4B backbone and 10−4 for the in-
+tent projector. The action chunk size and execution horizon
+both remain 15 steps.
+π0. We initialize from the pretrained π0-base checkpoint
+and finetune the full model for 30,000 steps on 8 NVIDIA
+H20 GPUs with a per-device batch size of 4.
+We use
+AdamW with a learning rate of 2×10−5 and 2,500 warmup
+steps. The action chunk size and execution horizon are both
+50 steps.
+18
+
+
+−40
+−30
+−20
+−10
+0
+10
+20
+30
+t-SNE 1
+−40
+−20
+0
+20
+40
+t-SNE 2
+−40
+−30
+−20
+−10
+0
+10
+20
+30
+40
+t-SNE 3
+Embodiment
+Panda
+WidowX
+Google
+Aloha AgileX
+Franka Dual
+ARX X5
+Piper
+UR5
+Modality
+Action
+Vision
+Language
+Figure 5. Intent geometry at the final pretraining checkpoint. Color identifies the embodiment and marker shape identifies the input
+modality. A shared three-dimensional t-SNE embedding is fitted after reducing the flattened intents to 50 dimensions with PCA. The
+projection emphasizes local neighborhood structure, while global distances should not be interpreted quantitatively.
+Table 10. Normalized masked action MAE under essential vector mismatch. Parentheses report the relative increase from the correct
+condition. Only embodiment conditioning is changed, while every sample retains its original target action schema.
+Path
+Correct
+Wrong encoder
+Wrong decoder
+All wrong
+AA
+0.00761
+0.04506 (+492.1%)
+0.19124 (+2413.0%)
+0.16470 (+2064.3%)
+VA
+0.01853
+0.02189 (+18.1%)
+0.20082 (+983.8%)
+0.21534 (+1062.1%)
+TA
+0.02429
+0.02429 (+0.0%)
+0.20684 (+751.5%)
+0.20684 (+751.5%)
+D. Action Head Efficiency
+We compare the direct point-regression head used by
+OpenVLA-OFT [21], the flow-matching head of π0.5 [37],
+and the CIALLO action decoder.
+CIALLO uses a
+distribution-based regression readout that predicts softmax
+weights over 256 ordered bins and outputs their expecta-
+tion in a single forward pass (Eq. 12). The bin weights are
+learned through action regression and serve as a structured
+decoding basis, rather than a calibrated action distribution.
+Benchmark protocol. All heads are benchmarked on a sin-
+gle NVIDIA H20 GPU in BF16 precision, with batch size 1,
+an action horizon of 8 steps, and action dimension 7. We re-
+port mean latency over 100 inference runs after 20 warmup
+runs. Table 11 reports head parameter counts, FLOPs, and
+inference latency, excluding the policy backbone. For com-
+parison within the framework used by π0.5, we also imple-
+ment the CIALLO decoder in JAX with the same architec-
+ture and action readout. This version is labeled “(JAX)”.
+Table 11. Action head efficiency on a single NVIDIA H20 with
+BF16, batch size 1, an action horizon of 8 steps, and action dimen-
+sion 7. Measurements exclude the policy backbone. Latency is
+averaged over 100 inference runs after 20 warmup runs.
+Method
+Params
+FLOPs
+Latency
+OFT [21]
+151.12M
+2.42G
+0.37ms
+π0.5 (JAX) [37]
+430.10M
+79.13G
+19.88ms
+CIALLO
+19.89M
+46.49G
+4.89ms
+CIALLO (JAX)
+19.89M
+46.49G
+1.46ms
+Results. CIALLO uses 19.89M parameters, approximately
+7.6× fewer than OFT and 21.6× fewer than the π0.5 action
+head. Under the same JAX framework, CIALLO decodes
+an action chunk in 1.46 ms, compared with 19.88 ms for
+π0.5, a 13.6× speedup. Its 46.49G FLOPs are also below
+the 79.13G FLOPs of the flow-matching head. The original
+19
+
+
+CIALLO implementation takes 4.89 ms, showing that the
+implementation framework materially affects latency even
+with an unchanged architecture. The single-pass expecta-
+tion readout avoids the iterative action refinement used by
+flow matching.
+OFT remains the fastest head at 0.37 ms and uses
+the fewest FLOPs (2.42G). CIALLO instead combines a
+smaller parameter count with a structured action-value rep-
+resentation and substantially lower latency than the flow-
+matching baseline.
+At the policy level, Qwen-CIALLO
+achieves higher success than OpenVLA-OFT on LIBERO
+(97.3% versus 97.1%, Table 2) and LIBERO-Plus (80.8%
+versus 69.6%, Table 3).
+E. Real Robot Tasks
+We use SO-101 and single-arm Piper, each equipped with a
+gripper, to evaluate manipulation in a tabletop workspace.
+Demonstrations are recorded at 30 Hz with a wrist camera
+and a fixed front camera, and actions are represented as joint
+angles. Each robot contributes 20 demonstrations for each
+of the three tasks in Table 12. Figure 6 shows front camera
+observations sampled from these demonstrations.
+Table 12. Task instructions used for data collection and evaluation
+on both robots. The wording is reproduced from the dataset.
+Task
+Instruction
+Water bottle Grab the water bottle and place on the black plate.
+Pour beer
+Pour beer from bottle into the cup.
+Wooden fish Pick up the screwdriver and hit the wooden fish.
+SO-101 / Water bottle
+SO-101 / Pour beer
+SO-101 / Wooden fish
+Piper / Water bottle
+Piper / Pour beer
+Piper / Wooden fish
+Figure 6. Demonstration sequences for the three real robot tasks
+on SO-101 and single-arm Piper. Each row shows front camera ob-
+servations at 15%, 50%, and 85% of one demonstration, ordered
+from left to right. These examples illustrate the recorded trajecto-
+ries and do not indicate evaluation success.
+20

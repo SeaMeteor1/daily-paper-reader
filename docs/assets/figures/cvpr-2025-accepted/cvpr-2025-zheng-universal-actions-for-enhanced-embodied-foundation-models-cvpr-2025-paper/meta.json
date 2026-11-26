@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pymupdf-images",
+  "figures": [
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-001.webp",
+      "caption": "",
+      "page": 1,
+      "index": 1,
+      "width": 333,
+      "height": 377
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-002.webp",
+      "caption": "",
+      "page": 6,
+      "index": 2,
+      "width": 1826,
+      "height": 282
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-003.webp",
+      "caption": "",
+      "page": 6,
+      "index": 3,
+      "width": 1961,
+      "height": 270
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-004.webp",
+      "caption": "",
+      "page": 7,
+      "index": 4,
+      "width": 2002,
+      "height": 416
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-005.webp",
+      "caption": "",
+      "page": 8,
+      "index": 5,
+      "width": 1960,
+      "height": 709
+    },
+    {
+      "url": "assets/figures/cvpr-2025-accepted/cvpr-2025-zheng-universal-actions-for-enhanced-embodied-foundation-models-cvpr-2025-paper/fig-006.webp",
+      "caption": "",
+      "page": 8,
+      "index": 6,
+      "width": 1959,
+      "height": 615
+    }
+  ]
+}

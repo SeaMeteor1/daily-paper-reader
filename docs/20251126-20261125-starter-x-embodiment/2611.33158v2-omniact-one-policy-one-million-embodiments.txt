@@ -1,0 +1,1541 @@
+OmniAct: One Policy, One Million Manipulators
+Xiang Fan1∗
+Yuheng Wang1∗
+Jiayuan Yan1
+Bohan Fang1
+Wisdom Oluchi Ikezogwo1
+Ainaz Eftekhar1
+Max Argus3
+Zhongzheng Ren1,2
+Jiafei Duan4
+Ranjay Krishna1
+1University of Washington
+2University of North Carolina at Chapel Hill
+3Allen Institute for Artificial Intelligence
+4National University of Singapore
+∗Equal contribution
+# xiangfan@cs.washington.edu
+ https://omniact.github.io/
+Generate embodiments
+1
+6 DoF
+7 DoF
+8 DoF
+2
+Grippers
+Keep successful trajectories
+5
+Simulation
+4
+Franka (baselines')
+OmniAct
+MolmoBot
+MolmoAct2-DROID
+Arms never seen
+EE pose
+OmniAct
+GPT-6 Astra
+UMI
+Zero-shot transfer to unseen arms
+63.0%
+41.1%
+21.1%
+3 Policy
+per node
+action
+69.1%
+63.0%
+22.5%
+robot
+nodes
+OmniAct
+“Put the cube
+in the bowl”
+“Put away the 
+screwdriver”
+OmniAct
+68.0%
+MolmoAct2
+53.0%
+DreamZero
+38.0%
+π0.5
+33.0%
+MolmoBot
+20.0%
+UMI
+3.0%
+“Place the purple
+cup on the plate”
+“Pick up the
+green cube”
+Figure 1. OMNIACT is an embodiment-native policy designed to employ robot-specific motion strategies without embodiment-agnostic
+planning. We generate (1) diverse embodiments procedurally and (2) varied simulated trajectories at scale and (3) train a single policy,
+OMNIACT. (4/5) In simulation and real, OMNIACT outperforms all baselines (zero shot) on seen and unseen embodiments.
+Abstract
+A single policy that controls diverse robots must not only
+transfer task knowledge across embodiments, but also adapt
+its behavior to each robot’s capabilities.
+Existing ap-
+proaches facilitate transfer through shared action represen-
+tations, but these representations do not necessarily cap-
+ture how differences in robot morphology should shape
+manipulation strategies. We introduce OMNIACT, a cross-
+embodiment manipulation policy that conditions directly
+on each robot’s kinematics in a specific scene to produce
+embodiment-specific behavior. This kinematic graph repre-
+sents the robot’s joint positions, motion axes, and connectiv-
+ity to its visual observation, allowing the policy to account
+for how its embodiment relates to objects and surfaces in the
+scene. A flow-matching policy predicts relative joint motions
+for each node, enabling control across robots with different
+degrees of freedom and kinematic configurations. To learn
+1
+arXiv:2611.33158v2  [cs.RO]  25 Nov 2026
+
+
+how physical structure shapes behavior at scale, we proce-
+durally design and filter one million physically feasible robot
+embodiments; next, we develop algorithms to generate robot
+trajectories in simulation for all embodiments; finally, we
+train across diverse simulated manipulation tasks. On 2,000
+embodiment-scene-held-out evaluation episodes, OMNIACT
+achieves 63.0% success, compared to 17.8% for π0.5 and
+57.9% for the strongest baseline; on the task families GPT-6
+Astra was evaluated on, it achieves 64.7% against 41.1%.
+On a previously unseen real-world robot, it achieves nearly
+twice the success rate of the next best method, MolmoAct2.
+Beyond task success, we observe that OMNIACT learns dis-
+tinct manipulation strategies that exploit the capabilities and
+accommodate the limitations of different morphologies.
+1. Introduction
+A single policy capable of controlling robots with diverse
+embodiments must solve two related problems: transfer-
+ring task knowledge across robots and adapting behavior
+to each robot’s physical capabilities. Existing approaches
+have made substantial progress on the former by identify-
+ing representations and interfaces that can be shared across
+embodiments. Generalist vision-language-action models use
+shared end-effector commands, unified action tokenizers,
+or learned action latents [4, 9, 21, 27, 36]. Object-centric
+methods represent desired object motions or interactions that
+can be transferred between robots [3, 18, 25, 44]. These
+approaches facilitate transfer by exploiting commonalities
+across embodiments. However, transferring task knowledge
+does not necessarily lead to effective control of each robot.
+Two robots pursuing the same goal may require different
+grasps, trajectories, or contact strategies because of differ-
+ences in their kinematics, workspace, and dexterity.
+Learning embodiment-specific behaviors presents several
+challenges. First, a policy must reason about the robot’s
+geometry in relation to the observed scene. The usefulness
+of a joint configuration depends on where its joints and mo-
+tion axes lie relative to the objects and obstacles it must
+interact with. Existing policies incorporate descriptions such
+as URDFs or kinematic graphs, but often encode the robot
+independently of the scene [7, 32, 35]. Second, the policy
+must accommodate different kinematic structures, includ-
+ing variations in joint types, degrees of freedom, and link
+topology, while still supporting a common control interface.
+Existing approaches have demonstrated transfer across rela-
+tively small collections of manipulators [28, 39, 47]. Third,
+the policy must learn how changes in morphology affect
+behavior so that it can control embodiments not encountered
+during training. This requires experience across a sufficiently
+diverse set of physical structures. Prior efforts to scale learn-
+ing across hundreds of morphologies have primarily focused
+on locomotion [1, 15] and not manipulation.
+We introduce OMNIACT, a policy trained across one
+million embodiments, capable of adapting behavior to each
+embodiment and what it can achieve in a given scene. Our
+approach represents each robot through a scene-grounded
+kinematic graph, expressing its joint geometry in the 3D
+coordinate frame of each observing camera. Each joint and
+fingertip is represented as a node containing its camera-frame
+position, motion axis, joint type, proprioceptive state, and
+kinematic connectivity. This allows the policy to relate the
+robot’s physical structure to the corresponding visual obser-
+vations. We pair this representation with a variable-DoF
+action representation that jointly predicts relative joint mo-
+tions and end-effector pose updates using a flow-matching
+policy. By unifying the indexing scheme across all embod-
+iments, our model learn to support different numbers and
+configurations of joints within the same network. These two
+components allow the policy to generate motions directly
+from each robot’s kinematic structure and its relationship to
+the scene.
+Training a policy to exploit these differences requires sub-
+stantial diversity in robot morphology. A policy trained on a
+handful of embodiments may learn effective manipulation
+strategies for those robots without learning how to adapt
+them to new ones. We develop a procedure to instantiate
+one million unique robot embodiments and create algo-
+rithms to automatically generate trajectories for each of
+them in simulation. Our data generation pipeline varies joint
+configurations, link geometry, and kinematic topology to
+generate embodiments; we use inverse-kinematics screening
+and physics-based acceptance to ensure feasibility of each
+trajectory. The resulting training distribution exposes the
+policy to a broad range of robot configurations and allow us
+to test on unseen embodiments.
+We evaluate OMNIACT on embodiments and scenes held
+out from training. On OMNIACT-BENCH, it succeeds in
+63.0% of episodes within 500 steps, against 57.9% for the
+strongest baseline and 17.8% for π0.5; on the task families
+GPT-6 Astra was evaluated on, it reaches 64.7% against
+GPT-6 Astra’s 41.1% at the same step budget and 54.8%
+with twice the budget (Table 3). On a real OpenYAM arm
+with a fine-tip gripper, neither seen in training, OMNIACT
+completes 13 of 20 pick-and-place trials. The only baseline
+to succeed at all is MolmoAct2-BimanualYAM, for which
+this arm is in distribution, at 7 of 20; every other baseline
+completes none (Table 5). We observe that on this arm the
+policy sometimes makes use of the long final link specific to
+this unseen embodiment, extending it horizontally and then
+rotating the gripper to reach far targets (Section 3.4), a behav-
+ior not seen from MolmoAct2 trained exclusively on YAM.
+These results suggest that policies grounded in a robot’s
+kinematics are a path towards better cross-embodiment gen-
+eralization.
+2
+
+
+Observations
+Scene-Grounded Kinematic Graph
+joint node:
+camera view:
+joint type:
+position:
+rotation axis:
+node pose:
+Node/Geom
+Vision
++
+Text
+Proprio
+Diffusion Transformer
+...
+Diffusion Transformer
+Per-node
+Joint Action
+EE Pose
+Figure 2. OMNIACT architecture. Multi-view RGB observations,
+language instructions, and camera-frame scene-grounded kinematic
+graph condition a shared flow-matching Transformer. Each node
+represents a joint or annotated point on the robot, encoding its
+geometric and proprioceptive state in each camera frame. The
+policy jointly predicts relative joint motions and end-effector poses
+through a variable-DoF action representation.
+2. Method
+We introduce OMNIACT, a single policy that learns cross-
+embodiment manipulation across robots with different kine-
+matic structures. Our approach has three components. First,
+we represent each robot through a scene-grounded kinematic
+graph that expresses its geometry in the coordinate frame
+of its visual observations. Second, we develop a variable-
+DoF action representation that jointly predicts joint motions
+and end-effector poses across different robot configurations.
+Third, we generate diverse embodiments and collect success-
+ful manipulation trajectories in simulation to train the policy
+across one million robots.
+Policy formulation.
+We consider manipulation tasks
+across robots with different numbers of joints, link geome-
+tries, and kinematic structures. At each time step t, the policy
+receives a language instruction ℓ, multi-view RGB observa-
+tions It = {It,v}V
+v=1, and the robot’s current configuration
+and proprioceptive state. The robot’s embodiment specifies
+its kinematic topology, joint types, limits, and geometric
+parameters.
+The policy predicts an action chunk containing relative
+joint motions and end-effector (EE) pose updates. Both pre-
+dictions are supervised during training and used for control
+during execution. A prefix of the predicted chunk is executed
+before obtaining updated observations and replanning. The
+same policy parameters are shared across all embodiments.
+We encode RGB observations using SigLIP v2 [38] and
+language instructions using Qwen 2.5 [2]. Robot geometry,
+configuration, and proprioception are represented through
+kinematic node tokens.
+2.1. Scene-Grounded Kinematic Graph
+The motions available to a robot depend on its kinematic
+structure and how that structure is situated relative to the
+visual observation.
+Kinematic structure.
+We decompose each robot into
+nodes representing arm joints, gripper drivers, grip-
+per tips, and annotated points such as the tool cen-
+ter point (TCP). Each node n has a type τn
+∈
+{terminal, revolute, prismatic, point} and an actuation in-
+dicator that distinguishes driven joints, terminal joints,
+and annotated points. The kinematic topology is encoded
+through shortest-path distances between nodes, which enter
+the Transformer as attention biases [43]. Nodes are ordered
+according to their kinematic structure and left-padded to a
+maximum supported node count, keeping end-effector nodes
+at the final positions of the sequence. This provides a con-
+sistent indexing scheme across different embodiments while
+preserving their variable numbers of joints.
+Joint proprioception.
+Joint states differ in their physical
+units, limits, and ranges across embodiments. We center
+each joint coordinate around the midpoint of its limits and
+convert it to a common numerical scale: pn = κn(qn −cn),
+where qn is the current joint position, cn is the midpoint of
+its limit range, and κn is a joint-type-dependent unit factor.
+Revolute joints are expressed in radians and prismatic joints
+in decimeters. The centered scalar is expanded into Fourier
+features and encoded through an MLP.
+Camera-frame geometric grounding.
+For each node n
+and camera v, we compute its current geometry using for-
+ward kinematics and known camera extrinsics. The geometry
+is represented in metric 3D camera coordinates through three
+fields: Gn,v =
+ gcenter
+n,v
+, gaxis
+n,v , gpose
+n,v
+
+, where gcenter
+n,v
+∈R3
+denotes the node center, gaxis
+n,v
+∈R3 is a point one unit
+along its motion axis, and gpose
+n,v ∈R9 represents translation
+and orientation using a continuous 6D rotation representa-
+tion [48]. The motion axis describes the rotation axis of a
+revolute joint or the translation direction of a prismatic joint.
+Centers are provided for all nodes, motion axes for ac-
+tuated nodes, and poses for annotated nodes. Unavailable
+fields are zeroed before encoding. In single-arm manipula-
+tion, the TCP is represented as an annotated descendant of
+the wrist, allowing its pose to be incorporated into the same
+representation.
+The camera-frame coordinates are encoded through sinu-
+soidal features and a learned projection, then combined with
+proprioception and discrete node attributes:
+zG
+n,v = fG
+ gcenter
+n,v
+, gaxis
+n,v , gpose
+n,v
+
++ fP (pn)
++ eslot
+j(n) + etype
+τn
++ eview
+v
++ enode,
+(1)
+3
+
+
+where fG and fP encode geometry and proprioception, eslot
+j(n)
+identifies the node’s padded slot, and etype
+τn
+identifies its
+type. The embedding enode distinguishes node tokens from
+other modalities. We construct one token per node and
+camera view. Each token shares its view embedding eview
+v
+with image tokens from the corresponding camera, allowing
+attention to associate the robot’s geometry with its visual
+observations and integrate information across views.
+Geometric grounding is performed in the camera’s 3D
+coordinate frame. We do not explicitly project joint positions
+into image pixels or sample visual features at projected loca-
+tions. The shared viewpoint and view embeddings provide
+correspondence between geometric and visual tokens, while
+the Transformer learns their interactions.
+2.2. Variable-DoF Action Prediction
+Robots differ in their numbers of joints, joint types, and
+available motion directions. We use a node-aligned action
+representation in which the output follows the same padded
+ordering as the input kinematic graph. This allows a single
+network to predict actions for different embodiments while
+maintaining correspondence between each node’s geometry
+and its control signals.
+Each output node is processed by two prediction heads:
+a relative joint-motion head and a relative pose head. The
+joint-motion head predicts changes in the robot’s joint co-
+ordinates, while the pose head predicts relative EE poses
+associated with the corresponding end-effector nodes. Both
+heads are trained through flow matching, and both predic-
+tions contribute to the control executed by the robot.
+We normalize joint actions using empirical statistics as-
+sociated with their left-padded node slots, which we find
+effective for representing diverse embodiments. Action out-
+puts are masked according to the valid nodes and action
+quantities for each robot.
+Architecture and training.
+Visual tokens, language to-
+kens, grounded kinematic nodes, and noisy action tokens are
+jointly processed by a Transformer. The model is trained
+using flow matching [24]. Let y denote a normalized target
+action chunk containing joint motions and EE pose updates.
+At flow time s ∈[0, 1], we construct
+xs = (1 −s)ϵ + sy,
+ϵ ∼N(0, I),
+(2)
+where Gaussian noise is sampled over valid action dimen-
+sions.
+The network predicts the velocity of this interpolation,
+conditioned on the language instruction, visual observations,
+and scene-grounded kinematic graph. We train using the
+flow-matching objective over valid action dimensions:
+LFM = Es,ϵ,y
+h
+∥M ⊙(vθ(xs, s; ℓ, It, Gt) −(y −ϵ))∥2
+2
+i
+,
+(3)
+where M masks invalid or padded action dimensions and Gt
+denotes the grounded kinematic representation. The model
+learns joint and EE pose predictions jointly. At inference,
+the predicted action chunk provides both joint-level motions
+and EE pose updates to the control interface. A prefix of the
+chunk is executed before the policy replans from updated
+observations.
+2.3. Scaling Embodiments
+Embodiment generation.
+A policy trained on a small set
+of robots may learn manipulation strategies specific to those
+kinematics, limiting its ability to adapt to unfamiliar em-
+bodiments. We therefore procedurally generate one million
+robot embodiments spanning different kinematic structures,
+joint configurations, and link geometries. Each embodiment
+is generated deterministically from a random seed, gener-
+ating its morphology, joint limits, actuator dynamics, link
+geometry, inertia, and appearance. This makes each robot
+reproducible without separately storing its complete descrip-
+tion.
+We filter generated candidates for self-collision and grasp
+feasibility. Grasp feasibility is evaluated by solving inverse
+kinematics for representative target grasp poses on randomly
+sampled objects. 84.4% of all generated embodiments fail
+self-collision and 97.5% of the surviving embodiments fail
+grasp checks despite being sampled from distributions de-
+signed to produce realistic robots. 6-DoF, 7-DoF, and 8-
+DoF embodiments have pass rates of 0.016%, 0.299%, and
+0.653% overall pass rate. Filtering these candidates avoids
+expensive trajectory collection for embodiments that cannot
+perform simple manipulation tasks.
+Generating trajectories per embodiment.
+We collect
+manipulation trajectories in MolmoSpaces [22], instantiating
+each feasible embodiment in randomly generated scenes
+with different tasks and initial configurations. We plan two
+scene-task instances per embodiment.
+Trajectory generation uses a planner that proposes lo-
+cally feasible motions under the current robot’s kinematic
+constraints. At each step, the planner considers feasible
+immediate motions towards the next desired pose [22] with-
+out explicitly planning an embodiment-specific long-horizon
+strategy. Different from MolmoSpaces’ use of top-down
+poses calculated assuming the Franka robot, we randomly
+rotate the grasp poses and allow for any kinematically fea-
+sible pose on the robot to form the support. We filter for
+successful episodes, producing demonstrations of manip-
+ulation behaviors that are feasible for each robot. 6-, 7-,
+and 8-DoF embodiments have flat episode success rates of
+35.9%, 34.8%, and 36.4%, compared to embodiment screen-
+ing’s DoF-dependent pass rates. Successful episodes are
+stored with sufficient simulation state to reconstruct the en-
+vironment at intermediate steps. Table 1 summarizes the
+4
+
+
+Table 1. OMNIACT-1M dataset statistics on a total of 1, 029,605
+trajectories over 800,196 embodiments.
+Task
+Episodes
+Frames
+Avg. length (s)
+Total length (h)
+Pick
+295.0k
+26.3M
+5.8
+476
+Open
+227.7k
+38.8M
+11.2
+707
+PnP color
+141.8k
+25.4M
+11.7
+462
+Close
+140.7k
+20.2M
+9.4
+367
+Pick-and-place
+127.7k
+21.1M
+10.8
+385
+PnP next-to
+96.6k
+18.9M
+12.8
+343
+Total
+1,029.6k
+150.4M
+9.6
+2,740
+Embodiment parameter
+p5
+p50
+p95
+Reach (m)
+0.86
+1.26
+1.74
+Segment length (m)
+0.00
+0.14
+0.41
+Arm mass (kg)
+3.9
+10.2
+18.3
+Link mass (kg)
+0.06
+0.55
+4.72
+Joint range (deg)
+94
+205
+322
+Joint stiffness
+37
+1216
+4145
+Stiffness, shoulder:wrist
+1.8
+4.3
+45
+Joint damping ratio
+1.1
+5.1
+14.6
+Gripper mount rotation (◦)
+1.0
+10.1
+159
+Pedestal height (m)
+0.57
+0.70
+0.84
+Embodiment property
+Share
+Arms mixing ≥2 link sources
+70.5%
+Arms with a forearm roll
+65.1%
+Prismatic gripper drivers
+49.6%
+Joints with off-center limits
+49.4%
+Arms with a universal joint
+44.2%
+Joints that move only one way
+28.4%
+Arms mixing two robots’ links
+24.0%
+Arms with three parallel axes
+10.0%
+Joints past a full turn
+1.6%
+resulting corpus.
+A fixed-seed RNG is used to reproducibly hold out 5%
+of embodiments and, within each task, 5% of scenes. A
+trajectory is used for training only if neither its embodiment
+nor its scene is reserved. An embodiment or scene is called
+seen when it appears in at least one accepted training tra-
+jectory. After this procedure, 18.3% of embodiments and
+10.9% of scenes end up unseen from training, directly or indi-
+rectly. 14.5% of all trajectories are comprised of both unseen
+embodiments and unseen scenes. The subset with both em-
+bodiment and scenes unseen is denoted OMNIACT-BENCH,
+used for benchmarking.
+3. Experiments
+The key takeaways are as follows: (a) In simulation on
+robots seen to baselines, OMNIACT performs better or on
+par with existing methods despite not seeing the robot itself;
+(b) In simulation on unseen robots, OMNIACT outperforms
+all baseline methods, including embodiment-specific and
+embodiment-agnostic policies, as well as the generalist VLM
+GPT-6 Astra, despite a smaller step budget; (c) In real-world
+deployment, OMNIACT performs better or on par with ex-
+isting methods on robots these existing methods specialize
+towards; (d) OMNIACT adapts its motion strategy based on
+the embodiment and the task at hand, instead of retargeting
+one canonical grasp across bodies.
+Training data. We train on our corpus of 1M procedurally
+generated manipulators (Section 2.3) performing manipula-
+tion in MolmoSpaces scenes [22].
+Baselines. We compare with frontier policies including
+π0.5 [19], DreamZero [42], MolmoAct2 [13], GPT-6 Astra
+(max thinking), and embodiment generalization specialists
+UMI [8] and UMI-on-Air [16]. To address the possibility
+that a multi-view setup would provide better visual context
+compared to UMI’s single-view setup, we add a variant of
+UMI supplied with a 3-view camera setup as another base-
+line. We train UMI on the same simulated trajectories as
+our training but with UMI’s setup, to measure the effects
+of our architectural choices that facilitate our specific in-
+put conditioning (Section 2.1). In real-world deployment,
+we additionally measure LAP-3B [45], a zero-shot cross-
+embodiment transfer model, at their released checkpoint.
+Benchmarks. We evaluate policies in three settings: i) on
+the existing MolmoSpaces benchmark that uses a robot that
+is in-distribution for the baseline policies, ii) on OMNIACT-
+BENCH, our benchmark based on held-out training data so
+unseen to all policies, and iii) on real-world tasks.
+Implementation details. OMNIACT is a 400M-parameter
+flow-matching policy over a fixed 12-slot node and action
+layout. It observes RGB views encoded by a frozen SigLIP 2
+image encoder [38], language encoded by the frozen text
+backbone of Qwen2.5-VL [2], and the per-node embodiment
+representation of Section 2.1. Training samples are 32-frame
+windows with a 31-step action prediction horizon. We train
+with an effective batch size of 128 with a learning rate of
+10−3 for 520K steps. At evaluation the policy predicts a
+31-step chunk and executes the first 8 steps every chunk.
+3.1. Evaluation on seen robots in simulation
+We evaluate OMNIACT in simulation on the MolmoSpaces
+benchmark, which uses the Franka Panda in the DROID
+configuration. All baselines have seen the Franka robot
+during training, whereas OMNIACT does not.
+OMNIACT performs on par with embodiment-specialized
+models on their expert embodiments. Table 2(full scenes)
+reports success on 2,622 held-out episodes under the same
+500-step cap. OMNIACT reaches 69.1% overall, against
+63.0% for MolmoBot and under 30% for the DROID-trained
+policies, and leads on four of the six task families, with
+the largest margins where the task constrains placement
+or approach: for example, +15.5 percentage points over
+MolmoBot on placing next to a reference object.
+OMNIACT is robust against changes in object, lighting,
+and prompt format, and handles changes in camera and
+robot pose about as well as baselines. π0.5 and MolmoAct2
+both score below their MolmoSpaces’ reported success. To
+understand this difference, we notice that MolmoSpaces’
+scenes, especially the ones involving locating an object,
+have increased in difficulty since release [11]. We thus
+label our benchmark as Table 2(full scenes) and contrast
+with Table 2(simple scenes). Other than adding harder pick
+objects and tasks, the change also includes more diverse and
+randomized lighting, camera, robot pose, and prompt. To
+find out why π0.5 and MolmoAct2 drop in performance, we
+gradually change each of the variables in the Pick task and
+5
+
+
+Table 2. Evaluation on MolmoSpaces with a real robot unseen to OMNIACT vs. other
+models trained for the robot. Success rate are measured over a sample of 2,622 held-out
+MolmoSpaces episodes with a 500-step cap. (PnPC and PnPN indicate pick-and-place with
+a color constraint and a “next to” target, respectively, and are not present in MolmoSpaces’
+simple scenes eval.)
+Model
+Pick
+PnP
+PnPC
+PnPN
+Open
+Close
+All
+n=647
+n=474
+n=394
+n=304
+n=551
+n=252 n=2,622
+Simple scenes
+π0.5-DROID
+36.4 ±1.5 13.6 ±1.1
+–
+–
+22.7 ±1.3 65.1 ±1.5 33.8 ±0.7
+MolmoAct2-DROID 48.3 ±1.6 23.3 ±1.3
+–
+–
+11.7 ±1.0 71.3 ±1.4 37.9 ±0.8
+Full scenes
+π0.5-DROID
+29.5 ±1.8 17.2 ±1.7 14.1 ±1.8 16.0 ±2.1 43.1 ±2.1 73.4 ±2.8 28.2 ±0.9
+DreamZero-DROID
+5.9 ±0.9
+2.1 ±0.7
+2.5 ±0.8
+3.0 ±1.0 20.5 ±1.7 66.3 ±3.0 13.2 ±0.7
+MolmoAct2-DROID 27.4 ±1.8 18.6 ±1.8 10.4 ±1.5 12.8 ±1.9 19.0 ±1.7 76.3 ±2.7 22.5 ±0.8
+MolmoBot
+90.4 ±1.2 78.9 ±1.9 78.7 ±2.1 42.4 ±2.8 18.3 ±1.6 61.1 ±3.1 63.0 ±0.9
+OMNIACT
+89.2 ±1.2 79.3 ±1.9 79.2 ±2.0 57.9 ±2.8 43.2 ±2.1 52.8 ±3.1 69.1 ±0.9
+Simple scenes
++Object
++Light
++Camera
++Pose
++Prompt
+Cumulatively added perturbations
+0
+20
+40
+60
+80
+Success (%)
+MolmoAct2
+π0.5
+OmniAct
+OmniAct (ours)
+MolmoAct2-DROID
+π0.5-DROID
+Figure 3. Cumulative robustness on Molmo-
+Spaces Pick. State-of-the-art policies π0.5 and
+MolmoAct2 show decline in performance as
+more aspects of their input conditionings are
+diversified from the simple version.
+Table 3. Evaluation on OMNIACT-BENCH with unseen robots. PnP, PnPN, and PnPC are pick-and-place, pick-and-place next to a
+reference object, and pick-and-place by color. Common aggregates task families available on all evaluated models. Steps is the per-episode
+step cap. GPT-6 Astra is run on max thinking level. GPT-6 Astra replans every five steps under a budget of 200 model calls, with a maximum
+allowed step count of 1,000; the 200- and 500-step rows truncate those same episodes. Omitted GPT-6 tasks are due to limited API tokens.
+Model
+Steps
+Pick
+PnP
+PnPN
+PnPC
+Open
+Close
+Common
+All
+MolmoAct2-YAM
+500
+0.2 ±0.2
+2.9 ±1.0
+0.0 ±0.0
+0.8 ±0.6
+3.0 ±0.8
+20.7 ±2.3
+1.8 ±0.4
+4.4 ±0.5
+DreamZero (DROID)
+500
+0.7 ±0.4
+2.5 ±0.9
+1.6 ±0.9
+1.6 ±0.8
+13.4 ±1.6 40.3 ±2.8
+5.5 ±0.6
+10.0 ±0.7
+MolmoAct2-DROID
+500
+1.5 ±0.5
+2.9 ±1.0
+2.6 ±1.2
+2.0 ±0.9
+19.4 ±1.9 60.0 ±2.8
+8.0 ±0.8
+14.7 ±0.8
+π0.5-DROID
+500
+1.9 ±0.6
+5.1 ±1.3
+6.3 ±1.8
+2.7 ±1.0
+23.6 ±2.0 69.2 ±2.6
+10.1 ±0.9
+17.8 ±0.9
+UMI
+500
+23.4 ±1.8
+7.6 ±1.6
+6.8 ±1.8
+6.7 ±1.6
+24.5 ±2.1 45.2 ±2.9
+20.3 ±1.1
+21.1 ±0.9
+UMI-on-Air
+500
+24.9 ±1.9
+7.6 ±1.6
+9.4 ±2.1
+6.3 ±1.5
+24.1 ±2.1 44.3 ±2.8
+20.8 ±1.1
+21.4 ±0.9
+UMI (all views)
+500
+65.4 ±2.1
+48.7 ±3.0
+39.8 ±3.5 47.5 ±3.1 60.6 ±2.4 68.9 ±2.7
+60.1 ±1.4
+57.9 ±1.1
+GPT-6 Astra
+200
+6.9 ±4.7
+0.0 ±0.0
+–
+–
+17.2 ±7.0
+–
+9.6 ±3.4
+9.6 ±3.4
+GPT-6 Astra
+500
+44.8 ±9.2 26.7 ±11.4
+–
+–
+44.8 ±9.2
+–
+41.1 ±5.8
+41.1 ±5.8
+GPT-6 Astra
+1000
+48.3 ±9.3 46.7 ±12.9
+–
+–
+65.5 ±8.8
+–
+54.8 ±5.8
+54.8 ±5.8
+OMNIACT
+200
+58.7 ±2.1
+22.0 ±2.5
+20.9 ±2.9 22.7 ±2.6 39.4 ±2.4 56.7 ±2.8
+43.9 ±1.4
+40.9 ±1.1
+OMNIACT
+500
+70.4 ±2.0
+59.6 ±2.9
+48.7 ±3.6 54.5 ±3.1 60.9 ±2.3 71.8 ±2.6
+64.7 ±1.4
+63.0 ±1.1
+contrast the results with OMNIACT in Figure 3, which shows
+that OMNIACT fluctuates within error margins while π0.5
+and MolmoAct2 drop.
+3.2. Evaluation on unseen robots in simulation
+Next we want to test how well baseline methods generalize to
+novel embodiments. We use the held-out OMNIACT-BENCH
+benchmark (Section 2.3).
+OMNIACT generalizes to unseen embodiments in simula-
+tion. Rollout success on a random subset of 2000 episodes
+sampled from our benchmark is reported in Table 3. From
+the results, we can see that OMNIACT outperforms base-
+lines at the same number of rollout steps, leading on six
+task families, and its overall success rate of 63.0% is 5.1
+percentage points above the next best method, UMI with all
+camera views. Beyond policies, the general-purpose GPT-6
+Astra model also struggles with random embodiments, trail-
+ing OMNIACT by 23.6 percentage points at the same step
+count on the task families both were evaluated on (41.1% vs.
+64.7%). We empirically observe that GPT-6 Astra, thanks
+to its language and multimodal reasoning capabilities, per-
+sistently retries with different solutions; however, even at
+double the step count, it is still behind OMNIACT by 9.9
+percentage points.
+3.3. Evaluation on real robots
+We deploy OMNIACT on two physical arms without fine-
+tuning: a Franka Panda, the robot every baseline was
+trained on, and an OpenYAM arm, which only MolmoAct2-
+BimanualYAM has trained on and which carries a fine-tip
+flange gripper that no policy has seen.
+Franka. We deploy on Franka Panda in the DROID con-
+6
+
+
+Table 4. Where the real-world evaluation arms, OpenYAM and
+Franka, sit in the training corpus. In addition, our OpenYAM
+arm carries a fine-tip flange gripper unseen during training. Pk
+indicates percentile.
+OpenYAM
+Franka
+Value
+Pk
+Value
+Pk
+Median
+Reach (m)
+0.76
+1.2
+1.21
+43.3
+1.26
+Arm mass (kg)
+3.6
+3.7
+18.3
+94.9
+10.2
+Joint stiffness
+30
+3.3
+3500
+90.0
+1216
+Damping gain
+1.75
+2.0
+350
+85.4
+102
+Armature
+0.017
+15.6
+0.100
+44.8
+0.130
+Force limit
+19
+1.2
+100,000
+82.2
+2293
+Stiffness:inertia
+3400
+11.2
+35,000
+95.2
+11,300
+Dist. to nearest emb.
+0.545
+98.9
+0.065
+15.8
+0.116
+5
+25
+50
+75
+95
+Percentile within the training corpus
+Reach (m)
+Arm mass (kg)
+Joint stiffness
+Damping gain
+Armature
+Force limit
+Stiffness:inertia
+0.86
+1.7
+3.9
+18
+37
+4,100
+3.4
+537
+0.0043
+0.25
+45
+100,000
+2,200
+35,000
+P5
+P95
+OpenYAM
+Franka
+corpus 5–95%
+25–75%
+median
+Figure 4. Percentile of each real-world arm within the training
+corpus for each physical quantity in Table 4. OpenYAM is at
+the edge of the distribution while Franka is a mix between in-
+distribution and the edge of the distribution.
+Table 5. Real-world deployment on physical arms Franka and
+OpenYAM. In the MolmoAct2 row, MolmoAct2’s specialized
+models for each embodiment are used in order to measure its best
+performance. N/S indicates that a model fails or behaves completely
+unsafely on all attempts on an embodiment due to the lack of
+support for that embodiment.
+Success
+Median
+Model
+Franka OpenYAM Overall (%) Params
+steps
+Some or all target embodiments seen
+MolmoBot
+8/20
+N/S
+8/40 (20%)
+4B
+142
+LAP-3B
+8/20
+0/20
+8/40 (20%)
+3B
+241
+π0.5
+13/20
+N/S
+13/40 (33%)
+3B
+165
+DreamZero
+15/20
+N/S
+15/40 (38%)
+14B
+194
+MolmoAct2
+14/20
+7/20
+21/40 (53%)
+5B
+356
+No target embodiments seen
+UMI
+1/20
+0/20
+1/40 (3%)
+0.6B
+152
+UMI-on-Air
+1/20
+0/20
+1/40 (3%)
+0.6B
+298
+UMI (all views)
+11/20
+0/20
+11/40 (28%)
+0.6B
+166
+OMNIACT
+14/20
+13/20
+27/40 (68%)
+0.4B
+177
+figuration, the robot on which every baseline is also trained.
+For the MolmoAct2 baseline, its DROID-specific variant is
+deployed to ensure maximum compatibility.
+OpenYAM. We next deploy on a physical OpenYAM arm
+fitted with its fine-tip flange gripper. For the MolmoAct2
+baseline, the BimanualYAM variant is deployed and both
+YAM arms are enabled with their standard camera setup to
+comply with its model’s expectation.
+OpenYAM is in a relatively low-density region of our
+training data, and its fine-tip flange gripper is not seen during
+training. Table 4 and Figure 4 show that many of its key
+characteristics lie beyond the 5th/95th percentile.
+On real unseen robots, OMNIACT outperforms other
+models not specialized to the embodiment, and is on par
+with embodient-specialized models. We measure the suc-
+cess rate on an object pick-and-place task, varying the loca-
+tion of the object and the target within and at the boundary of
+the embodiment’s reach. We measure 20 starting setups per
+robot; in each setup, every policy starts from the same object
+positions, under a 1000 step horizon (Table 5). OMNIACT is
+deployed zero-shot; it receives no fine-tuning on either robot,
+real or simulated.
+On Franka, OMNIACT succeeds on 14 of 20 setups, the
+same as MolmoAct2-DROID and on par with the policies
+trained on real DROID data from this robot. On OpenYAM,
+it succeeds on 13 of 20 setups, while MolmoAct2, which is
+specifically trained on YAM, succeeds on only 7. Empiri-
+cally, MolmoAct2-BimanualYAM fails frequently when the
+object is farther from the robot compared to the receptacle,
+or partially hidden behind the receptacle. Despite LAP-3B’s
+30% success rate on I2RT YAM, it does not succeed on
+OpenYAM and struggles at the pick phase.
+Notably, while UMI with all views achieves 11/20 on
+Franka, it fails on all OpenYAM setups, which fall on the
+edge of the training distribution. UMI (all views) receives
+the same training data as our model except for the scene-
+grounded kinematic graph (Section 2.1).
+3.4. Motion strategy analysis
+During evaluation, we notice that when the object pickup
+site is close to the receptacle, OMNIACT sometimes takes
+advantage of OpenYAM’s long link leading up to the grip-
+per, simply rotating the gripper in the Z axis to reach the
+receptacle instead of lifting and dropping.
+This is plausibly a side-effect of our data generation
+method: we allow for poses at different phases to have dif-
+ferent orientations; thus, when the receptacle is close by,
+rotating is a viable, if not more direct, strategy. Because ev-
+ery trajectory in our corpus is one that its own embodiment
+could execute, the data does not commit to a single grasp
+retargeted to different embodiments: depending on the body
+and the object, successful grasps approach from above, from
+the side, or in between. We examine whether OMNIACT
+carries the flexibility to change its strategy depending on the
+embodiment and the task.
+7
+
+
+Setup. We perform this experiment on OpenYAM, a normal-
+sized arm, and Lite6, an arm relatively limited in reach. A
+knife, a cube, and a bowl are visible. The knife lies on the
+surface and cannot be picked up easily from the top.
+On real tasks, OMNIACT adapts its motion strategy to the
+task. Figure 5(a) shows two grasps by the same OpenYAM
+arm from the same deployment. For the cube (top), OMNI-
+ACT approaches from above and closes the gripper vertically.
+For the knife (bottom), it instead pitches the wrist until the
+gripper is level with the table and closes on the blade from
+the side, the orientation in which the thin body fits between
+the fingertips with maximum contact area. The policy treats
+the wrist as a free degree of freedom and picks the grasp
+orientation the object calls for, rather than holding a fixed
+top-down pose.
+On real robots, OMNIACT adapts its motion strategy to
+the embodiment. Figure 5(b) fixes the task and varies the
+body. When the object is placed close to the robot, both
+OpenYAM and Lite6 approaches normally from the top.
+However, when the object is placed at the edge of Lite6’s
+relatively short reach (bottom), it approaches from the side
+with the gripper lying about 20◦from the table, while on
+OpenYAM (top) it approaches from the top as OpenYAM can
+easily reach the same distance. Additionally, when attempt-
+ing to pick from the side, the angles of approach are slightly
+different between OpenYAM and Lite6 (Figure 5(a)(b) bot-
+tom), such that both robots would be lying as flat as possible
+without putting excessive force on the table, which would
+trigger a gripper collision in simulation and a collision stop
+in real drivers.
+Overall, we can see that OMNIACT adapts its motion strat-
+egy to the embodiment and the task at hand, rather than
+retargeting one canonical grasp across bodies and forced
+into an infeasible pose on one of them.
+3.5. Ablation study
+Scaling training embodiments helps.
+We subsample the
+generated training embodiments to one half and one eighth
+of the corpus (400K and 100K, respectively), holding archi-
+tecture and training schedule fixed (Table 6 & Figure 6). Suc-
+cess falls monotonically: −6.5% at one half, and −26.8%
+at one eighth, on a 500 rollout step limit.
+Scene-grounded kinematic graph and camera-view in-
+puts are important to success. We then remove inputs
+at fixed data (Table 6). Dropping the per-node kinematic
+graph tokens costs 5.1 percentage success: the body is
+partially inferable from pixels and proprioception, but not
+fully, demonstrating the advantage of supplying the scene-
+grounded graph through camera-grounded nodes instead of
+through robot-frame proprioception. Removing the exocen-
+tric views as well, leaving only wrist observations, costs a
+further 36.8%.
+(a) Same emb., different tasks.
+(b) Same task, different embs.
+Figure 5. OMNIACT chooses its grasp orientation for the task
+and the embodiment. (a) Same embodiment, different tasks: top-
+down for the cube, side grasp for the knife. (b) Same task, different
+embodiments: top-down on OpenYAM, lateral on Lite6.
+1/8
+1/2
+All
+Training embodiments
+20
+30
+40
+50
+60
+70
+Success (%)
+200
+300
+500
+500 steps
+300 steps
+200 steps
+Figure 6. Success vs. number of training embodiments. Success
+on the same held-out episodes as Table 6, at each rollout step cap.
+Standard errors (≤1.1 points) are smaller than the markers.
+Table 6. Ablation study. Success rates on the same held-out
+episodes and hyperparameters.
+Success % with rollout steps ...
+Model
+200
+300
+500
+OMNIACT
+40.9 ±1.1
+53.8 ±1.1
+63.0 ±1.1
+w/ 1/2 embodiments
+−5.8 ±1.1
+−6.7 ±1.2
+−6.5 ±1.2
+w/ 1/8 embodiments
+−17.4 ±1.2 −23.8 ±1.2 −26.8 ±1.3
+w/o scene grnd.
+−4.6 ±1.1
+−6.0 ±1.2
+−5.1 ±1.2
+w/o scene grnd. &
+w/o exo views
+−29.0 ±1.1 −37.9 ±1.2 −41.9 ±1.3
+4. Discussion
+We find that scaling diverse robotic embodiments and sup-
+plying scene-grounded kinematic graphs lead to better gen-
+eralization to unseen robots on real-world tasks, enabling
+8
+
+
+body-specific motion strategies for the task at hand. Scal-
+ing the number of training embodiments drives performance
+on held-out simulated embodiments. The scene-grounded
+kinematic graph provides a small amount of improvement
+as well, but farther away from the training distribution, the
+graph’s contribution appears much larger (e.g. OpenYAM).
+These results suggest that embodiment scale covers bodies
+that resemble the training ones, while the graph carries the
+policy to a body at the edge of that distribution.
+An open question is to scale embodiments types further,
+including bimanual arms, humanoids, and everyday objects
+such as tools, equipment, and vehicles.
+Acknowledgments
+We thank Jiawei Gu for the support of figure drafts and
+providing feedback, and Lindsey Li for helping proofread
+the work.
+This work used resources through allocation
+#CIS261283 from the Advanced Cyberinfrastructure Co-
+ordination Ecosystem: Services & Support (ACCESS) pro-
+gram, which is supported by U.S. National Science Founda-
+tion grants #2138259, #2138286, #2138307, #2137603, and
+#2138296. This work was supported in part by Advanced
+Micro Devices, Inc. under the AMD University Program’s
+AI & HPC Cluster. This work was supported in part by the
+NSF through award IIS-2211133.
+References
+[1] Bo Ai, Liu Dai, Nico Bohlinger, Dichen Li, Tongzhou Mu,
+Zhanxin Wu, K. Fay, Henrik I. Christensen, Jan Peters, and
+Hao Su. Towards embodiment scaling laws in robot locomo-
+tion, 2025. 2
+[2] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge,
+Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang,
+Humen Zhong, Yuanzhi Zhu, Mingkun Yang, Zhaohai Li,
+Jianqiang Wan, Pengfei Wang, Wei Ding, Zheren Fu, Yiheng
+Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng, Hang
+Zhang, Zhibo Yang, Haiyang Xu, and Junyang Lin. Qwen2.5-
+vl technical report, 2025. 3, 5
+[3] Homanga Bharadhwaj, Roozbeh Mottaghi, Abhinav Gupta,
+and Shubham Tulsiani. Track2act: Predicting point tracks
+from internet videos enables generalizable robot manipulation,
+2024. 2
+[4] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, Szymon Jakubczak, Tim
+Jones, Liyiming Ke, Sergey Levine, Adrian Li-Bell, Mo-
+hith Mothukuri, Suraj Nair, Karl Pertsch, Lucy Xiaoyang Shi,
+James Tanner, Quan Vuong, Anna Walling, Haohuan Wang,
+and Ury Zhilinsky. π0: A vision-language-action flow model
+for general robot control, 2026. 2
+[5] Qingwen Bu, Yanting Yang, Jisong Cai, Shenyuan Gao,
+Guanghui Ren, Maoqing Yao, Ping Luo, and Hongyang Li.
+Univla: Learning to act anywhere with task-centric latent
+actions, 2025.
+[6] Lawrence Yunliang Chen, Kush Hari, Karthik Dharmara-
+jan, Chenfeng Xu, Quan Vuong, and Ken Goldberg. Mi-
+rage: Cross-embodiment zero-shot policy transfer with cross-
+painting, 2024.
+[7] Tao Chen, Adithyavairavan Murali, and Abhinav Gupta. Hard-
+ware conditioned policies for multi-robot transfer learning,
+2019. 2
+[8] Cheng Chi, Zhenjia Xu, Chuer Pan, Eric Cousineau, Ben-
+jamin Burchfiel, Siyuan Feng, Russ Tedrake, and Shuran
+Song. Universal manipulation interface: In-the-wild robot
+teaching without in-the-wild robots, 2024. 5
+[9] Embodiment Collaboration, Abby O’Neill, Abdul Rehman,
+Abhinav Gupta, Abhiram Maddukuri, Abhishek Gupta, Ab-
+hishek Padalkar, Abraham Lee, Acorn Pooley, Agrim Gupta,
+Ajay Mandlekar, Ajinkya Jain, Albert Tung, Alex Bewley,
+Alex Herzog, Alex Irpan, Alexander Khazatsky, Anant Rai,
+Anchit Gupta, Andrew Wang, Andrey Kolobov, Anikait
+Singh, Animesh Garg, Aniruddha Kembhavi, Annie Xie,
+Anthony Brohan, Antonin Raffin, Archit Sharma, Arefeh
+Yavary, Arhan Jain, Ashwin Balakrishna, Ayzaan Wahid,
+Ben Burgess-Limerick, Beomjoon Kim, Bernhard Sch¨olkopf,
+Blake Wulfe, Brian Ichter, Cewu Lu, Charles Xu, Charlotte
+Le, Chelsea Finn, Chen Wang, Chenfeng Xu, Cheng Chi,
+Chenguang Huang, Christine Chan, Christopher Agia, Chuer
+Pan, Chuyuan Fu, Coline Devin, Danfei Xu, Daniel Mor-
+ton, Danny Driess, Daphne Chen, Deepak Pathak, Dhruv
+Shah, Dieter B¨uchler, Dinesh Jayaraman, Dmitry Kalash-
+nikov, Dorsa Sadigh, Edward Johns, Ethan Foster, Fangchen
+Liu, Federico Ceola, Fei Xia, Feiyu Zhao, Felipe Vieira Fru-
+jeri, Freek Stulp, Gaoyue Zhou, Gaurav S. Sukhatme, Gautam
+Salhotra, Ge Yan, Gilbert Feng, Giulio Schiavi, Glen Berseth,
+Gregory Kahn, Guangwen Yang, Guanzhi Wang, Hao Su,
+Hao-Shu Fang, Haochen Shi, Henghui Bao, Heni Ben Amor,
+Henrik I Christensen, Hiroki Furuta, Homanga Bharadhwaj,
+Homer Walke, Hongjie Fang, Huy Ha, Igor Mordatch, Ilija
+Radosavovic, Isabel Leal, Jacky Liang, Jad Abou-Chakra, Jae-
+hyung Kim, Jaimyn Drake, Jan Peters, Jan Schneider, Jasmine
+Hsu, Jay Vakil, Jeannette Bohg, Jeffrey Bingham, Jeffrey Wu,
+Jensen Gao, Jiaheng Hu, Jiajun Wu, Jialin Wu, Jiankai Sun,
+Jianlan Luo, Jiayuan Gu, Jie Tan, Jihoon Oh, Jimmy Wu,
+Jingpei Lu, Jingyun Yang, Jitendra Malik, Jo˜ao Silv´erio, Joey
+Hejna, Jonathan Booher, Jonathan Tompson, Jonathan Yang,
+Jordi Salvador, Joseph J. Lim, Junhyek Han, Kaiyuan Wang,
+Kanishka Rao, Karl Pertsch, Karol Hausman, Keegan Go,
+Keerthana Gopalakrishnan, Ken Goldberg, Kendra Byrne,
+Kenneth Oslund, Kento Kawaharazuka, Kevin Black, Kevin
+Lin, Kevin Zhang, Kiana Ehsani, Kiran Lekkala, Kirsty Ellis,
+Krishan Rana, Krishnan Srinivasan, Kuan Fang, Kunal Pratap
+Singh, Kuo-Hao Zeng, Kyle Hatch, Kyle Hsu, Laurent Itti,
+Lawrence Yunliang Chen, Lerrel Pinto, Li Fei-Fei, Liam Tan,
+Linxi ”Jim” Fan, Lionel Ott, Lisa Lee, Luca Weihs, Magnum
+Chen, Marion Lepert, Marius Memmel, Masayoshi Tomizuka,
+Masha Itkina, Mateo Guaman Castro, Max Spero, Maxim-
+ilian Du, Michael Ahn, Michael C. Yip, Mingtong Zhang,
+Mingyu Ding, Minho Heo, Mohan Kumar Srirama, Mohit
+Sharma, Moo Jin Kim, Muhammad Zubair Irshad, Naoaki
+Kanazawa, Nicklas Hansen, Nicolas Heess, Nikhil J Joshi,
+Niko Suenderhauf, Ning Liu, Norman Di Palo, Nur Muham-
+9
+
+
+mad Mahi Shafiullah, Oier Mees, Oliver Kroemer, Osbert
+Bastani, Pannag R Sanketi, Patrick ”Tree” Miller, Patrick Yin,
+Paul Wohlhart, Peng Xu, Peter David Fagan, Peter Mitrano,
+Pierre Sermanet, Pieter Abbeel, Priya Sundaresan, Qiuyu
+Chen, Quan Vuong, Rafael Rafailov, Ran Tian, Ria Doshi,
+Roberto Mart´ın-Mart´ın, Rohan Baijal, Rosario Scalise, Rose
+Hendrix, Roy Lin, Runjia Qian, Ruohan Zhang, Russell Men-
+donca, Rutav Shah, Ryan Hoque, Ryan Julian, Samuel Bus-
+tamante, Sean Kirmani, Sergey Levine, Shan Lin, Sherry
+Moore, Shikhar Bahl, Shivin Dass, Shubham Sonawani, Shub-
+ham Tulsiani, Shuran Song, Sichun Xu, Siddhant Haldar, Sid-
+dharth Karamcheti, Simeon Adebola, Simon Guist, Soroush
+Nasiriany, Stefan Schaal, Stefan Welker, Stephen Tian, Sub-
+ramanian Ramamoorthy, Sudeep Dasari, Suneel Belkhale,
+Sungjae Park, Suraj Nair, Suvir Mirchandani, Takayuki Osa,
+Tanmay Gupta, Tatsuya Harada, Tatsuya Matsushima, Ted
+Xiao, Thomas Kollar, Tianhe Yu, Tianli Ding, Todor Davchev,
+Tony Z. Zhao, Travis Armstrong, Trevor Darrell, Trinity
+Chung, Vidhi Jain, Vikash Kumar, Vincent Vanhoucke, Vitor
+Guizilini, Wei Zhan, Wenxuan Zhou, Wolfram Burgard, Xi
+Chen, Xiangyu Chen, Xiaolong Wang, Xinghao Zhu, Xinyang
+Geng, Xiyuan Liu, Xu Liangwei, Xuanlin Li, Yansong Pang,
+Yao Lu, Yecheng Jason Ma, Yejin Kim, Yevgen Chebotar,
+Yifan Zhou, Yifeng Zhu, Yilin Wu, Ying Xu, Yixuan Wang,
+Yonatan Bisk, Yongqiang Dou, Yoonyoung Cho, Youngwoon
+Lee, Yuchen Cui, Yue Cao, Yueh-Hua Wu, Yujin Tang, Yuke
+Zhu, Yunchu Zhang, Yunfan Jiang, Yunshuang Li, Yunzhu
+Li, Yusuke Iwasawa, Yutaka Matsuo, Zehan Ma, Zhuo Xu,
+Zichen Jeff Cui, Zichen Zhang, Zipeng Fu, and Zipeng Lin.
+Open x-embodiment: Robotic learning datasets and rt-x mod-
+els, 2025. 2
+[10] AgiBot World Contributors, Qingwen Bu, Jisong Cai, Li
+Chen, Xiuqi Cui, Yan Ding, Siyuan Feng, Shenyuan Gao,
+Xindong He, Xuan Hu, Xu Huang, Shu Jiang, Yuxin Jiang,
+Cheng Jing, Hongyang Li, Jialu Li, Chiming Liu, Yi Liu,
+Yuxiang Lu, Jianlan Luo, Ping Luo, Yao Mu, Yuehan Niu,
+Yixuan Pan, Jiangmiao Pang, Yu Qiao, Guanghui Ren, Cheng
+Ruan, Jiaqi Shan, Yongjian Shen, Chengshi Shi, Mingkang
+Shi, Modi Shi, Chonghao Sima, Jianheng Song, Huijie Wang,
+Wenhao Wang, Dafeng Wei, Chengen Xie, Guo Xu, Junchi
+Yan, Cunbiao Yang, Lei Yang, Shukai Yang, Maoqing Yao, Jia
+Zeng, Chi Zhang, Qinglin Zhang, Bin Zhao, Chengyue Zhao,
+Jiaqi Zhao, and Jianchao Zhu. Agibot world colosseo: A
+large-scale manipulation platform for scalable and intelligent
+embodied systems, 2026.
+[11] Abhay Deshpande, Maya Guru, Rose Hendrix, Snehal Jauhri,
+Ainaz Eftekhar, Rohun Tripathi, Max Argus, Jordi Salvador,
+Haoquan Fang, Matthew Wallingford, Wilbert Pumacay,
+Yejin Kim, Quinn Pfeifer, Ying-Chun Lee, Piper Wolters,
+Omar Rayyan, Mingtong Zhang, Jiafei Duan, Karen Farley,
+Winson Han, Eli Vanderbilt, Dieter Fox, Ali Farhadi, Georgia
+Chalvatzaki, Dhruv Shah, and Ranjay Krishna. Molmob0t:
+Large-scale simulation enables zero-shot manipulation, 2026.
+5
+[12] Ria Doshi, Homer Walke, Oier Mees, Sudeep Dasari, and
+Sergey Levine. Scaling cross-embodied learning: One policy
+for manipulation, navigation, locomotion and aviation, 2024.
+[13] Haoquan Fang, Jiafei Duan, Donovan Clay, Sam Wang, Shuo
+Liu, Weikai Huang, Xiang Fan, Wei-Chuan Tsai, Shirui
+Chen, Yi Ru Wang, Shanli Xing, Jaemin Cho, Jae Sung Park,
+Ainaz Eftekhar, Peter Sushko, Karen Farley, Angad Wadhwa,
+Cole Harrison, Winson Han, Ying-Chun Lee, Eli VanderBilt,
+Rose Hendrix, Suveen Ellawela, Lucas Ngoo, Joyce Chai,
+Zhongzheng Ren, Ali Farhadi, Dieter Fox, and Ranjay Kr-
+ishna. Molmoact2: Action reasoning models for real-world
+deployment, 2026. 5
+[14] Raktim Gautam Goswami, Prashanth Krishnamurthy, Yann
+LeCun, and Farshad Khorrami. Robopepp: Vision-based
+robot pose and joint angle estimation through embedding
+predictive pre-training, 2025.
+[15] Agrim Gupta, Linxi Fan, Surya Ganguli, and Li Fei-Fei.
+Metamorph: Learning universal controllers with transformers,
+2022. 2
+[16] Harsh Gupta, Xiaofeng Guo, Huy Ha, Chuer Pan, Muqing
+Cao, Dongjae Lee, Sebastian Scherer, Shuran Song, and
+Guanya Shi. Umi-on-air: Embodiment-aware guidance for
+embodiment-agnostic visuomotor policies, 2026. 5
+[17] Huy Ha, C. Karen Liu, and Shuran Song. Transformer trans-
+former: A unified model for motion-conditioned robot co-
+design, 2026.
+[18] Wenlong Huang, Chen Wang, Yunzhu Li, Ruohan Zhang, and
+Li Fei-Fei. Rekep: Spatio-temporal reasoning of relational
+keypoint constraints for robotic manipulation, 2024. 2
+[19] Physical Intelligence, Kevin Black, Noah Brown, James
+Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Manuel Y. Gal-
+liker, Dibya Ghosh, Lachy Groom, Karol Hausman, Brian
+Ichter, Szymon Jakubczak, Tim Jones, Liyiming Ke, Devin
+LeBlanc, Sergey Levine, Adrian Li-Bell, Mohith Mothukuri,
+Suraj Nair, Karl Pertsch, Allen Z. Ren, Lucy Xiaoyang Shi,
+Laura Smith, Jost Tobias Springenberg, Kyle Stachowicz,
+James Tanner, Quan Vuong, Homer Walke, Anna Walling,
+Haohuan Wang, Lili Yu, and Ury Zhilinsky. π0.5: a vision-
+language-action model with open-world generalization, 2025.
+5
+[20] Byungjun Kim, Taeksoo Kim, Hyunsoo Cha, and Hanbyul
+Joo. Robot-factored world models via robot rendering, 2026.
+[21] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao,
+Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Fos-
+ter, Grace Lam, Pannag Sanketi, Quan Vuong, Thomas Kollar,
+Benjamin Burchfiel, Russ Tedrake, Dorsa Sadigh, Sergey
+Levine, Percy Liang, and Chelsea Finn. Openvla: An open-
+source vision-language-action model, 2024. 2
+[22] Yejin Kim, Wilbert Pumacay, Omar Rayyan, Max Argus,
+Winson Han, Eli VanderBilt, Jordi Salvador, Abhay Desh-
+pande, Rose Hendrix, Snehal Jauhri, Shuo Liu, Nur Muham-
+mad Mahi Shafiullah, Maya Guru, Ainaz Eftekhar, Karen
+Farley, Donovan Clay, Jiafei Duan, Arjun Guru, Piper
+Wolters, Alvaro Herrasti, Ying-Chun Lee, Georgia Chal-
+vatzaki, Yuchen Cui, Ali Farhadi, Dieter Fox, and Ranjay
+Krishna. Molmospaces: A large-scale open ecosystem for
+robot navigation and manipulation, 2026. 4, 5
+[23] Marion Lepert, Jiaying Fang, and Jeannette Bohg. Masquer-
+ade: Learning from in-the-wild human videos using data-
+editing, 2025.
+10
+
+
+[24] Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maxi-
+milian Nickel, and Matt Le. Flow matching for generative
+modeling, 2023. 4
+[25] Fangchen Liu, Kuan Fang, Pieter Abbeel, and Sergey Levine.
+Moka: Open-world robotic manipulation through mark-based
+visual prompting, 2024. 2
+[26] Ruoshi Liu, Alper Canberk, Shuran Song, and Carl Vondrick.
+Differentiable robot rendering, 2024.
+[27] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan,
+Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and Jun Zhu.
+Rdt-1b: a diffusion foundation model for bimanual manipula-
+tion, 2025. 2
+[28] Kangchen Lv, Mingrui Yu, Yongyi Jia, Chenyu Zhang, and
+Xiang Li. Kinematics-aware diffusion policy with consis-
+tent 3d observation and action space for whole-arm robotic
+manipulation, 2025. 2
+[29] Xiao Ma, Sumit Patidar, Iain Haughton, and Stephen James.
+Hierarchical diffusion policy for kinematics-aware multi-task
+robotic manipulation, 2024.
+[30] Pengjun Niu, Yujia Xie, Rui Peng, Hang Zhao, and Ke Liu.
+Skelwam: A skeleton-guided world-action model for zero-
+shot cross-embodiment manipulation, 2026.
+[31] NVIDIA, Johan Bjorck, Fernando Casta˜neda, Nikita Cher-
+niadev, Xingye Da, Runyu Ding, Linxi ”Jim” Fan, Yu Fang,
+Dieter Fox, Fengyuan Hu, Spencer Huang, Joel Jang, Zhenyu
+Jiang, Jan Kautz, Kaushil Kundalia, Lawrence Lao, Zhiqi
+Li, Zongyu Lin, Kevin Lin, Guilin Liu, Edith Llontop, Loic
+Magne, Ajay Mandlekar, Avnish Narayan, Soroush Nasiriany,
+Scott Reed, You Liang Tan, Guanzhi Wang, Zu Wang, Jing
+Wang, Qi Wang, Jiannan Xiang, Yuqi Xie, Yinzhen Xu, Zhen-
+jia Xu, Seonghyeon Ye, Zhiding Yu, Ao Zhang, Hao Zhang,
+Yizhou Zhao, Ruijie Zheng, and Yuke Zhu. Gr00t n1: An
+open foundation model for generalist humanoid robots, 2025.
+[32] Austin Patel and Shuran Song. Get-zero: Graph embodiment
+transformer for zero-shot embodiment generalization, 2024.
+2
+[33] Prabin Kumar Rath and Nakul Gopalan. Xmop: Whole-body
+control policy for zero-shot cross-embodiment neural motion
+planning, 2025.
+[34] Mingyo Seo, H. Andy Park, Shenli Yuan, Yuke Zhu, and Luis
+Sentis. Legato: Cross-embodiment imitation using a grasping
+tool, 2025.
+[35] Kei Suzuki, Jing Liu, Ye Wang, Chiori Hori, Matthew Brand,
+Diego Romeres, and Toshiaki Koike-Akino. Embedding mor-
+phology into transformers for cross-robot policy learning,
+2026. 2
+[36] Octo Model Team, Dibya Ghosh, Homer Walke, Karl Pertsch,
+Kevin Black, Oier Mees, Sudeep Dasari, Joey Hejna, To-
+bias Kreiman, Charles Xu, Jianlan Luo, You Liang Tan,
+Lawrence Yunliang Chen, Pannag Sanketi, Quan Vuong, Ted
+Xiao, Dorsa Sadigh, Chelsea Finn, and Sergey Levine. Octo:
+An open-source generalist robot policy, 2024. 2
+[37] Xiaomi Embodied Intelligence Team, University of Macau,
+Shaoqing Xu, Fang Li, Guozhi Zhan, Zhixiang Duan, Yuhan
+Wang, Yuechen Luo, Shengyin Jiang, Hanbing Li, Zhiying
+Du, Longlong Wang, Longmei Jiang, Weixiang Liang, Ying
+Gong, Yong Pan, Ziping Zhao, Zhiyuan Chen, Yangwei You,
+Kun Ma, Qinyuan Liu, Hangjun Ye, and Zhi xin Yang. One
+policy, many embodiments: Unified camera-centric action
+geometry pre-training for heterogeneous embodied manipula-
+tion, 2026.
+[38] Michael Tschannen, Alexey Gritsenko, Xiao Wang, Muham-
+mad Ferjad Naeem,
+Ibrahim Alabdulmohsin,
+Nikhil
+Parthasarathy, Talfan Evans, Lucas Beyer, Ye Xia, Basil
+Mustafa, Olivier H´enaff, Jeremiah Harmsen, Andreas Steiner,
+and Xiaohua Zhai. Siglip 2: Multilingual vision-language
+encoders with improved semantic understanding, localization,
+and dense features, 2025. 3, 5
+[39] Vitalis Vosylius, Younggyo Seo, Jafar Uruc¸, and Stephen
+James. Render and diffuse: Aligning image and action spaces
+for diffusion-based behaviour cloning, 2024. 2
+[40] Lirui Wang, Xinlei Chen, Jialiang Zhao, and Kaiming He.
+Scaling proprioceptive-visual learning with heterogeneous
+pre-trained transformers, 2024.
+[41] Junjie Wen, Yichen Zhu, Jinming Li, Zhibin Tang, Chaomin
+Shen, and Feifei Feng. Dexvla: Vision-language model with
+plug-in diffusion expert for general robot control, 2025.
+[42] Seonghyeon Ye, Yunhao Ge, Kaiyuan Zheng, Shenyuan Gao,
+Sihyun Yu, George Kurian, Suneel Indupuru, You Liang Tan,
+Chuning Zhu, Jiannan Xiang, Ayaan Malik, Kyungmin Lee,
+William Liang, Nadun Ranawaka, Jiasheng Gu, Yinzhen Xu,
+Guanzhi Wang, Fengyuan Hu, Avnish Narayan, Johan Bjorck,
+Jing Wang, Gwanghyun Kim, Dantong Niu, Ruijie Zheng,
+Yuqi Xie, Jimmy Wu, Qi Wang, Ryan Julian, Danfei Xu,
+Yilun Du, Yevgen Chebotar, Scott Reed, Jan Kautz, Yuke
+Zhu, Linxi ”Jim” Fan, and Joel Jang. World action models
+are zero-shot policies, 2026. 5
+[43] Chengxuan Ying, Tianle Cai, Shengjie Luo, Shuxin Zheng,
+Guolin Ke, Di He, Yanming Shen, and Tie-Yan Liu. Do
+transformers really perform bad for graph representation?,
+2021. 3
+[44] Chengbo Yuan, Chuan Wen, Tong Zhang, and Yang Gao. Gen-
+eral flow as foundation affordance for scalable robot learning,
+2024. 2
+[45] Lihan Zha, Asher J. Hancock, Mingtong Zhang, Tenny Yin,
+Yixuan Huang, Dhruv Shah, Allen Z. Ren, and Anirudha
+Majumdar. Lap: Language-action pre-training enables zero-
+shot cross-embodiment transfer, 2026. 5
+[46] Ke Zhang, Lixin Xu, Chengyi Song, Junzhe Xu, Xiaoyi Lin,
+Zeyu Jiang, and Renjing Xu. Dexformer: Cross-embodied
+dexterous manipulation via history-conditioned transformer,
+2026.
+[47] Guoyang Zhao, Quanhao Qian, Gongjie Zhang, Wenhao Li,
+Jiuniu Wang, Xiaowei Lu, Deli Zhao, and Ran Xu. Geoprop:
+Grounding robot state in vision for generalist manipulation,
+2026. 2
+[48] Yi Zhou, Connelly Barnes, Jingwan Lu, Jimei Yang, and Hao
+Li. On the continuity of rotation representations in neural
+networks, 2020. 3
+11

@@ -1,0 +1,2441 @@
+RoboMorpher: Scaling Robot Morphology Representations for
+Cross-Embodiment Action Prediction
+Wenwei Lin1,∗, Yan Qin2,∗, Weiliang Deng3,∗, Zixuan Li1,∗, Kaixuan Wang1,∗,
+Zanxin Chen4, Yue Chen5, Tianshuo Yang1, Junting Chen6, Zhixuan Liang1,
+Yao Mu4, Ximin Lyu3, Renjing Xu2, Ping Luo1,†, Tianxing Chen1,†
+1The University of Hong Kong
+2HKUST (Guangzhou)
+3Sun Yat-sen University
+4Shanghai Jiao Tong University
+5Peking University
+6National University of Singapore
+∗Equal contribution
+†Corresponding authors
+Project page: https://robomorpher.github.io/
+Abstract
+Learning shared action representations is central to cross-
+embodiment manipulation. However, identical joint values
+can produce different spatial configurations across robots,
+limiting representations learned from joint values alone.
+We introduce RoboMorpher, a morphology-conditioned ac-
+tion tokenizer that jointly reconstructs joint angles and link
+poses to associate control coordinates with their kinematic
+effects. MorphGen supplies scalable kinematic supervision
+by generating serial-arm descriptions from survey-derived
+geometric priors.
+We pretrain RoboMorpher on 40 mil-
+lion morphology–state pairs and integrate the frozen to-
+kenizer into a vision–language–action policy for discrete
+prediction and continuous refinement. We also introduce
+EmbodiBench, a ten-task benchmark with 30 generated
+URDFs per task. With downstream URDFs excluded from
+tokenizer pretraining, the policy achieves 56.40% success
+on RoboTwin 2.0 and 23.27% on EmbodiBench, exceeding
+continuous joint-space control by 9.73 and 15.34 percent-
+age points. Removing link-pose supervision reduces Em-
+bodiBench success by 17.94 percentage points, supporting
+morphology-aware geometric supervision for joint-action
+representation learning.
+1. Introduction
+Generalist robot policies learn from demonstrations across
+platforms [11, 13, 14], but the kinematic meaning of joint-
+space actions depends on robot morphology. Identical joint
+values can produce different link poses as link lengths and
+joint arrangements vary; padding actions to a common di-
+mension does not resolve this ambiguity.
+End-effector
+(EE) control provides Cartesian targets but requires robot-
+specific inverse kinematics and does not uniquely specify
+the full joint configuration. A shared joint-action represen-
+tation should therefore preserve control coordinates while
+accounting for their morphology-dependent spatial effects.
+To learn this relationship without collecting manipula-
+tion demonstrations for every morphology, we use robot
+kinematics as supervision. We introduce MorphGen, a pro-
+cedural generator informed by a survey of 33 URDF/MJCF
+descriptions. MorphGen normalizes serial-arm kinematics
+into a common local-Z convention, samples six- and seven-
+joint manipulators from empirical link-length priors, and se-
+lects feasible home poses through collision-aware inverse
+kinematics. Forward kinematics provides link-pose targets
+for 40 million morphology–state pairs.
+We present RoboMorpher, a morphology-conditioned
+action tokenizer pretrained on these data.
+Morphology
+conditions its encoder and decoder, while kinematic-chain
+attention biases encode relative joint positions along the
+chain.
+Joint-angle reconstruction preserves control coor-
+dinates, and link-pose reconstruction supervises their kine-
+matic effects. The pretrained tokenizer is then frozen and
+integrated into a vision–language–action (VLA) policy. Fol-
+lowing Discrete Forcing [21], a discrete branch predicts ac-
+tion codes, which are decoded into coarse trajectories and
+refined by a continuous flow-matching branch. Pretrained
+morphology features condition both branches.
+We evaluate on 15 RoboTwin 2.0 tasks across five em-
+bodiments [3] and introduce EmbodiBench, comprising ten
+tabletop tasks with 30 generated URDFs each. Downstream
+URDFs are excluded from tokenizer pretraining; policies
+learn from task demonstrations.
+RoboMorpher achieves
+56.40% and 23.27% success, exceeding continuous joint-
+space control by 9.73 and 15.34 percentage points. Remov-
+ing link-pose supervision reduces EmbodiBench success to
+5.33%, supporting its contribution to downstream perfor-
+mance.
+Our contributions are as follows.
+• MorphGen, a survey-guided generator of robot mor-
+phologies and large-scale kinematic pretraining data.
+• RoboMorpher, a morphology-conditioned action tok-
+enizer trained through joint-angle and link-pose recon-
+struction, integrated into a VLA policy for discrete pre-
+1
+arXiv:2611.24816v1  [cs.RO]  18 Nov 2026
+
+
+(a) Joint-wise length priors
+(b) MorphGen samples
+0
+5
+10
+15
+20
+-0.4
+-0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+Link length (m)
+Probability density
+Joint position
+1
+2
+3
+4
+5
+6
+7
+Figure 1. Survey and morphology generation. (a) Seven Gaussian priors N(µi, σ2
+i ) fitted to 185 reported lengths from 30 description
+records. Curves show the fitted distributions before truncation and chain-length rescaling. (b) Ninety-six generated morphologies varying
+link geometry and joint-frame arrangement. Sections A and B provide the survey records and generation details.
+diction and continuous refinement.
+• EmbodiBench, a benchmark for manipulation across
+generated morphologies, with experiments on task perfor-
+mance, representation design, and reconstruction fidelity.
+2. Related Work
+Cross-Embodiment
+Robot
+Learning.
+Open
+X-
+Embodiment
+aggregates
+demonstrations
+across
+robot
+platforms [14], supporting generalist policies such as Octo
+and RDT [11, 13].
+HPT and CrossFormer learn shared
+representations from heterogeneous embodiments [5, 22].
+MetaMorph and Shared Modular Policies incorporate robot
+morphology through policy conditioning and inter-module
+communication [6, 7],
+while Body Transformer and
+BodyVLA exploit kinematic structure in policy architec-
+tures [17, 19].
+UniAct, X-VLA, and XL-VLA further
+explore universal actions, embodiment-specific prompts,
+and shared latent action spaces [8, 25, 26]. Our focus is
+morphology-conditioned action encoding and decoding,
+learned from kinematic supervision before policy training.
+Robot Action Representations and Tokenization.
+Vec-
+tor quantization learns discrete representations through re-
+construction [20]. FAST, VQ-VLA, and FASTer explore ac-
+tion tokenization for efficient sequence modeling [12, 16,
+24], while X-Tokenizer aligns discrete action codes with
+pretrained vision-language representations [9].
+Discrete
+Forcing combines discrete action prediction with continu-
+ous flow-matching refinement [21]. RoboMorpher extends
+configuration-level tokenization with morphology condi-
+tioning and joint-angle/link-pose reconstruction, explicitly
+supervising the relationship between control values and spa-
+tial effects.
+Robot Data Generation and Benchmarks.
+RoboGen
+synthesizes robot tasks, scenes, and training supervision
+through simulation [23]. RoboTwin 2.0 and RoboDojo pro-
+vide diverse manipulation tasks and evaluation across simu-
+lation and real-world settings [3, 4]. MorphGen targets kine-
+matic supervision by generating chains and configuration–
+pose pairs from survey-derived priors. EmbodiBench eval-
+uates the resulting action representations across generated
+morphologies on ten tabletop tasks.
+3. Method
+Our pipeline separates kinematic representation learning
+from task-specific action selection (Fig. 2).
+MorphGen
+generates morphology–configuration pairs with forward-
+kinematics (FK) supervision. RoboMorpher encodes con-
+figurations into joint-aligned codes and reconstructs angles
+and link poses conditioned on morphology. A VLA policy
+predicts these codes and refines decoded trajectories while
+keeping the tokenizer frozen.
+3.1. MorphGen Data Generation
+MorphGen converts survey-derived geometric priors into
+serial-arm descriptions, represents their kinematics in a
+common frame convention, and selects home poses us-
+ing collision-aware inverse kinematics (IK). FK then sup-
+plies configuration–pose supervision without manipulation
+2
+
+
+(a) MorphGen
+(b) RoboMorpher
+Morphology-conditioned tokenizer pretraining
+Robot-description survey
+33 descriptions / 30 names
+Sample local-Z chains
+Survey-derived length priors
+6–7 revolute joints
+Home-pose IK + filtering
+URDF + q + FK targets
+Normalized origins: xyz + rpy
+URDF encoder × 2
+Joint-aligned morphology features / AdaLN-Zero
+Joint angles q
+Angle encoder × 2
+Conditional
+encoder × 6
+Residual VQ
+256D latent
+Conditional
+decoder × 4
+2 × 2048 codebooks
+2 IDs per valid joint
+Reconstruction
+Angle (1D)
+Position (3D)
+Rotation (6D)
+Graph-biased attention
+Chain distance / upstream / downstream
+40M training examples
+Supervision: angles + FK position/orientation + RVQ loss
+(c) Morphology-aware action prediction
+Frozen URDF encoder / joint-wise morphology features
+3 RGB views + instruction
++ current state
+Qwen3-VL-4B
+Trainable VLM
+Layer-wise VLM context
+Discrete DiT
+8 MaskGIT iterations
+Frozen decoder
+10 → 50 frames
+Coarse + noise
+0.3 aᵈ + 0.7 ε
+Continuous DiT
+4 Euler steps
+Joint actions
+50-frame chunk
+Predicted action IDs
+Coarse trajectory aᵈ
+Refinement source
+Flow refinement
+Valid joints + grippers
+Discrete / continuous DiTs: first 2 blocks share weights; remaining blocks are separate
+Loss: 0.5 CE + FM
+Figure 2. RoboMorpher pipeline. (a) MorphGen samples local-Z chains using survey priors and IK filtering. (b) URDF-conditioned
+tokenization learns two codes per joint with FK supervision. (c) The VLA predicts codes, decodes ten nodes, interpolates 50 frames, and
+refines them with flow matching. Frozen URDF features condition both DiTs and the decoder. VLM context conditions the DiTs.
+Table 1. Robot-description survey. Entry-level statistics. Masses
+and reaches are reported values.
+The appendix documents
+description-level discrepancies.
+Property
+Count / range
+Description entries / distinct names
+33 / 30
+URDF / MJCF entries
+24 / 9
+Gripper / other tool / no tool listed
+11 / 1 / 21
+Approx. reach (32 entries)
+0.25–2.05 m
+Model mass (32 entries)
+0.226–33.5 kg
+demonstrations.
+3.1.1. Robot Morphology Survey and Geometric Priors
+We survey 33 serial-manipulator descriptions covering 30
+robot names. Gen3, Koch v1.1, and Panda each have URDF
+and MJCF entries. Six- and seven-DoF arms account for
+30/33 descriptions (90.9%), motivating our sampling range.
+Variation in joint limits and tool coupling motivates explicit
+arm-chain extraction and separate gripper handling. Table 1
+and Sec. A summarize the inventory and description ambi-
+guities.
+A separate set of 30 link-length records contains 185 re-
+ported values across seven joint positions (Fig. 1(a)). The
+positions have 30, 30, 30, 30, 30, 27, and 8 observations,
+respectively.
+Zeros are retained and missing entries ex-
+cluded. Positions 3 and 4 have the largest means (0.3029
+and 0.2270 m), while position 5 has the largest sample
+standard deviation (0.1862 m). These differences motivate
+position-specific Gaussian priors. The priors characterize
+the surveyed inventory, with only eight observations sup-
+porting the seventh position.
+3.1.2. A Unified Kinematic Representation
+Because local frames and intermediate fixed links can dif-
+fer between equivalent descriptions, we express each or-
+dered serial chain in a common local-Z convention. Let
+Oi ∈SE(3) be joint i’s origin transform after composing
+intervening fixed transforms, and ai its rotation axis. We
+choose Ci such that Ciez = ai, using the minimum-angle
+rotation and a fixed X-axis choice for the antiparallel case.
+With C0 = I,
+eOi = C−1
+i−1OiCi,
+eTi(q) =
+iY
+k=1
+eOkRz(qk).
+(1)
+Rotations are embedded in homogeneous transforms, Rz is
+a local-Z rotation, and Ti is the original root-to-link trans-
+form. The identity eTi(q) = Ti(q)Ci preserves joint values,
+signs, zeros, and physical joint positions. Inverse frame cor-
+rections recover link orientations. Asset-origin corrections
+preserve visual and collision placement.
+The tokenizer receives M = {(ti, ϕi)}J
+i=1, comprising
+each normalized origin’s translation and XYZ roll–pitch–
+yaw angles, together with a validity mask. Joint angles are
+supplied separately. This six-value interface removes ex-
+plicit axis parameters and intermediate fixed paths. It sup-
+ports independent revolute/continuous chains and rejects
+selected prismatic/mimic joints or skipped movable joints.
+3
+
+
+This standardizes the input convention without defining a
+unique canonical form for physical morphology.
+3.1.3. Survey-Guided Procedural Generation
+The generator samples six- or seven-joint revolute arms in
+the local-Z convention. An initial length eℓi is drawn from a
+truncated Gaussian using the mean µi and sample standard
+deviation σi of survey column i (Tab. 8). The lower bound
+is zero and the upper bound is max(u, µi +0.1) m, where u
+is 0.65 m with probability 0.95 and 0.35 m otherwise. The
+lengths are rescaled to a sampled total chain length,
+ℓi = L
+eℓi
+P
+k eℓk
+,
+L ∼
+
+
+
+
+
+U(0.8, 1.6)
+0.95,
+U(1.6, 2.0)
+0.03,
+U(0.3, 0.8)
+0.02.
+(2)
+Here L denotes total link length in meters. The sampler
+also varies displacement directions and joint-frame rota-
+tions, assigns local-Z axes and [−2π, 2π] limits, and ex-
+ports gripper-equipped assets with planner and simulator
+configurations. Section B specifies the sampling distribu-
+tions and export settings.
+Home poses and pretraining samples.
+A cuRobo
+solver [18] searches perturbed tabletop targets with 32 IK
+seeds and self-collision checking. A successful configura-
+tion is absorbed into the joint origins to define the home
+pose; descriptions with no solution are discarded. Unlike
+frame normalization, this changes the controller zero with-
+out shifting joint-limit intervals, so it need not preserve the
+original bounded configuration set.
+Each training sample pairs a description and configu-
+ration with forward-kinematics targets from the original
+URDF tree, corrected into the normalized frames. Inputs
+contain J × 7 values (origin translation/rotation and joint
+angle), and targets contain J × 10 values (position, 6D ro-
+tation, and angle), with padding to seven joints. Pretraining
+uses 40 million morphology–state pairs.
+3.2. RoboMorpher Action Tokenization
+Given morphology M and configuration q ∈RJ, Robo-
+Morpher assigns two code indices to each valid joint. A
+morphology-conditioned decoder reconstructs joint angles
+and link poses from these codes.
+A mask m excludes
+padding from encoding, quantization, and reconstruction.
+3.2.1. Morphology-Conditioned Joint Encoding
+Separate two-layer Transformer branches encode the origin
+parameters and joint angles, retaining one feature per joint.
+Morphology features cM,i modulate a six-layer action en-
+coder and four-layer decoder through joint-wise AdaLN-
+Zero [15]. All blocks have width 1024, eight heads, and
+bidirectional attention.
+For head h, query joint i, and key joint j, the attention
+logit is
+Ah
+ij = Qh⊤
+i
+Kh
+j
+√
+d
++ bh
+s(|i −j| + 1)
++ bh
+p((i −j)+) + bh
+c ((j −i)+) + Mij.
+(3)
+Here d is the head width and (x)+ = max(x, 0).
+The
+zero-initialized tables encode hop distance and directed up-
+stream/downstream relations; directional index zero con-
+tributes no bias. M masks invalid keys, and padded features
+are zeroed. Thus chain biases describe joint connectivity,
+while AdaLN supplies morphology-dependent geometric in-
+formation.
+3.2.2. Joint-Aligned Residual Quantization
+A linear map projects each conditioned feature to ui ∈
+R256. Residual vector quantization (RVQ) [10] uses two
+2048-entry codebooks shared across joints and descriptions.
+Quantization proceeds as
+z(1)
+i
+= arg min
+k
+∥ui −e(1)
+k ∥2
+2,
+(4)
+z(2)
+i
+= arg min
+k
+∥ui −e(1)
+z(1)
+i
+−e(2)
+k ∥2
+2,
+(5)
+bui = e(1)
+z(1)
+i
++ e(2)
+z(2)
+i .
+(6)
+The resulting two indices per joint define a frame-level code
+sequence. Quantized features are projected back to width
+1024 for conditional decoding. Codebooks use exponential
+moving averages and a straight-through gradient estimator
+(Sec. C). Decoding depends on M, so a shared code need
+not correspond to the same joint value on every robot.
+3.2.3. Joint and Geometric Reconstruction
+For each valid joint, the decoder predicts its normalized an-
+gle and child-link position, together with a 6D rotation [27].
+For N = P
+i mi, the objective is
+Lq = 1
+N
+X
+i
+mi|b¯qi −¯qi|,
+(7)
+Lp =
+1
+3N
+X
+i
+mi∥b¯pi −¯pi∥1,
+(8)
+LR =
+1
+πN
+X
+i
+mi dSO(3)( bRi, Ri),
+(9)
+Ltok = Lq + Lp + 0.5LR + LRVQ.
+(10)
+Bars denote normalized values.
+dSO(3) is the rotation
+geodesic in radians. LRVQ includes the commitment weight.
+Rotations are denormalized before Gram–Schmidt conver-
+sion. Per-feature min–max statistics are shared across valid
+joints and robots. Raw joint angles are not wrapped.
+4
+
+
+The joint and pose objectives supervise complementary
+aspects of each configuration: its control coordinates and its
+spatial realization. Because poses are predicted by an aux-
+iliary head, this objective does not enforce exact FK consis-
+tency of decoded angles. All tokenizer parameters, includ-
+ing the morphology encoder, remain frozen during policy
+learning.
+3.3. VLA Policy Integration
+To use the pretrained representation for control, we com-
+bine Qwen3-VL-4B-Instruct [1], the frozen tokenizer, and
+a two-branch diffusion Transformer (DiT). Given images I,
+instruction ℓ, state s, and morphology M, the policy pre-
+dicts 50-frame chunks of absolute joint positions and grip-
+per commands. Each arm occupies seven padded joint slots
+and one gripper channel, giving 16 coordinates for two arms.
+Masks exclude absent joints and arms.
+3.3.1. From Frame Tokens to Action Chunks
+To apply the frame-level tokenizer to action chunks, we
+fit K = 10 nodes to each arm’s 50-frame trajectory A ∈
+R50×J. With endpoint-aligned interpolation matrix U ∈
+R50×10, ridge fitting yields B∗∈R10×J,
+B∗= (U ⊤U + 10−4I)−1U ⊤A.
+(11)
+Each fitted node is tokenized independently. Decoded nodes
+are interpolated to 50 frames at inference. Grippers use lin-
+ear resampling and 256-bin quantization. An arm with J
+joints contributes K(2J +1) indices, giving at most 300 for
+two seven-joint arms.
+3.3.2. Morphology-Conditioned Policy Architecture
+LayerNorm and a linear map project each VLM hidden-
+state level into width-1024, 16-head action blocks. The L
+action blocks align with the VLM layers and alternate VLM
+cross-attention with action self-attention. Following the par-
+tially shared design of Discrete Forcing [21], our branches
+share two initial blocks and use separate remaining blocks
+and output heads. The branches do not exchange attention.
+Current state and 32 learned future queries provide context,
+while frozen URDF features modulate each branch through
+AdaLN. The VLM instruction additionally includes 256-bin
+state tokens.
+3.3.3. Discrete Prediction and Refinement
+The discrete branch minimizes cross-entropy over masked
+valid action codes, using a cosine masking ratio determined
+by a uniformly sampled time. At inference, eight MaskGIT
+iterations [2] commit codes by confidence. Frozen decoding
+and interpolation yield the coarse trajectory ad.
+The continuous branch refines ad in normalized action
+space. For target trajectory a∗and context c = (I, ℓ, s, M),
+x0 = 0.3ad + 0.7ϵ,
+ϵ ∼N(0, I),
+(12)
+xγ = (1 −γ)x0 + γa∗,
+(13)
+LFM = E
+
+∥vϕ(xγ, γ, c) −(a∗−x0)∥2
+m
+
+.
+(14)
+Here ∥· ∥2
+m averages squared error over valid action coor-
+dinates per example. Both trajectories use per-slot 1st/99th-
+percentile normalization and clipping to [−2.2, 2.2]. Train-
+ing reconstructs ad from target-trajectory codes, whereas in-
+ference uses predicted codes.
+The policy minimizes 0.5LCE + LFM. Four Euler steps
+of size 1/4 advance γ from zero to one, producing the
+50-frame action chunk. Section D gives optimization and
+training-time sampling settings.
+4. EmbodiBench Evaluation
+EmbodiBench evaluates whether the learned representation
+supports manipulation across generated kinematic chains in
+SAPIEN. Its ten tasks comprise three lifting, three picking,
+three stacking, and one pushing variant, with single arms or
+same-/opposite-side dual arms (Fig. 3).
+Data and coverage.
+Each task uses 30 URDFs and
+50 demonstrations per task–URDF pair, totaling 15,000
+demonstrations. The overlapping task-specific sets contain
+55 distinct generated morphologies. Dual-arm trials use the
+same morphology for both arms. Policies receive head and
+wrist RGB views resized to 224×224. Absent arm channels
+are masked.
+Evaluation.
+Evaluation uses separate scene seeds and five
+trials per task–URDF pair: 150 per task and 1,500 per
+method. Scenes rejected by the expert planner do not con-
+sume the quota. Success rates are therefore conditional on
+planner feasibility. Each accepted trial has a fixed instruc-
+tion and permits 300 executed action commands, counted
+per frame within a chunk. We report task success rates and
+their unweighted mean.
+Success criteria.
+Picking requires an object height in-
+crease exceeding 7 cm. Pushing requires planar placement
+within 3 cm per coordinate and orientation error below 9◦.
+Stacking requires alignment within (2.5, 2.5, 1.2) cm of the
+target pose and open grippers. Lifting requires height above
+0.9 m, a rise of at least 3 cm, and a valid two-finger grasp by
+at least one arm for 15 consecutive physics steps (Sec. E).
+5. Experiments
+We evaluate downstream task performance, the contribution
+of representation components, and reconstruction fidelity
+on URDFs unseen during tokenizer pretraining.
+5
+
+
+01 Lift / Dual OS
+02 Lift / Dual SS
+03 Lift / Single
+04 Pick / Dual OS
+05 Pick / Dual SS
+06 Pick / Single
+07 Push / Dual SS
+08 Stack / Dual OS
+09 Stack / Dual SS
+10 Stack / Single
+Figure 3. The ten EmbodiBench tasks. Successful saved-trajectory keyframes, ordered as in Tab. 3. SS/OS denote same-side/opposite-
+side dual-arm placement. These visualization replays are distinct from learned-policy rollouts.
+5.1. Experimental Setup
+Training and evaluation.
+The tokenizer is pretrained on
+40 million morphology–state pairs for 300 epochs using
+eight GPUs and a global batch of 32,768. All downstream
+URDFs are excluded. Policy training updates the VLM and
+action head with global batch 128 while keeping the tok-
+enizer frozen.
+RoboTwin 2.0 uses 3,750 demonstrations
+(15 tasks, 5 embodiments, 50 demonstrations each) for 30k
+steps. EmbodiBench uses 15,000 for 60k steps. Full set-
+tings appear in Sec. C. RoboTwin 2.0 evaluates 20 trials
+per task–embodiment pair. EmbodiBench follows Sec. 4.
+Both benchmarks use 1,500 trials per method with equal
+task quotas, so macro-averaged and pooled success agree
+up to rounding.
+Comparisons.
+StarVLA (joint) predicts continuous joint
+actions. 256-bin uses uniform bins, MaskGIT, and ten-node
+fitting.
+FAST [16] uses autoregressive codes without fit-
+ting. Angle+M removes the link-pose prediction head and
+its reconstruction loss.
+Angle also removes morphology
+conditioning and graph biases and changes commitment
+weight from 0.1 to 0.25. StarVLA (EE) is a separate control-
+interface reference. Ours denotes the policy using the full
+RoboMorpher tokenizer.
+5.2. Multi-Embodiment Task Performance
+RoboMorpher achieves the highest mean success among the
+evaluated joint-space methods: 56.40% on RoboTwin 2.0
+and 23.27% on EmbodiBench (Tabs. 2 and 3), exceeding
+StarVLA (joint) by 9.73 and 15.34 percentage points (pp).
+Gains across RoboTwin 2.0 tasks.
+RoboMorpher im-
+proves over continuous joint control on 12 of 15 tasks. The
+largest gains are on bowl stacking (54% vs. 25%), micro-
+phone handover (75% vs. 47%), and hammering (34% vs.
+10%). Success decreases by 3–4 pp on bell clicking, dual-
+bottle picking, and bottle disposal. Against 256-bin and
+FAST, the mean gains are 4.80 and 5.67 pp, with improve-
+ments on nine and eleven tasks, respectively.
+Lifting gains on EmbodiBench.
+The three lifting tasks
+average 55.11% success,
+compared with 14.00% for
+StarVLA (joint), accounting for about 80% of the overall
+gain. Picking improves from 7.11% to 12.89% on average,
+and pushing from 16.00% to 28.67%. The policy improves
+on six of seven non-stacking tasks, but single-arm picking
+falls from 9.33% to 4.00%. All three stacking rates remain
+zero, and no evaluated method exceeds 1.33% on these
+tasks. This contrasts with 54% success on RoboTwin 2.0
+bowl stacking, but differences in objects and success predi-
+cates preclude attributing the gap solely to morphology.
+Opposite-side trials yield higher lifting (61.33% vs.
+52.67%) and picking (23.33% vs. 11.33%) success.
+Be-
+cause placement and scene geometry vary together, this
+does not isolate an effect of arm placement.
+Tokenization baselines.
+256-bin and FAST exceed con-
+tinuous joint control on RoboTwin 2.0 but trail it on Em-
+bodiBench. Their EmbodiBench lifting rates are 9.78% and
+10.44%, compared with 55.11% for RoboMorpher. Tempo-
+ral processing and decoding also differ between these base-
+lines; the link-pose ablation below offers a more controlled
+comparison.
+Comparison
+with
+EE
+control.
+The
+EE
+reference
+achieves 69.93% and 32.00% success, exceeding RoboMor-
+6
+
+
+Table 2. Full RoboTwin 2.0 results. Success rate (%). All 15 evaluated tasks across five embodiments. 20 trials per pair. Bold/underline
+mark best/second-best positive joint-space scores (ties included). EE uses a separate control interface.
+Joint-space baselines
+Representation variants
+Full model
+Reference
+Task
+Joint
+256-bin
+FAST
+Angle
+Angle+M
+Ours
+EE
+grab_roller
+90.00%
+97.00%
+95.00%
+95.00%
+97.00%
+92.00%
+100.00%
+shake_bottle
+92.00%
+95.00%
+96.00%
+88.00%
+96.00%
+94.00%
+100.00%
+handover_mic
+47.00%
+67.00%
+74.00%
+52.00%
+74.00%
+75.00%
+93.00%
+place_burger_fries
+59.00%
+65.00%
+67.00%
+58.00%
+53.00%
+74.00%
+52.00%
+place_empty_cup
+69.00%
+70.00%
+68.00%
+69.00%
+69.00%
+70.00%
+85.00%
+click_bell
+88.00%
+72.00%
+69.00%
+84.00%
+100.00%
+84.00%
+88.00%
+lift_pot
+28.00%
+37.00%
+17.00%
+5.00%
+22.00%
+30.00%
+82.00%
+open_laptop
+66.00%
+73.00%
+76.00%
+64.00%
+70.00%
+82.00%
+97.00%
+beat_block_hammer
+10.00%
+13.00%
+25.00%
+11.00%
+18.00%
+34.00%
+32.00%
+stack_bowls_three
+25.00%
+59.00%
+54.00%
+54.00%
+64.00%
+54.00%
+68.00%
+pick_dual_bottles
+32.00%
+35.00%
+32.00%
+25.00%
+30.00%
+29.00%
+65.00%
+move_can_pot
+20.00%
+21.00%
+17.00%
+20.00%
+12.00%
+26.00%
+52.00%
+place_phone_stand
+31.00%
+34.00%
+42.00%
+27.00%
+39.00%
+50.00%
+51.00%
+put_bottles_dustbin
+21.00%
+10.00%
+12.00%
+8.00%
+18.00%
+17.00%
+42.00%
+place_dual_shoes
+22.00%
+26.00%
+17.00%
+20.00%
+16.00%
+35.00%
+42.00%
+Mean
+46.67%
+51.60%
+50.73%
+45.33%
+51.87%
+56.40%
+69.93%
+Table 3. Full EmbodiBench results. Success rate (%). All 10 tasks with 30 URDFs per task. Five trials per pair. Bold/underline mark
+best/second-best positive joint-space scores (ties included). EE uses a separate control interface.
+Joint-space baselines
+Representation variants
+Full model
+Reference
+Task
+Joint
+256-bin
+FAST
+Angle
+Angle+M
+Ours
+EE
+lift_dual_os
+14.67%
+14.00%
+9.33%
+10.67%
+10.67%
+61.33%
+62.67%
+lift_dual_ss
+14.00%
+4.00%
+11.33%
+6.67%
+8.67%
+52.67%
+58.67%
+lift_single
+13.33%
+11.33%
+10.67%
+6.00%
+9.33%
+51.33%
+78.67%
+pick_dual_os
+6.00%
+2.67%
+4.00%
+1.33%
+3.33%
+23.33%
+14.67%
+pick_dual_ss
+6.00%
+4.00%
+2.67%
+2.67%
+4.67%
+11.33%
+8.00%
+pick_single
+9.33%
+4.00%
+5.33%
+5.33%
+1.33%
+4.00%
+32.67%
+push_dual_ss
+16.00%
+15.33%
+15.33%
+13.33%
+14.67%
+28.67%
+62.67%
+stack_dual_os
+0.00%
+0.00%
+0.00%
+0.00%
+0.00%
+0.00%
+1.33%
+stack_dual_ss
+0.00%
+0.00%
+0.00%
+0.00%
+0.67%
+0.00%
+0.00%
+stack_single
+0.00%
+0.00%
+0.67%
+0.00%
+0.00%
+0.00%
+0.67%
+Mean
+7.93%
+5.53%
+5.93%
+4.60%
+5.33%
+23.27%
+32.00%
+pher by 13.53 and 8.73 pp. On EmbodiBench, RoboMor-
+pher performs better on both dual-arm picking tasks but
+trails by 28.67 pp on single-arm picking and 34.00 pp on
+pushing. This gap includes differences in execution inter-
+face and cannot be attributed solely to representation qual-
+ity.
+5.3. Effect of Representation Design
+Link-pose supervision.
+Removing link-pose reconstruc-
+tion reduces mean success by 4.53 pp on RoboTwin 2.0
+and 17.94 pp on EmbodiBench. On EmbodiBench, lifting
+drops from 55.11% to 9.56% on average, and all seven non-
+stacking tasks decline. Angle+M retains morphology input
+yet reaches only 5.33% overall, below continuous joint con-
+trol at 7.93%. These results support the value of link-pose
+7
+
+
+Table 4. Tokenizer reconstruction. All saved task frames across six description groups. Geometry is predicted directly by the decoder.
+P90 is the pooled 90th percentile. Bold/underline mark the lowest/second-lowest value per column (ties included). Metric definitions
+appear in Sec. C.
+Joint angle (◦)
+Position (m)
+Orientation (◦)
+Description
+Mean
+P90
+Max
+Mean
+P90
+Max
+Mean
+P90
+Max
+ALOHA
+0.4124
+0.8951
+14.4648
+0.004255
+0.009446
+0.116570
+1.3237
+3.4343
+88.6863
+ARX-X5
+0.4107
+0.7768
+52.6336
+0.004899
+0.013960
+0.112769
+1.0860
+2.0659
+133.9178
+Franka Panda
+0.4563
+1.0207
+42.7852
+0.009204
+0.022782
+0.644741
+1.8655
+4.4817
+178.8929
+Piper
+0.4448
+0.8695
+40.3280
+0.003503
+0.007992
+0.186133
+1.6299
+4.5327
+88.5053
+UR5-WSG
+0.5429
+1.2653
+5.6463
+0.007017
+0.016207
+0.048518
+1.3591
+3.7680
+11.4713
+Generated URDFs
+0.4764
+1.0696
+80.9388
+0.008355
+0.018587
+0.752892
+2.1928
+4.6185
+179.9428
+supervision on generated morphologies, particularly for lift-
+ing.
+Link-pose supervision improves nine RoboTwin 2.0
+tasks, including burger-and-fries (+21 pp) and shoe place-
+ment (+19 pp), but reduces bell clicking and bowl stacking
+by 16 and 10 pp. Its benefit is therefore task-dependent.
+Morphology conditioning and graph biases.
+Angle+M
+exceeds Angle by 6.54 pp on RoboTwin 2.0 and 0.73 pp
+on EmbodiBench. Morphology conditioning, graph biases,
+and commitment weight change together, preventing attri-
+bution to individual components. Continuous refinement is
+not separately ablated.
+5.4. Reconstruction Fidelity
+Reconstruction covers every frame of 3,750 RoboTwin 2.0
+and
+15,000
+EmbodiBench
+policy-training
+demonstra-
+tions, using URDFs unseen during tokenizer pretraining
+(Sec. C.4). We pool valid joint/link errors by description,
+comparing decoded angles with inputs and decoded poses
+with input-angle FK targets.
+Mean joint errors span 0.4107◦–0.5429◦(Tab. 4). Gen-
+erated URDFs average 0.4764◦joint error but have the
+highest mean orientation error (2.1928◦).
+Their maxi-
+mum position and orientation errors reach 0.752892 m and
+179.9428◦, revealing substantial outliers.
+These sample-
+count-dependent maxima do not establish relative tail ro-
+bustness. Raw-angle errors retain periodic-boundary differ-
+ences.
+Reconstruction weights joint/link samples equally; pol-
+icy success weights tasks equally. Representation fidelity
+alone establishes neither action-selection quality nor FK
+consistency of decoded angles.
+5.5. Limitations
+Unseen-URDF reconstruction does not establish zero-shot
+policy transfer: downstream policy training and evaluation
+(a) Joint angle (degrees)
+0.3
+1
+3
+10
+30
+100
+ALOHA
+ARX-X5
+Franka Panda
+Piper
+UR5-WSG
+Generated URDFs
+(b) Position (mm)
+3
+10
+30
+100
+300
+1000
+ALOHA
+ARX-X5
+Franka Panda
+Piper
+UR5-WSG
+Generated URDFs
+Mean
+P90
+Maximum
+Figure 4. Reconstruction error profiles. Mean, P90, and max-
+imum joint-angle and position errors from Tab. 4. Both axes are
+logarithmic.
+lack a disjoint-morphology split. Survey coverage is lim-
+ited, stacking remains difficult, and reconstruction has large
+outliers. Scaling behavior and variability across training
+seeds remain unmeasured (Sec. E.3).
+6. Conclusion
+RoboMorpher learns morphology-conditioned action codes
+from MorphGen kinematic supervision and improves mean
+joint-space policy success on RoboTwin 2.0 and Embod-
+iBench. These findings support kinematic pretraining fol-
+lowed by task-specific policy learning. Ablations support
+link-pose supervision, particularly for lifting, while recon-
+struction exposes substantial outliers despite low average
+errors on unseen tokenizer URDFs. Improving stacking, re-
+ducing reconstruction tails, and testing policy transfer un-
+der disjoint morphology splits are important directions for
+future work.
+8
+
+
+References
+[1] Shuai Bai et al. Qwen3-VL technical report. arXiv preprint
+arXiv:2511.21631, 2025. 5
+[2] Huiwen Chang, Han Zhang, Lu Jiang, Ce Liu, and William T.
+Freeman. MaskGIT: Masked generative image transformer.
+arXiv preprint arXiv:2202.04200, 2022. 5
+[3] Tianxing Chen, Zanxin Chen, Baijun Chen, Zijian Cai, Yibin
+Liu, Zixuan Li, Qiwei Liang, Xianliang Lin, Yiheng Ge,
+Zhenyu Gu, Weiliang Deng, Yubin Guo, Tian Nian, Xuan-
+bing Xie, Qiangyu Chen, Kailun Su, Tianling Xu, Guodong
+Liu, Mengkang Hu, Huan ang Gao, Kaixuan Wang, Zhix-
+uan Liang, Yusen Qin, Xiaokang Yang, Ping Luo, and Yao
+Mu. RoboTwin 2.0: A scalable data generator and bench-
+mark with strong domain randomization for robust biman-
+ual robotic manipulation. arXiv preprint arXiv:2506.18088,
+2025. 1, 2
+[4] Tianxing Chen, Yue Chen, Zixuan Li, Junyuan Tang, Kailun
+Su, Haoran Lu, Weijie Wan, Baijun Chen, Songling Liu,
+Haowen Yan, et al. RoboDojo: A unified sim-and-real bench-
+mark for comprehensive evaluation of generalist robot ma-
+nipulation policies. arXiv preprint arXiv:2607.04434, 2026.
+2
+[5] Ria Doshi, Homer Rich Walke, Oier Mees, Sudeep Dasari,
+and Sergey Levine. Scaling cross-embodied learning: One
+policy for manipulation, navigation, locomotion and aviation.
+In Proceedings of The 8th Conference on Robot Learning,
+pages 496–512. PMLR, 2025. 2
+[6] Agrim Gupta, Linxi Fan, Surya Ganguli, and Li Fei-Fei.
+MetaMorph: Learning universal controllers with transform-
+ers. In International Conference on Learning Representa-
+tions, 2022. 2
+[7] Wenlong Huang, Igor Mordatch, and Deepak Pathak. One
+policy to control them all: Shared modular policies for agent-
+agnostic control. In International Conference on Machine
+Learning, pages 4455–4464, 2020. 2
+[8] Guangqi Jiang, Yutong Liang, Jianglong Ye, Jia-Yang
+Huang, Changwei Jing, Rocky Duan, Pieter Abbeel, Xiao-
+long Wang, and Xueyan Zou. Cross-hand latent representa-
+tion for vision-language-action models. In Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), 2026. 2
+[9] Miracle Kang, Lights Shi, Lucy Liang, Roy Gan, Dongxiu
+Liu, Pushi Zhang, Sylas Chen, Shawn Qin, Yinan Zheng,
+Jinliang Zheng, Hao Wang, Xianyuan Zhan, and Hang
+Su. X-tokenizer: A multimodal action tokenizer for vision-
+language-action pretraining, 2026. 2
+[10] Doyup Lee, Chiheon Kim, Saehoon Kim, Minsu Cho, and
+Wook-Shin Han.
+Autoregressive image generation using
+residual quantization.
+In IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition, pages 11523–11532,
+2022. 4
+[11] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan,
+Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and Jun Zhu.
+RDT-1B: A diffusion foundation model for bimanual manip-
+ulation. In International Conference on Learning Represen-
+tations, 2025. 1, 2
+[12] Yicheng Liu, Shiduo Zhang, Zibin Dong, Baijun Ye,
+Tianyuan Yuan, Xiaopeng Yu, Linqi Yin, Chenhao Lu, Jun-
+hao Shi, Luca Jiang-Tao Yu, Liangtao Zheng, Tao Jiang,
+Jingjing Gong, Xipeng Qiu, and Hang Zhao. Faster: Toward
+efficient autoregressive vision language action modeling via
+neural action tokenization, 2025. 2
+[13] Octo Model Team, Dibya Ghosh, Homer Walke, Karl
+Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey Hejna,
+Tobias Kreiman, Charles Xu, Jianlan Luo, You Liang Tan,
+Lawrence Yunliang Chen, Pannag Sanketi, Quan Vuong,
+Ted Xiao, Dorsa Sadigh, Chelsea Finn, and Sergey Levine.
+Octo: An open-source generalist robot policy. arXiv preprint
+arXiv:2405.12213, 2024. 1, 2
+[14] Open X-Embodiment Collaboration. Open X-Embodiment:
+Robotic learning datasets and RT-X models. arXiv preprint
+arXiv:2310.08864, 2023. 1, 2
+[15] William Peebles and Saining Xie. Scalable diffusion models
+with transformers. In IEEE/CVF International Conference
+on Computer Vision, pages 4195–4205, 2023. 4
+[16] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess,
+Suraj Nair,
+Quan Vuong,
+Oier Mees,
+Chelsea Finn,
+and Sergey Levine.
+FAST: Efficient action tokeniza-
+tion for vision-language-action models.
+arXiv preprint
+arXiv:2501.09747, 2025. 2, 6
+[17] Carmelo Sferrazza, Dun-Ming Huang, Fangchen Liu, Jong-
+min Lee, and Pieter Abbeel.
+Body transformer: Leverag-
+ing robot embodiment for policy learning. In Proceedings
+of The 8th Conference on Robot Learning, pages 3407–3424.
+PMLR, 2025. 2
+[18] Balakumar Sundaralingam, Siva Kumar Sastry Hari, Adam
+Fishman, Caelan Garrett, Karl Van Wyk, Valts Blukis,
+Alexander Millane, Helen Oleynikova, Ankur Handa, Fabio
+Ramos, Nathan Ratliff, and Dieter Fox. cuRobo: Parallelized
+collision-free minimum-jerk robot motion generation. arXiv
+preprint arXiv:2310.17274, 2023. 4
+[19] Kei Suzuki, Jing Liu, Ye Wang, Chiori Hori, Matthew Brand,
+Diego Romeres, and Toshiaki Koike-Akino.
+Embedding
+morphology into transformers for cross-robot policy learn-
+ing. In International Conference on Learning Representa-
+tions (ICLR) Workshop on Efficient Spatial Reasoning, 2026.
+2
+[20] Aaron van den Oord, Oriol Vinyals, and Koray Kavukcuoglu.
+Neural discrete representation learning.
+arXiv preprint
+arXiv:1711.00937, 2017. 2
+[21] Jingbo Wang, Wenxuan Song, Wenhao Yu, Han Zhao, Xi
+Wang, Jiayi Chen, Donglin Wang, Yan Wang, and Haoang
+Li. Discrete forcing: Infusing discrete guidance into contin-
+uous denoising for few-step action experts. arXiv preprint
+arXiv:2609.39526, 2026. 1, 2, 5
+[22] Lirui Wang, Xinlei Chen, Jialiang Zhao, and Kaiming He.
+Scaling proprioceptive-visual learning with heterogeneous
+pre-trained transformers. In Advances in Neural Information
+Processing Systems, 2024. 2
+[23] Yufei Wang, Zhou Xian, Feng Chen, Tsun-Hsuan Wang,
+Yian Wang, Katerina Fragkiadaki, Zackory Erickson, David
+Held, and Chuang Gan. RoboGen: Towards unleashing infi-
+nite data for automated robot learning via generative simula-
+tion. arXiv preprint arXiv:2311.01455, 2023. 2
+9
+
+
+[24] Yating Wang, Haoyi Zhu, Mingyu Liu, Jiange Yang, Hao-
+Shu Fang, and Tong He. Vq-vla: Improving vision-language-
+action models via scaling vector-quantized action tokenizers.
+In Proceedings of the IEEE/CVF International Conference
+on Computer Vision (ICCV), pages 11089–11099, 2025. 2
+[25] Jinliang Zheng, Jianxiong Li, Dongxiu Liu, Yinan Zheng,
+Zhihao Wang, Zhonghong Ou, Yu Liu, Jingjing Liu, Ya-
+Qin Zhang, and Xianyuan Zhan. Universal actions for en-
+hanced embodied foundation models.
+In Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), pages 22508–22519, 2025. 2
+[26] Jinliang Zheng, Jianxiong Li, Zhihao Wang, Dongxiu Liu,
+Xirui Kang, Yuchun Feng, Yinan Zheng, Jiayin Zou, Yilun
+Chen, Jia Zeng, Ya-Qin Zhang, Jiangmiao Pang, Jingjing
+Liu, Tai Wang, and Xianyuan Zhan. X-vla: Soft-prompted
+transformer as scalable cross-embodiment vision-language-
+action model. In International Conference on Learning Rep-
+resentations (ICLR), 2026. 2
+[27] Yi Zhou, Connelly Barnes, Jingwan Lu, Jimei Yang, and Hao
+Li. On the continuity of rotation representations in neural
+networks. In IEEE/CVF Conference on Computer Vision and
+Pattern Recognition, pages 5745–5753, 2019. 4
+10
+
+
+RoboMorpher: Scaling Robot Morphology Representations for
+Cross-Embodiment Action Prediction
+Supplementary Material
+A. Robot-Description Survey
+A.1. Inventory and Scope
+Table 5 lists all 33 descriptions of serial manipulators, cov-
+ering 30 names. Gen3, Koch v1.1, and Panda each have two
+entries. Distinct model names, such as UR5 and UR5e, re-
+main separate. Mass, reach, tool DoF, and sensing are tran-
+scribed description properties, not independently validated
+hardware measurements.
+Arm DoF follows the explicit survey field. Joint-type
+counts may include fixed and tool joints and therefore can-
+not replace that field. Likewise, mimic or other coupling
+constraints can make the number of movable fingers differ
+from the number of independent control dimensions. Chain
+extraction and action masks use independent arm joints.
+A.2. Limit and Tool Conventions
+The B/M/U labels retain each entry’s stated scope, which
+may cover the arm or all joints.
+There are 26 bounded,
+four mixed, and three unrestricted entries.
+Gen2 mixes
+unrestricted base/wrist with bounded shoulder/elbow joints.
+Gen3 MJCF lists unrestricted base, elbow-1, wrist-1, and
+wrist-3 joints.
+Its URDF entry omits elbow-1 from this
+list. ViperX 300 lists an unrestricted gripper joint along-
+side bounded arm/finger joints. The unrestricted entries are
+e.DO, Low-Cost Robot Arm, and Poppy Ergo Jr.
+Table 6 retains the 14 entries with a recorded tool, sensor,
+or marker. The other 19 list neither. Eleven entries have
+grippers, comprising five translating two-finger, four single-
+sided, one two-finger, and one two-finger four-joint. Poppy
+Ergo Jr lists a lamp. Sensing is recorded only for Gen3
+MJCF (force/torque) and Gen3 URDF (camera). ViperX
+300 lists a passive AR marker. Missing records do not imply
+absent hardware or describe the observation setup used in
+policy experiments.
+A.3. Link Records and Data Ambiguities
+Table 7 preserves all 30 link records, including reported
+zeros and missing entries. This table is not in one-to-one
+correspondence with the description inventory. FR3 has no
+named link record, Gen3 has unsuffixed and MJCF records,
+and other repeated names may have only one link record.
+Without the source transforms and extraction rule, these val-
+ues cannot be treated as physical measurements or summed
+to estimate reach.
+We retain five unresolved discrepancies. Gen3 reports
+six arm DoF in URDF and seven in MJCF. Koch v1.1 re-
+ports six arm DoF but five hinges and one slider in MJCF.
+Sawyer reports six arm DoF but seven link values. Lite 6
+and ViperX 300 link records are labeled MJCF, whereas
+their inventory entries are URDF. Panda reports different
+tool DoF across formats, with explicit mimic coupling in
+URDF. The survey alone cannot distinguish hardware vari-
+ants from modeling or counting differences.
+B. MorphGen Implementation
+B.1. Survey-Derived Sampling Parameters
+Table 8 gives the seven Gaussian parameters computed from
+Tab. 7. Each column uses its non-missing values, including
+zeros, to estimate the mean and sample standard deviation.
+These are linkwise sampling priors, not workspace statis-
+tics.
+For each arm, the generator samples an integer joint
+count uniformly from the configured inclusive interval,
+whose default is [6, 7]. Each provisional length is drawn
+from N(µi, σ2
+i ) truncated below at zero and above at
+max(u, µi + 0.1) meters. The nominal upper bound u is
+0.65 with probability 0.95 and 0.35 otherwise. The sampled
+lengths are rescaled jointly using Eq. (2). Consequently,
+the final lengths need not retain the pre-rescaling truncation
+bounds.
+The first displacement is along positive Z.
+Later
+displacements select one, two, or three active coordi-
+nates with probabilities (0.60, 0.39, 0.01).
+A single ac-
+tive coordinate is selected from (x, y, z) with probabili-
+ties (0.15, 0.15, 0.70). A coordinate pair is selected from
+(xz, yz, xy) with probabilities (0.45, 0.45, 0.10).
+Active
+components are sampled from U(0, 1) and normalized to
+unit length. The implementation rejects a direction within
+5◦of the preceding direction’s antiparallel orientation in
+the common frame. Roll and pitch initially take values in
+{0, ±π/2, π}, and yaw is zero. Internal roll and pitch each
+independently receive a Gaussian perturbation of standard
+deviation 0.09 radians with probability 0.05. The terminal
+orientation filter accepts a downward or horizontal termi-
+nal local-Z direction, expressed by the updated rotation’s
+Rzz ≤0 condition.
+The exporter assigns arm limits [−2π, 2π], effort 100,
+and velocity 5, attaches an ALOHA gripper, and writes plan-
+ner and simulator configurations. Collision spheres have
+radius 0.035 m and spacing 0.02 m. The 96 examples in
+Fig. 1(b) illustrate variation, without identifying evaluation
+URDFs or establishing hardware feasibility.
+11
+
+
+Table 5. Complete description inventory of structure and scale. All entries are serial manipulators. DoF is the reported arm DoF,
+and masses and reaches are approximate description-level values. Joint types are R (revolute), C (continuous), P (prismatic), F (fixed), H
+(hinge), and S (slide/slider). Limits are B (bounded in the stated scope), M (mixed), and U (unrestricted). A dash denotes an unavailable
+value.
+ID
+Name
+Format
+DoF
+Joint types
+Limits
+Mass (kg)
+Reach (m)
+1
+e.DO
+URDF
+6
+All C
+U
+0.5
+–
+2
+FR3
+MJCF
+7
+All H
+B
+15.49
+0.85
+3
+Gen2
+URDF
+6
+C:3; R:3; F:6
+M
+4.35
+0.96
+4
+Gen3 Lite
+URDF
+6
+R:10; F:4
+B
+5.56
+0.79
+5
+Gen3
+MJCF
+7
+All H
+M
+6.34
+0.93
+6
+Gen3
+URDF
+6
+C:3; R:3; F:4
+M
+6.14
+0.93
+7
+iiwa 14
+MJCF
+7
+All H
+B
+29.26
+0.82
+8
+iiwa 7
+URDF
+7
+R:7; F:1
+B
+26.96
+0.80
+9
+Koch v1.1
+MJCF
+6
+H:5; S:1
+B
+0.226
+0.25
+10
+Koch v1.1
+URDF
+6
+All R
+B
+0.29
+0.25
+11
+Lite 6
+URDF
+6
+R:6; F:1
+B
+6.22
+0.60
+12
+Low-Cost Robot Arm
+URDF
+5
+All C
+U
+2.23
+0.25
+13
+M-710iC
+URDF
+6
+R:6; F:3
+B
+–
+2.05
+14
+Med 14
+URDF
+7
+R:7; F:1
+B
+31.65
+1.30
+15
+Med 7
+URDF
+7
+R:7; F:1
+B
+27.18
+0.70
+16
+Panda
+MJCF
+7
+H:7; S:2
+B
+18.17
+0.85
+17
+Panda
+URDF
+7
+R:7; P:2; F:3
+B
+18.15
+0.85
+18
+PiPER
+URDF
+6
+R:6; P:2; F:2
+B
+4.24
+0.60
+19
+Poppy Ergo Jr
+URDF
+6
+C:6; F:1
+U
+0.6
+0.30
+20
+Sawyer
+MJCF
+6
+All H
+B
+24.21
+1.0
+21
+SO-ARM 100
+URDF
+5
+All R
+B
+1.61
+0.35
+22
+UR10
+URDF
+6
+R:6; F:4
+B
+32.72
+1.30
+23
+UR10e
+MJCF
+6
+All H
+B
+33.5
+1.30
+24
+UR3
+URDF
+6
+R:6; F:4
+B
+11.63
+0.50
+25
+UR3e
+URDF
+6
+R:6; F:3
+B
+11.23
+0.50
+26
+UR5
+URDF
+6
+R:6; F:4
+B
+22.77
+0.85
+27
+UR5e
+MJCF
+6
+All H
+B
+22.82
+0.85
+28
+ViperX 300
+URDF
+6
+R:6; P:2; F:5; C:1
+M
+3.47
+0.75
+29
+WidowX 250
+MJCF
+6
+H:6; S:2
+B
+2.88
+0.60
+30
+xArm5
+URDF
+5
+R:5; F:1
+B
+8.54
+0.70
+31
+xArm6
+URDF
+6
+R:6; F:1
+B
+9.53
+0.70
+32
+xArm7
+URDF
+7
+R:7; F:1
+B
+5.50
+0.70
+33
+Z1
+URDF
+6
+R:6; F:1
+B
+4.43
+0.80
+B.2. Inverse-Kinematics Home-Pose Selection
+The home-pose stage constructs a tabletop target grid with
+x ∈[0.20, 0.38], y ∈[−0.25, 0.25], and z ∈[0.18, 0.51]
+meters, at spacings 0.03, 0.05, and 0.03 m, respectively. Po-
+sitions receive independent Gaussian noise with standard
+deviation 0.01 m. Targets are shuffled and tested in batches
+of 50. cuRobo uses 32 IK seeds and self-collision check-
+ing. The first batch containing a successful target provides
+a randomly selected successful solution. A description is
+rejected if all candidates fail.
+Each joint origin rotation absorbs Rai(qhome
+i
+) to set the
+controller zero. Unlike the axis-frame change in Eq. (1),
+this changes the numerical configuration coordinates. Be-
+cause limits are not shifted, the original bounded configu-
+ration set need not be preserved. The IK filter checks sam-
+pled targets under the collision model. It does not guarantee
+collision-free motion throughout the joint space.
+B.3. Feature Extraction and Frames
+The feature extractor receives an explicit joint order.
+It
+composes fixed paths between consecutive selected mov-
+able joints, rejects skipped movable joints and selected
+mimic/prismatic joints, and expresses each selected rota-
+tional axis as local Z. The default representation is relative
+to the arm root. An optional setting can incorporate the root-
+to-arm home transform into the first origin. Each valid joint
+supplies translation and roll–pitch–yaw, plus its raw joint
+angle. A Boolean mask separates real joints from padding
+up to seven positions.
+12
+
+
+Table 6. Recorded tools and sensing. IDs match Tab. 5. The 19 omitted entries list neither a tool nor sensing. Tool DoF and couplings
+follow the survey and need not equal independent actuation. Missing records concern the description, not the physical robot. The AR tag
+is a passive marker.
+ID
+Name
+Format
+Tool
+Reported tool DoF
+Sensor / marker
+3
+Gen2
+URDF
+Two-finger gripper
+0
+None listed
+4
+Gen3 Lite
+URDF
+Two-finger, four-joint gripper
+1
+None listed
+5
+Gen3
+MJCF
+None listed
+–
+Force/torque at EE
+6
+Gen3
+URDF
+None listed
+–
+Camera at EE
+9
+Koch v1.1
+MJCF
+Single-sided gripper
+1 translational
+None listed
+10
+Koch v1.1
+URDF
+Single-sided gripper
+1 rotational
+None listed
+12
+Low-Cost Robot Arm
+URDF
+Single-sided gripper
+1 continuous rotation
+None listed
+16
+Panda
+MJCF
+Two-finger translating gripper
+2 translational
+None listed
+17
+Panda
+URDF
+Two-finger translating gripper
+1 translational; mimic
+None listed
+18
+PiPER
+URDF
+Two-finger translating gripper
+2 translational
+None listed
+19
+Poppy Ergo Jr
+URDF
+Lamp
+–
+None listed
+21
+SO-ARM 100
+URDF
+Single-sided gripper
+1 rotational
+None listed
+28
+ViperX 300
+URDF
+Two-finger translating gripper
+1 translational; mimic
+AR tag at EE
+29
+WidowX 250
+MJCF
+Two-finger translating gripper
+1 translational; opposing fingers
+None listed
+Table 7. Link-length records as supplied (m). Blank source cells are shown as dashes. Reported zeros are retained. These records are
+kept separate from the main inventory because description identities and extraction conventions are not fully aligned. They are not treated
+as validated workspace radii or summed to estimate reach.
+Record
+1
+2
+3
+4
+5
+6
+7
+eDO
+0.145292
+0.18967
+0.210498
+0.159044
+0.1053
+0.163646
+–
+Gen2
+0.15675
+0.11876
+0.410
+0.2076
+0.10375
+0.10375
+–
+Gen3 Lite
+0.12825
+0.11885
+0.280
+0.14142
+0.1088
+0.1088
+–
+Gen3
+0.15643
+0.12849
+0.410
+0.20853
+0.10593
+0.10593
+–
+iiwa14
+0.1575
+0.2025
+0.2045
+0.2155
+0.1845
+0.2155
+0.0810
+iiwa7
+0.15
+0.19
+0.21
+0.19
+0.2
+0.19946
+0.10122
+koch-v1-1
+0.04262
+0.02596
+0.10950
+0.10052
+0.04687
+0.02096
+–
+M-710iC
+0.565
+0.150
+0.870
+0.170
+1.016
+0.175
+–
+PIPER
+0.123
+0.0
+0.28503
+0.25171
+0.0
+0.091
+–
+SO-ARM 100
+0.04812
+0.10697
+0.11600
+0.13500
+0.06010
+–
+–
+UR10
+0.1273
+0.220941
+0.63568
+0.5723
+0.1149
+0.1157
+–
+UR3
+0.1519
+0.1198
+0.26062
+0.21325
+0.08505
+0.08535
+–
+UR5
+0.089159
+0.13585
+0.44153
+0.3922
+0.093
+0.09465
+–
+Z1
+0.0585
+0.045
+0.35
+0.22533
+0.07
+0.0492
+–
+panda
+0.333
+0.0
+0.316
+0.0825
+0.39276
+0.0
+0.088
+Gen3 (MJCF)
+0.15643
+0.12849
+0.21048
+0.21048
+0.20853
+0.10593
+0.10593
+Lite 6 (MJCF)
+0.2435
+0.0
+0.2002
+0.24367
+0.0
+0.0625
+–
+Poppy Ergo Jr
+0.0328
+0.0240
+0.0540
+0.0450
+0.0480
+0.0540
+–
+Sawyer (MJCF)
+0.08
+0.25540
+0.19977
+0.26337
+0.17784
+0.27674
+0.15228
+Low-Cost Robot Arm
+0.03900
+0.01730
+0.10935
+0.09051
+0.04502
+–
+–
+Med 14
+0.14700
+0.21273
+0.22822
+0.19229
+0.20777
+0.20507
+0.11524
+Med 7
+0.14750
+0.19279
+0.20777
+0.19279
+0.20777
+0.20507
+0.11524
+UR10e (MJCF)
+0.18100
+0.17600
+0.62812
+0.57100
+0.13500
+0.12000
+–
+UR3e
+0.15200
+0.12000
+0.26112
+0.21300
+0.10400
+0.08500
+–
+UR5e (MJCF)
+0.16300
+0.13800
+0.44473
+0.39200
+0.12700
+0.10000
+–
+ViperX 300 (MJCF)
+0.07900
+0.04805
+0.30585
+0.20000
+0.10000
+0.06974
+–
+WidowX 250 (MJCF)
+0.07200
+0.03865
+0.25490
+0.17500
+0.07500
+0.06500
+–
+xArm7
+0.26700
+0.0
+0.29300
+0.05250
+0.35116
+0.0
+0.12323
+xArm6
+0.26700
+0.0
+0.28949
+0.35116
+0.0
+0.12323
+–
+xArm5
+0.26700
+0.0
+0.28949
+0.35116
+0.12323
+–
+–
+13
+
+
+Table 8. Survey-derived link prior. Means and sample standard
+deviations reproduce the generator parameters to four decimals.
+Statistics use the supplied link records, including zeros and exclud-
+ing blanks. Sampling and global rescaling change the final length
+distribution.
+Joint position
+Records
+µi (m)
+σi (m)
+1
+30
+0.1576
+0.1071
+2
+30
+0.1035
+0.0805
+3
+30
+0.3029
+0.1715
+4
+30
+0.2270
+0.1282
+5
+30
+0.1532
+0.1862
+6
+27
+0.1112
+0.0677
+7
+8
+0.1103
+0.0222
+Forward kinematics on the original graph provides
+targets, subsequently corrected into the normalized link
+frames.
+These targets comprise position, two rotation-
+matrix columns, and angle. Gripper actions are handled
+separately.
+Local-Z normalization removes explicit axis
+variation and intervening fixed paths, but chain selection,
+coordinate gauges, and roll–pitch–yaw conventions prevent
+a unique representation of all physically equivalent descrip-
+tions.
+C. Tokenizer Training and Reconstruction
+C.1. Network, Quantization, and Normalization
+The morphology and angle branches each have two Trans-
+former layers, followed by six conditional encoder and four
+decoder layers (width 1024, eight heads). RVQ uses dimen-
+sion 256 and two separate 2048-entry codebooks shared
+across joints.
+It uses EMA decay 0.8, 100 k-means ini-
+tialization iterations, commitment weight 0.1, dead-code
+fraction 0.1, and straight-through gradients.
+Rotation-
+trick gradients, entropy regularization, and autoencoder-
+only warmup are disabled.
+Conditional stacks use joint-
+wise AdaLN-Zero. Spatial and directional chain-bias tables
+start at zero. Table 9 consolidates training data and opti-
+mization settings for all stages.
+Min–max statistics are computed per channel over valid
+training joints and shared across positions and robots. Fea-
+tures map to [−1, 1], with 10−6 added to the denominator.
+Padding is excluded. Raw angle radians are not wrapped.
+Decoder rotations are denormalized before conversion to
+matrices. Equation (10) uses normalized angle/position er-
+rors and physical rotation geodesics divided by π.
+The lazy loader reserves every 1000th global row for vali-
+dation (fraction 0.001). This splits samples rather than mor-
+phology identities. The 40M count refers to morphology–
+state pairs. Unique pretraining URDF counts and sampling
+densities require the data manifest. Tokenizer training com-
+pletes 300 epochs (365,700 optimization steps). Training
+uses eight GPUs, batch 4096 per GPU, and no gradient
+accumulation (global batch 32,768).
+All six joint-space
+policies and the EE reference complete 30,000 steps on
+RoboTwin 2.0 and 60,000 on EmbodiBench, with global
+batch 128.
+C.2. Ablation Configuration Differences
+Angle+M retains the joint-code layout, URDF branch, and
+graph biases but removes link-geometry prediction and su-
+pervision.
+Angle additionally removes the morphology
+branch, all three graph-bias types, and policy URDF condi-
+tioning. It also changes the commitment weight from 0.1 to
+0.25. Thus Angle versus Angle+M changes several factors,
+while the full model versus Angle+M compares link-pose
+supervision under morphology conditioning. The code la-
+bels this output and loss “EE,” although they cover all valid
+links.
+C.3. Physical Reconstruction Metrics
+For each valid joint, angle error is the absolute decoder-to-
+target difference in degrees without periodic wrapping. Po-
+sition error is the Euclidean distance in meters between the
+decoder’s direct position output and FK of the original joint
+angles. Orientation error is the SO(3) geodesic angle in de-
+grees between the decoded 6D rotation and the correspond-
+ing FK rotation. These metrics cover all valid child-link
+frames, not just the end effector. They do not evaluate FK
+of reconstructed angles.
+Mean, P90, and maximum are computed after pooling all
+valid raw errors within each description group. This weights
+individual joint/link samples equally, without balancing tra-
+jectories, tasks, or morphologies. Longer trajectories and
+arms with more valid joints therefore contribute more sam-
+ples.
+Policy success instead averages tasks equally, so
+the two metrics use different weighting schemes. Padding,
+missing arms, and grippers are excluded. Shardwise or join-
+twise percentiles are not averaged. The encoder receives
+joint angles and morphology, without link-pose input. Re-
+construction excludes VLA code prediction and continuous
+refinement.
+C.4. Reconstruction Data Coverage
+We reconstruct every original saved frame of the down-
+stream task datasets, rather than subsampled frames or the
+ten fitted action nodes. A time frame counts once regardless
+of camera count. Each real arm is reconstructed indepen-
+dently. RoboTwin 2.0 uses 750 trajectories per embodiment,
+totaling 3,750, consistent with the policy-training count. Ta-
+ble 10 summarizes trajectory coverage.
+EmbodiBench reconstruction uses the policy-training
+demonstrations from Sec. 4, with 1,500 trajectories per task
+and 15,000 in total.
+All downstream policy URDFs are
+excluded from tokenizer pretraining. EmbodiBench uses
+14
+
+
+Table 9. Training data and optimization. Tokenizer data count morphology–state pairs. Policy data count demonstrations. Durations and
+global batches describe completed runs. The remaining optimizer settings are from the reference configurations. Reconstruction corpus
+sizes are reported separately in Tab. 10.
+Setting
+Tokenizer
+VLA: RoboTwin 2.0
+VLA: EmbodiBench
+Training data
+40M pairs
+3,750 demonstrations
+15,000 demonstrations
+Duration
+300 epochs
+30,000 steps
+60,000 steps
+Global batch
+32,768
+128
+128
+Gradient accumulation
+1
+1
+1
+Optimizer
+AdamW
+AdamW
+AdamW
+Learning rate
+10−5
+VLM 10−5; head 10−4
+VLM 10−5; head 10−4
+Adam betas
+(0.9, 0.999)
+(0.9, 0.95)
+(0.9, 0.95)
+Weight decay
+10−2
+10−8
+10−8
+Warmup
+1000 steps
+5000 steps
+5000 steps
+Schedule / minimum LR
+Cosine / 10−6
+Cosine / 5 × 10−7
+Cosine / 5 × 10−7
+Gradient norm clip
+1
+1
+1
+Precision / seed
+BF16 / 42
+BF16 / 42
+BF16 / 42
+Validation fraction
+0.001
+0
+0
+Table 10.
+Reconstruction evaluation coverage.
+All original
+saved frames are evaluated. Each real arm is reconstructed in-
+dependently. Padding, missing arms, and grippers are excluded.
+Generated URDFs span 55 distinct morphologies across ten task-
+specific sets of 30.
+Description
+Trajectories
+ALOHA
+750
+ARX-X5
+750
+Franka Panda
+750
+Piper
+750
+UR5-WSG
+750
+RoboTwin 2.0 total
+3,750
+Generated URDFs
+15,000
+newly generated URDFs.
+This evaluates the frozen tok-
+enizer on unseen morphologies, using demonstrations that
+also train the downstream policy. Each task uses 30 URDFs.
+The union of left/right arm IDs across tasks contains 55 dis-
+tinct URDFs, also confirmed by SHA-256 deduplication of
+the actual URDF files. The dataset contains 1,850,860 origi-
+nal time frames, 3,151,136 real-arm frames, and 20,604,806
+valid joint/link error samples. These 55 task-data morpholo-
+gies are not the unique-morphology count of the 40M pre-
+training corpus.
+D. VLA Training and Sampling Details
+D.1. Observations, Action Layout, and Context
+Qwen3-VL-4B-Instruct receives 224×224 head/wrist RGB
+views and an instruction containing 256-bin current-state to-
+kens. The action head also receives state directly. Each arm
+has eight slots, comprising seven arm joints and one gripper
+channel. Masks suppress absent joints and arms. Prediction
+and execution both use 50-frame chunks of absolute joint
+positions and gripper commands, passed to the simulator’s
+controllers.
+Ten fitted joint nodes per chunk (Eq. (11)), two IDs per
+joint, and one ID per gripper yield 10(2J + 1) IDs per arm,
+or at most 300 for two seven-joint arms. Grippers use ordi-
+nary temporal resampling and 256 bins. The 256-bin joint
+baseline uses the same ridge fitting but clips fitted nodes to
+its fixed quantization interval. FAST uses variable-length
+autoregressive codes without node fitting. The pose head re-
+ceives auxiliary geometric supervision during tokenizer pre-
+training. During control, the policy refines decoded joint
+actions and does not execute the predicted link poses.
+LayerNorm and linear projection map each VLM layer’s
+features to width 1024. The action head uses 16 heads, 32
+future queries, position capacity 2048, dropout 0.2, and the
+VLM’s layer count. Even blocks use VLM cross-attention.
+Odd blocks use action self-attention. The discrete and con-
+tinuous branches share their first two blocks, with separate
+later blocks and no cross-branch attention. The VLM and
+action head are trainable. The entire tokenizer, including its
+morphology encoder, is frozen. Training uses BF16, FSDP,
+and AdamW epsilon 10−8.
+D.2. Discrete Training and Iterative Completion
+For N valid token positions, training samples u ∼U(0, 1)
+and masks
+nmask = clip
+
+round
+h
+N cos
+πu
+2
+i
+, 1, N
+
+.
+(15)
+Cross-entropy is averaged only over these masked valid po-
+sitions. Inference begins with all valid positions masked and
+performs eight iterations. Token candidates are sampled at
+15
+
+
+categorical temperature 1. For iteration progress r ∈(0, 1],
+confidence combines the sampled token’s log probability
+with Gumbel noise scaled by 1−r. The next unknown count
+follows ⌊N cos(πr/2)⌋, capped below the current unknown
+count to ensure progress. Highest-confidence candidates are
+committed. Committed positions are never remasked.
+D.3. Continuous Source, Time Sampling, and Exe-
+cution
+Each action coordinate maps its dataset’s 1st/99th per-
+centiles to −1/1, then clips to [−2.2, 2.2].
+Coarse and
+ground-truth actions share this normalization. Invalid coor-
+dinates are zero. Of eight repeated instances per demonstra-
+tion, four train each branch. Masked CE and flow matching
+have weights 0.5 and 1. Optional angle and one-step losses
+are disabled.
+The continuous source is x0
+= 0.3ad + 0.7ϵ.
+To
+sample its training time, the implementation draws b ∼
+Beta(1.5, 1) and sets
+t = clip
+0.999 −0.5b
+0.999
+, 0.5, 1
+
+,
+γ = 2t −1.
+(16)
+The phase t routes the continuous branch, while γ con-
+trols interpolation in Eq. (14) with velocity target a∗−x0.
+Training reconstructs ad from ground-truth IDs. Rollout
+uses predicted IDs. Inference evaluates four Euler steps at
+γ = 0, 0.25, 0.5, 0.75, with step size 0.25, then denormal-
+izes and executes all 50 frames. These iteration counts do
+not measure wall-clock latency.
+E. EmbodiBench Protocol Details
+E.1. Tasks, Robot Schedules, and Scene Seeds
+Table 3 lists the complete ten-task evaluation suite. Other
+implemented environments are excluded. Suffixes SS/OS
+denote same-side/opposite-side dual-arm placement. Both
+arms use the same selected morphology. Collection and
+evaluation follow task-indexed robot-ID schedules.
+Evaluation requests 150 trials per task, five per URDF,
+with fixed instructions and expert feasibility checking. The
+initial scene seed is 100000(1 + s) for evaluation seed s.
+Planner-infeasible scenes advance the seed stream without
+consuming a trial, so success rates are conditional on plan-
+ner feasibility.
+Each accepted trial allows 300 executed
+commands. The counter increments per take_action,
+including every chunk frame, rather than per policy query
+or physics step.
+Default head/wrist cameras use 320×240 resolution and
+45◦/37◦fields of view. The model resizes to 224 × 224.
+Scene randomization is set separately in the run configura-
+tion.
+Figure 3 uses uncropped keyframes from 640 × 480, 30-
+fps renders of successful saved trajectories (512 samples
+per pixel). Stacking frames show the released upper block.
+These are visualization replays, not learned-policy rollouts
+or policy observations.
+16
+
+
+E.2. Success Predicates
+Picking.
+The relevant object centers must rise more than
+0.07 m from their initial heights.
+Pushing.
+The object must satisfy |x| < 0.03 and |y −
+0.05| < 0.03 meters. Its normalized quaternion rotation
+distance to the target must be below 0.05. The distance is
+2 arccos(|∆qw|)/π, so the threshold corresponds to 9◦.
+Stacking.
+The
+target
+is
+the
+lower
+block
+posi-
+tion
+plus
+(0, 0, 0.05) m,
+with
+axiswise
+tolerances
+(0.025, 0.025, 0.012) m for the upper block.
+The ap-
+propriate grippers must also open.
+Lifting.
+The reported results use an at-least-one-arm
+stable-grasp predicate. For 15 consecutive physics steps, the
+object center must satisfy z > 0.9 m and rise at least 0.03 m
+above its settled initial height. At every step, both fingers of
+the same gripper must form a valid grasp and pass the grip-
+per closure/holding check. Validity requires contact on the
+true inner finger surfaces, opposing grasp directions, and at
+least 0.5 N effective normal force per finger, with surface
+tolerance 0.002 m.
+The qualifying arm may change during the interval, but
+contacts from different grippers cannot be combined into a
+grasp. Any failed condition resets the counter. At 250 Hz,
+15 physics steps correspond to 0.06 s, not 15 policy actions.
+There is no object-tilt bound, support-separation require-
+ment, or simultaneous two-arm grasp requirement. Each
+episode permits at most 300 action targets, predicted and
+executed in 50-step chunks.
+E.3. Result Mapping and Reproducibility Scope
+The implementation identifies methods by configura-
+tion names.
+Ours is qwen_w_eat.
+Angle+M is
+qwen_urdf_angle.
+Angle is qwen_angle_only.
+256-bin and FAST are qwen_256bin and qwen_fast.
+Joint and EE denote the corresponding StarVLA control in-
+terfaces. Reported means are unweighted task averages. Re-
+computation from rounded entries differs by at most 0.011
+percentage points. The tables report aggregate success rates
+without across-training-seed standard deviations.
+Tokenizer pretraining and downstream policy learning
+use disjoint URDF sets.
+EmbodiBench reconstruction
+reuses policy-training demonstrations. It measures repre-
+sentation fidelity on morphologies unseen by the tokenizer,
+not policy generalization. No disjoint-morphology split is
+established between policy training and rollout evaluation.
+The 40M pretraining sample count does not specify the
+number of unique morphologies.
+Identity manifests are
+needed to reproduce the split. We do not report genera-
+tion throughput, scaling curves, or variation across training
+seeds.
+17
